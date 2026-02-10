@@ -1,0 +1,1158 @@
+import React, { useState, useRef } from 'react';
+import { 
+  View, Text, StyleSheet, ScrollView, TouchableOpacity, Image, 
+  Dimensions 
+} from 'react-native';
+import { TripIcon } from '@/types/trip';
+import { SafeAreaView } from 'react-native-safe-area-context';
+import { useLocalSearchParams, useRouter, Stack } from 'expo-router';
+import { 
+  ArrowLeft, Share2, Edit3, Calendar, MapPin, 
+  Users, ChevronRight, Plus, Clock, DollarSign,
+  Hotel, Image as ImageIcon, Camera, Utensils, Car, ShoppingBag,
+  Flower2, Church, Palmtree, Mountain, Sun, Landmark, Trees, Snowflake, Tent,
+  Check, ExternalLink
+} from 'lucide-react-native';
+import Colors from '@/constants/colors';
+import ActivityCard from '@/components/ActivityCard';
+import { mockTrips, mockStays } from '@/mocks/trips';
+
+const { width: SCREEN_WIDTH } = Dimensions.get('window');
+
+type TabType = 'overview' | 'itinerary' | 'budget' | 'stays' | 'memories';
+
+const TABS: { id: TabType; label: string }[] = [
+  { id: 'overview', label: 'Overview' },
+  { id: 'itinerary', label: 'Itinerary' },
+  { id: 'budget', label: 'Budget' },
+  { id: 'stays', label: 'Stays' },
+  { id: 'memories', label: 'Memories' },
+];
+
+export default function TripDetailScreen() {
+  const { id } = useLocalSearchParams<{ id: string }>();
+  const router = useRouter();
+  const [activeTab, setActiveTab] = useState<TabType>('overview');
+  const [activeDay, setActiveDay] = useState(0);
+  const scrollViewRef = useRef<ScrollView>(null);
+  const tabScrollRef = useRef<ScrollView>(null);
+
+  const trip = mockTrips.find(t => t.id === id);
+  const tripStays = mockStays.filter(s => s.tripId === id);
+
+  const getIconComponent = (iconName: TripIcon) => {
+    const iconMap: Record<TripIcon, React.ComponentType<{ size: number; color: string }>> = {
+      'cherry-blossom': Flower2,
+      'cathedral': Church,
+      'palm-tree': Palmtree,
+      'mountain': Mountain,
+      'sun': Sun,
+      'landmark': Landmark,
+      'trees': Trees,
+      'snowflake': Snowflake,
+      'tent': Tent,
+    };
+    return iconMap[iconName] || Landmark;
+  };
+
+  if (!trip) {
+    return (
+      <View style={styles.notFound}>
+        <Text style={styles.notFoundText}>Trip not found</Text>
+      </View>
+    );
+  }
+
+  const formatDate = (date: string) => {
+    return new Date(date).toLocaleDateString('en-US', { 
+      weekday: 'short',
+      month: 'short', 
+      day: 'numeric' 
+    });
+  };
+
+  const formatShortDate = (date: string) => {
+    return new Date(date).toLocaleDateString('en-US', { 
+      month: 'short', 
+      day: 'numeric' 
+    });
+  };
+
+  const calculateTripDays = () => {
+    const start = new Date(trip.startDate);
+    const end = new Date(trip.endDate);
+    const diff = Math.ceil((end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24));
+    return diff;
+  };
+
+  const tripDays = calculateTripDays();
+  const tripNights = tripDays > 0 ? tripDays : 0;
+  const budgetProgress = (trip.spentBudget / trip.totalBudget) * 100;
+  const IconComponent = getIconComponent(trip.icon);
+
+  const getStatusLabel = (status: string) => {
+    switch (status) {
+      case 'planning': return 'Planning';
+      case 'upcoming': return 'Upcoming';
+      case 'ongoing': return 'In Progress';
+      case 'completed': return 'Past';
+      default: return status;
+    }
+  };
+
+  const getStatusColor = (status: string) => {
+    switch (status) {
+      case 'planning': return '#6B7280';
+      case 'upcoming': return '#3B82F6';
+      case 'ongoing': return '#10B981';
+      case 'completed': return '#8B5CF6';
+      default: return Colors.textSecondary;
+    }
+  };
+
+  const handleTabPress = (tabId: TabType, index: number) => {
+    setActiveTab(tabId);
+  };
+
+  const budgetCategories = [
+    { id: 'stays', label: 'Stays', icon: Hotel, spent: 1200, allocated: 1500 },
+    { id: 'transport', label: 'Transport', icon: Car, spent: 450, allocated: 600 },
+    { id: 'activities', label: 'Activities', icon: Landmark, spent: 350, allocated: 500 },
+    { id: 'food', label: 'Food', icon: Utensils, spent: 280, allocated: 400 },
+    { id: 'other', label: 'Other', icon: ShoppingBag, spent: 60, allocated: 200 },
+  ];
+
+  const renderOverview = () => (
+    <View style={styles.tabContentInner}>
+      <View style={styles.overviewCard}>
+        <Text style={styles.overviewCardTitle}>Trip Summary</Text>
+        <View style={styles.overviewStats}>
+          <View style={styles.overviewStatItem}>
+            <Clock size={18} color={Colors.textSecondary} />
+            <Text style={styles.overviewStatValue}>{tripDays} days</Text>
+            <Text style={styles.overviewStatLabel}>{tripNights} nights</Text>
+          </View>
+          <View style={styles.overviewStatDivider} />
+          <View style={styles.overviewStatItem}>
+            <DollarSign size={18} color={Colors.textSecondary} />
+            <Text style={styles.overviewStatValue}>${trip.totalBudget.toLocaleString()}</Text>
+            <Text style={styles.overviewStatLabel}>Total budget</Text>
+          </View>
+          <View style={styles.overviewStatDivider} />
+          <View style={styles.overviewStatItem}>
+            <Users size={18} color={Colors.textSecondary} />
+            <Text style={styles.overviewStatValue}>{trip.collaborators.length}</Text>
+            <Text style={styles.overviewStatLabel}>Travelers</Text>
+          </View>
+        </View>
+      </View>
+
+      <View style={styles.overviewCard}>
+        <Text style={styles.overviewCardTitle}>Budget Overview</Text>
+        <View style={styles.budgetSummaryRow}>
+          <Text style={styles.budgetSummarySpent}>${trip.spentBudget.toLocaleString()}</Text>
+          <Text style={styles.budgetSummaryOf}>of ${trip.totalBudget.toLocaleString()}</Text>
+        </View>
+        <View style={styles.budgetBarBg}>
+          <View style={[styles.budgetBarFill, { width: `${Math.min(budgetProgress, 100)}%` }]} />
+        </View>
+        <Text style={styles.budgetRemaining}>
+          ${(trip.totalBudget - trip.spentBudget).toLocaleString()} remaining
+        </Text>
+      </View>
+
+      <Text style={styles.sectionTitle}>Quick Actions</Text>
+      <View style={styles.quickActionsGrid}>
+        <TouchableOpacity 
+          style={styles.quickActionCard}
+          onPress={() => setActiveTab('itinerary')}
+        >
+          <View style={[styles.quickActionIcon, { backgroundColor: '#EEF2FF' }]}>
+            <Calendar size={20} color="#6366F1" />
+          </View>
+          <Text style={styles.quickActionLabel}>Add itinerary</Text>
+        </TouchableOpacity>
+
+        <TouchableOpacity 
+          style={styles.quickActionCard}
+          onPress={() => setActiveTab('stays')}
+        >
+          <View style={[styles.quickActionIcon, { backgroundColor: '#FEF3C7' }]}>
+            <Hotel size={20} color="#D97706" />
+          </View>
+          <Text style={styles.quickActionLabel}>Add stays</Text>
+        </TouchableOpacity>
+
+        <TouchableOpacity 
+          style={styles.quickActionCard}
+          onPress={() => setActiveTab('budget')}
+        >
+          <View style={[styles.quickActionIcon, { backgroundColor: '#D1FAE5' }]}>
+            <DollarSign size={20} color="#059669" />
+          </View>
+          <Text style={styles.quickActionLabel}>Track budget</Text>
+        </TouchableOpacity>
+
+        <TouchableOpacity 
+          style={styles.quickActionCard}
+          onPress={() => setActiveTab('memories')}
+        >
+          <View style={[styles.quickActionIcon, { backgroundColor: '#FCE7F3' }]}>
+            <Camera size={20} color="#DB2777" />
+          </View>
+          <Text style={styles.quickActionLabel}>Add memories</Text>
+        </TouchableOpacity>
+      </View>
+    </View>
+  );
+
+  const renderItinerary = () => (
+    <View style={styles.tabContentInner}>
+      {trip.itinerary.length > 0 ? (
+        <>
+          <ScrollView 
+            horizontal 
+            showsHorizontalScrollIndicator={false}
+            contentContainerStyle={styles.daysScroll}
+          >
+            {trip.itinerary.map((day, index) => (
+              <TouchableOpacity
+                key={day.id}
+                style={[styles.dayPill, activeDay === index && styles.dayPillActive]}
+                onPress={() => setActiveDay(index)}
+              >
+                <Text style={[styles.dayNumber, activeDay === index && styles.dayNumberActive]}>
+                  Day {index + 1}
+                </Text>
+                <Text style={[styles.dayDate, activeDay === index && styles.dayDateActive]}>
+                  {formatShortDate(day.date)}
+                </Text>
+              </TouchableOpacity>
+            ))}
+          </ScrollView>
+
+          <View style={styles.activitiesList}>
+            {trip.itinerary[activeDay]?.activities.map((activity) => (
+              <ActivityCard
+                key={activity.id}
+                activity={activity}
+                onPress={() => console.log('Activity:', activity.id)}
+              />
+            ))}
+          </View>
+
+          <TouchableOpacity style={styles.addItemButton}>
+            <Plus size={18} color={Colors.primary} />
+            <Text style={styles.addItemText}>Add Activity</Text>
+          </TouchableOpacity>
+        </>
+      ) : (
+        <View style={styles.emptyState}>
+          <Calendar size={40} color={Colors.textMuted} />
+          <Text style={styles.emptyTitle}>No plans yet</Text>
+          <Text style={styles.emptyText}>Start adding activities to your itinerary</Text>
+          <TouchableOpacity style={styles.emptyButton}>
+            <Plus size={18} color={Colors.textLight} />
+            <Text style={styles.emptyButtonText}>Add Activity</Text>
+          </TouchableOpacity>
+        </View>
+      )}
+    </View>
+  );
+
+  const renderBudget = () => (
+    <View style={styles.tabContentInner}>
+      <View style={styles.budgetOverviewCard}>
+        <View style={styles.budgetHeaderRow}>
+          <View>
+            <Text style={styles.budgetTotalLabel}>Total Budget</Text>
+            <Text style={styles.budgetTotalValue}>${trip.totalBudget.toLocaleString()}</Text>
+          </View>
+          <View style={styles.budgetHeaderRight}>
+            <Text style={styles.budgetSpentLabel}>Spent</Text>
+            <Text style={styles.budgetSpentValue}>${trip.spentBudget.toLocaleString()}</Text>
+          </View>
+        </View>
+        <View style={styles.budgetBarBgLarge}>
+          <View style={[styles.budgetBarFillLarge, { width: `${Math.min(budgetProgress, 100)}%` }]} />
+        </View>
+        <View style={styles.budgetFooterRow}>
+          <Text style={styles.budgetRemainingLarge}>
+            ${(trip.totalBudget - trip.spentBudget).toLocaleString()} remaining
+          </Text>
+          <Text style={styles.budgetPercentage}>{Math.round(budgetProgress)}% used</Text>
+        </View>
+      </View>
+
+      <Text style={styles.sectionTitle}>By Category</Text>
+      <View style={styles.categoryList}>
+        {budgetCategories.map((cat) => {
+          const CategoryIcon = cat.icon;
+          const catProgress = cat.allocated > 0 ? (cat.spent / cat.allocated) * 100 : 0;
+          return (
+            <View key={cat.id} style={styles.categoryItem}>
+              <View style={styles.categoryHeader}>
+                <View style={styles.categoryIconWrap}>
+                  <CategoryIcon size={18} color={Colors.primary} />
+                </View>
+                <Text style={styles.categoryLabel}>{cat.label}</Text>
+                <Text style={styles.categoryAmount}>
+                  ${cat.spent} / ${cat.allocated}
+                </Text>
+              </View>
+              <View style={styles.categoryBarBg}>
+                <View style={[styles.categoryBarFill, { width: `${Math.min(catProgress, 100)}%` }]} />
+              </View>
+            </View>
+          );
+        })}
+      </View>
+
+      <TouchableOpacity 
+        style={styles.viewDetailButton}
+        onPress={() => router.push(`/budget/${trip.id}`)}
+      >
+        <Text style={styles.viewDetailButtonText}>View Full Budget</Text>
+        <ChevronRight size={18} color={Colors.primary} />
+      </TouchableOpacity>
+    </View>
+  );
+
+  const renderStays = () => (
+    <View style={styles.tabContentInner}>
+      {tripStays.length > 0 ? (
+        <>
+          {tripStays.map((stay) => (
+            <View key={stay.id} style={styles.stayCard}>
+              <View style={styles.stayHeader}>
+                <View style={styles.stayIconContainer}>
+                  <Hotel size={22} color={Colors.primary} />
+                </View>
+                <View style={styles.stayInfo}>
+                  <Text style={styles.stayName}>{stay.hotelName}</Text>
+                  <Text style={styles.stayAddress}>{stay.address}</Text>
+                </View>
+                {stay.isConfirmed && (
+                  <View style={styles.confirmedBadge}>
+                    <Check size={12} color={Colors.textLight} />
+                  </View>
+                )}
+              </View>
+              
+              <View style={styles.stayDates}>
+                <View style={styles.stayDateItem}>
+                  <Text style={styles.stayDateLabel}>Check-in</Text>
+                  <Text style={styles.stayDateValue}>{formatDate(stay.checkIn)}</Text>
+                </View>
+                <View style={styles.stayDateDivider} />
+                <View style={styles.stayDateItem}>
+                  <Text style={styles.stayDateLabel}>Check-out</Text>
+                  <Text style={styles.stayDateValue}>{formatDate(stay.checkOut)}</Text>
+                </View>
+              </View>
+
+              {stay.price && (
+                <View style={styles.stayPriceRow}>
+                  <Text style={styles.stayPriceLabel}>Total</Text>
+                  <Text style={styles.stayPriceValue}>${stay.price}</Text>
+                </View>
+              )}
+
+              {stay.bookingRef && (
+                <View style={styles.stayRefRow}>
+                  <Text style={styles.stayRefLabel}>Booking ref:</Text>
+                  <Text style={styles.stayRefValue}>{stay.bookingRef}</Text>
+                </View>
+              )}
+
+              <View style={styles.stayActions}>
+                <TouchableOpacity style={styles.stayActionButton}>
+                  <ExternalLink size={16} color={Colors.primary} />
+                  <Text style={styles.stayActionText}>View Booking</Text>
+                </TouchableOpacity>
+              </View>
+            </View>
+          ))}
+
+          <TouchableOpacity style={styles.addItemButton}>
+            <Plus size={18} color={Colors.primary} />
+            <Text style={styles.addItemText}>Add Another Stay</Text>
+          </TouchableOpacity>
+        </>
+      ) : (
+        <View style={styles.emptyState}>
+          <Hotel size={40} color={Colors.textMuted} />
+          <Text style={styles.emptyTitle}>No stays added yet</Text>
+          <Text style={styles.emptyText}>Add accommodations for your trip</Text>
+          <TouchableOpacity style={styles.emptyButton}>
+            <Plus size={18} color={Colors.textLight} />
+            <Text style={styles.emptyButtonText}>Add Stay</Text>
+          </TouchableOpacity>
+        </View>
+      )}
+    </View>
+  );
+
+  const renderMemories = () => {
+    const placeholderImages = [1, 2, 3, 4, 5, 6];
+    const hasMemories = trip.status === 'completed';
+
+    return (
+      <View style={styles.tabContentInner}>
+        {hasMemories ? (
+          <>
+            <View style={styles.memoriesGrid}>
+              {placeholderImages.map((_, index) => (
+                <View key={index} style={styles.memoryPlaceholder}>
+                  <ImageIcon size={24} color={Colors.textMuted} />
+                </View>
+              ))}
+            </View>
+
+            <TouchableOpacity style={styles.addItemButton}>
+              <Camera size={18} color={Colors.primary} />
+              <Text style={styles.addItemText}>Add Photos</Text>
+            </TouchableOpacity>
+          </>
+        ) : (
+          <View style={styles.emptyState}>
+            <Camera size={40} color={Colors.textMuted} />
+            <Text style={styles.emptyTitle}>Memories from this trip will appear here</Text>
+            <Text style={styles.emptyText}>
+              {trip.status === 'planning' || trip.status === 'upcoming' 
+                ? 'Come back after your trip to add photos and videos'
+                : 'Add photos and videos from your trip'}
+            </Text>
+            <TouchableOpacity style={styles.emptyButton}>
+              <Camera size={18} color={Colors.textLight} />
+              <Text style={styles.emptyButtonText}>Add Photos</Text>
+            </TouchableOpacity>
+          </View>
+        )}
+      </View>
+    );
+  };
+
+  const renderTabContent = () => {
+    switch (activeTab) {
+      case 'overview': return renderOverview();
+      case 'itinerary': return renderItinerary();
+      case 'budget': return renderBudget();
+      case 'stays': return renderStays();
+      case 'memories': return renderMemories();
+      default: return renderOverview();
+    }
+  };
+
+  return (
+    <>
+      <Stack.Screen options={{ headerShown: false }} />
+      <View style={styles.container}>
+        <ScrollView showsVerticalScrollIndicator={false} ref={scrollViewRef}>
+          <View style={[styles.heroContainer, { backgroundColor: trip.iconColor + '15' }]}>
+            <View style={styles.heroIconContainer}>
+              <IconComponent size={100} color={trip.iconColor} />
+            </View>
+            
+            <SafeAreaView style={styles.heroContent} edges={['top']}>
+              <View style={styles.heroHeader}>
+                <TouchableOpacity 
+                  style={styles.backButton}
+                  onPress={() => router.back()}
+                >
+                  <ArrowLeft size={24} color={Colors.text} />
+                </TouchableOpacity>
+                <View style={styles.heroActions}>
+                  <TouchableOpacity style={styles.actionButton}>
+                    <Edit3 size={18} color={Colors.text} />
+                  </TouchableOpacity>
+                  <TouchableOpacity style={styles.actionButton}>
+                    <Share2 size={18} color={Colors.text} />
+                  </TouchableOpacity>
+                </View>
+              </View>
+
+              <View style={styles.heroInfo}>
+                <View style={[styles.statusBadge, { backgroundColor: getStatusColor(trip.status) + '20' }]}>
+                  <View style={[styles.statusDot, { backgroundColor: getStatusColor(trip.status) }]} />
+                  <Text style={[styles.statusText, { color: getStatusColor(trip.status) }]}>
+                    {getStatusLabel(trip.status)}
+                  </Text>
+                </View>
+                <Text style={styles.heroTitle}>{trip.name}</Text>
+                <View style={styles.heroLocation}>
+                  <MapPin size={16} color={Colors.textSecondary} />
+                  <Text style={styles.heroLocationText}>
+                    {trip.destination}, {trip.country}
+                  </Text>
+                </View>
+                <View style={styles.heroDate}>
+                  <Calendar size={14} color={Colors.textSecondary} />
+                  <Text style={styles.heroDateText}>
+                    {formatDate(trip.startDate)} - {formatDate(trip.endDate)}
+                  </Text>
+                </View>
+              </View>
+            </SafeAreaView>
+          </View>
+
+          <View style={styles.content}>
+            <View style={styles.collaboratorsSection}>
+              <Text style={styles.sectionLabel}>Travelers</Text>
+              <View style={styles.collaboratorsRow}>
+                {trip.collaborators.map((collab, index) => (
+                  <Image
+                    key={collab.id}
+                    source={{ uri: collab.avatar }}
+                    style={[styles.collaboratorAvatar, { marginLeft: index > 0 ? -12 : 0 }]}
+                  />
+                ))}
+                <TouchableOpacity 
+                  style={styles.addCollaborator}
+                  onPress={() => router.push(`/collaboration/${trip.id}`)}
+                >
+                  <Users size={16} color={Colors.primary} />
+                </TouchableOpacity>
+              </View>
+            </View>
+
+            <View style={styles.tabsContainer}>
+              <ScrollView 
+                ref={tabScrollRef}
+                horizontal 
+                showsHorizontalScrollIndicator={false}
+                contentContainerStyle={styles.tabsScroll}
+              >
+                {TABS.map((tab, index) => (
+                  <TouchableOpacity
+                    key={tab.id}
+                    style={[styles.tab, activeTab === tab.id && styles.tabActive]}
+                    onPress={() => handleTabPress(tab.id, index)}
+                  >
+                    <Text style={[styles.tabText, activeTab === tab.id && styles.tabTextActive]}>
+                      {tab.label}
+                    </Text>
+                  </TouchableOpacity>
+                ))}
+              </ScrollView>
+            </View>
+
+            <View style={styles.tabContent}>
+              {renderTabContent()}
+            </View>
+          </View>
+        </ScrollView>
+      </View>
+    </>
+  );
+}
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    backgroundColor: Colors.background,
+  },
+  notFound: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: Colors.background,
+  },
+  notFoundText: {
+    fontSize: 16,
+    color: Colors.textSecondary,
+  },
+  heroContainer: {
+    height: 300,
+  },
+  heroIconContainer: {
+    position: 'absolute',
+    width: '100%',
+    height: '100%',
+    justifyContent: 'center',
+    alignItems: 'center',
+    opacity: 0.5,
+  },
+  heroContent: {
+    flex: 1,
+    justifyContent: 'space-between',
+    padding: 20,
+  },
+  heroHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  backButton: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    backgroundColor: Colors.surface,
+    justifyContent: 'center',
+    alignItems: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 2,
+  },
+  heroActions: {
+    flexDirection: 'row',
+    gap: 10,
+  },
+  actionButton: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: Colors.surface,
+    justifyContent: 'center',
+    alignItems: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 2,
+  },
+  heroInfo: {},
+  statusBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    alignSelf: 'flex-start',
+    paddingHorizontal: 10,
+    paddingVertical: 5,
+    borderRadius: 12,
+    marginBottom: 8,
+    gap: 6,
+  },
+  statusDot: {
+    width: 6,
+    height: 6,
+    borderRadius: 3,
+  },
+  statusText: {
+    fontSize: 12,
+    fontWeight: '600' as const,
+  },
+  heroTitle: {
+    fontSize: 26,
+    fontWeight: '700' as const,
+    color: Colors.text,
+    marginBottom: 6,
+  },
+  heroLocation: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    marginBottom: 4,
+  },
+  heroLocationText: {
+    fontSize: 15,
+    color: Colors.textSecondary,
+  },
+  heroDate: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+  },
+  heroDateText: {
+    fontSize: 13,
+    color: Colors.textSecondary,
+  },
+  content: {
+    padding: 20,
+    paddingBottom: 40,
+  },
+  collaboratorsSection: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 20,
+  },
+  sectionLabel: {
+    fontSize: 14,
+    fontWeight: '500' as const,
+    color: Colors.textSecondary,
+  },
+  collaboratorsRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  collaboratorAvatar: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    borderWidth: 2,
+    borderColor: Colors.background,
+  },
+  addCollaborator: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: Colors.primary + '15',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginLeft: -12,
+    borderWidth: 2,
+    borderColor: Colors.background,
+  },
+  tabsContainer: {
+    marginBottom: 20,
+  },
+  tabsScroll: {
+    gap: 8,
+  },
+  tab: {
+    paddingHorizontal: 16,
+    paddingVertical: 10,
+    backgroundColor: Colors.surface,
+    borderRadius: 10,
+  },
+  tabActive: {
+    backgroundColor: Colors.text,
+  },
+  tabText: {
+    fontSize: 14,
+    fontWeight: '500' as const,
+    color: Colors.textSecondary,
+  },
+  tabTextActive: {
+    color: Colors.textLight,
+  },
+  tabContent: {},
+  tabContentInner: {},
+  
+  overviewCard: {
+    backgroundColor: Colors.surface,
+    borderRadius: 16,
+    padding: 16,
+    marginBottom: 16,
+  },
+  overviewCardTitle: {
+    fontSize: 15,
+    fontWeight: '600' as const,
+    color: Colors.text,
+    marginBottom: 14,
+  },
+  overviewStats: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  overviewStatItem: {
+    flex: 1,
+    alignItems: 'center',
+  },
+  overviewStatValue: {
+    fontSize: 18,
+    fontWeight: '700' as const,
+    color: Colors.text,
+    marginTop: 6,
+  },
+  overviewStatLabel: {
+    fontSize: 12,
+    color: Colors.textMuted,
+    marginTop: 2,
+  },
+  overviewStatDivider: {
+    width: 1,
+    height: 40,
+    backgroundColor: Colors.borderLight,
+  },
+  budgetSummaryRow: {
+    flexDirection: 'row',
+    alignItems: 'baseline',
+    gap: 6,
+    marginBottom: 10,
+  },
+  budgetSummarySpent: {
+    fontSize: 22,
+    fontWeight: '700' as const,
+    color: Colors.text,
+  },
+  budgetSummaryOf: {
+    fontSize: 14,
+    color: Colors.textMuted,
+  },
+  budgetBarBg: {
+    height: 8,
+    backgroundColor: Colors.borderLight,
+    borderRadius: 4,
+    marginBottom: 8,
+  },
+  budgetBarFill: {
+    height: '100%',
+    backgroundColor: Colors.primary,
+    borderRadius: 4,
+  },
+  budgetRemaining: {
+    fontSize: 13,
+    color: Colors.textMuted,
+  },
+  sectionTitle: {
+    fontSize: 16,
+    fontWeight: '600' as const,
+    color: Colors.text,
+    marginBottom: 12,
+    marginTop: 8,
+  },
+  quickActionsGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 12,
+  },
+  quickActionCard: {
+    width: (SCREEN_WIDTH - 52) / 2,
+    backgroundColor: Colors.surface,
+    borderRadius: 14,
+    padding: 16,
+    alignItems: 'center',
+  },
+  quickActionIcon: {
+    width: 44,
+    height: 44,
+    borderRadius: 12,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: 10,
+  },
+  quickActionLabel: {
+    fontSize: 13,
+    fontWeight: '500' as const,
+    color: Colors.text,
+  },
+  
+  daysScroll: {
+    marginBottom: 16,
+    gap: 10,
+  },
+  dayPill: {
+    paddingHorizontal: 16,
+    paddingVertical: 10,
+    backgroundColor: Colors.surface,
+    borderRadius: 12,
+    alignItems: 'center',
+    marginRight: 10,
+  },
+  dayPillActive: {
+    backgroundColor: Colors.primary,
+  },
+  dayNumber: {
+    fontSize: 14,
+    fontWeight: '600' as const,
+    color: Colors.text,
+    marginBottom: 2,
+  },
+  dayNumberActive: {
+    color: Colors.textLight,
+  },
+  dayDate: {
+    fontSize: 11,
+    color: Colors.textMuted,
+  },
+  dayDateActive: {
+    color: Colors.textLight,
+    opacity: 0.9,
+  },
+  activitiesList: {
+    marginBottom: 16,
+  },
+  emptyState: {
+    alignItems: 'center',
+    paddingVertical: 50,
+    backgroundColor: Colors.surface,
+    borderRadius: 16,
+  },
+  emptyTitle: {
+    fontSize: 16,
+    fontWeight: '600' as const,
+    color: Colors.text,
+    marginTop: 14,
+    marginBottom: 6,
+    textAlign: 'center',
+  },
+  emptyText: {
+    fontSize: 14,
+    color: Colors.textSecondary,
+    marginBottom: 20,
+    textAlign: 'center',
+    paddingHorizontal: 20,
+  },
+  emptyButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    paddingHorizontal: 20,
+    paddingVertical: 12,
+    backgroundColor: Colors.primary,
+    borderRadius: 12,
+  },
+  emptyButtonText: {
+    fontSize: 14,
+    fontWeight: '600' as const,
+    color: Colors.textLight,
+  },
+  addItemButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 6,
+    paddingVertical: 14,
+    backgroundColor: Colors.surface,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: Colors.borderLight,
+    borderStyle: 'dashed',
+  },
+  addItemText: {
+    fontSize: 14,
+    fontWeight: '500' as const,
+    color: Colors.primary,
+  },
+  
+  budgetOverviewCard: {
+    backgroundColor: Colors.surface,
+    borderRadius: 16,
+    padding: 18,
+    marginBottom: 20,
+  },
+  budgetHeaderRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'flex-start',
+    marginBottom: 14,
+  },
+  budgetTotalLabel: {
+    fontSize: 13,
+    color: Colors.textMuted,
+    marginBottom: 4,
+  },
+  budgetTotalValue: {
+    fontSize: 26,
+    fontWeight: '700' as const,
+    color: Colors.text,
+  },
+  budgetHeaderRight: {
+    alignItems: 'flex-end',
+  },
+  budgetSpentLabel: {
+    fontSize: 12,
+    color: Colors.textMuted,
+    marginBottom: 2,
+  },
+  budgetSpentValue: {
+    fontSize: 18,
+    fontWeight: '600' as const,
+    color: Colors.primary,
+  },
+  budgetBarBgLarge: {
+    height: 10,
+    backgroundColor: Colors.borderLight,
+    borderRadius: 5,
+    marginBottom: 10,
+  },
+  budgetBarFillLarge: {
+    height: '100%',
+    backgroundColor: Colors.primary,
+    borderRadius: 5,
+  },
+  budgetFooterRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+  },
+  budgetRemainingLarge: {
+    fontSize: 13,
+    color: Colors.textSecondary,
+  },
+  budgetPercentage: {
+    fontSize: 13,
+    fontWeight: '500' as const,
+    color: Colors.textMuted,
+  },
+  categoryList: {
+    backgroundColor: Colors.surface,
+    borderRadius: 16,
+    padding: 16,
+    marginBottom: 16,
+  },
+  categoryItem: {
+    marginBottom: 16,
+  },
+  categoryHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 8,
+  },
+  categoryIconWrap: {
+    width: 32,
+    height: 32,
+    borderRadius: 8,
+    backgroundColor: Colors.primary + '12',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: 10,
+  },
+  categoryLabel: {
+    flex: 1,
+    fontSize: 14,
+    fontWeight: '500' as const,
+    color: Colors.text,
+  },
+  categoryAmount: {
+    fontSize: 13,
+    color: Colors.textSecondary,
+  },
+  categoryBarBg: {
+    height: 6,
+    backgroundColor: Colors.borderLight,
+    borderRadius: 3,
+  },
+  categoryBarFill: {
+    height: '100%',
+    backgroundColor: Colors.primary,
+    borderRadius: 3,
+  },
+  viewDetailButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 4,
+    paddingVertical: 14,
+    backgroundColor: Colors.surface,
+    borderRadius: 12,
+  },
+  viewDetailButtonText: {
+    fontSize: 14,
+    fontWeight: '500' as const,
+    color: Colors.primary,
+  },
+  
+  stayCard: {
+    backgroundColor: Colors.surface,
+    borderRadius: 16,
+    padding: 16,
+    marginBottom: 12,
+  },
+  stayHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 14,
+  },
+  stayIconContainer: {
+    width: 44,
+    height: 44,
+    borderRadius: 12,
+    backgroundColor: Colors.primary + '12',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: 12,
+  },
+  stayInfo: {
+    flex: 1,
+  },
+  stayName: {
+    fontSize: 16,
+    fontWeight: '600' as const,
+    color: Colors.text,
+    marginBottom: 2,
+  },
+  stayAddress: {
+    fontSize: 13,
+    color: Colors.textSecondary,
+  },
+  confirmedBadge: {
+    width: 24,
+    height: 24,
+    borderRadius: 12,
+    backgroundColor: Colors.primary,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  stayDates: {
+    flexDirection: 'row',
+    backgroundColor: Colors.background,
+    borderRadius: 12,
+    padding: 12,
+    marginBottom: 12,
+  },
+  stayDateItem: {
+    flex: 1,
+  },
+  stayDateLabel: {
+    fontSize: 11,
+    color: Colors.textMuted,
+    marginBottom: 2,
+  },
+  stayDateValue: {
+    fontSize: 14,
+    fontWeight: '500' as const,
+    color: Colors.text,
+  },
+  stayDateDivider: {
+    width: 1,
+    backgroundColor: Colors.borderLight,
+    marginHorizontal: 12,
+  },
+  stayPriceRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 8,
+  },
+  stayPriceLabel: {
+    fontSize: 14,
+    color: Colors.textSecondary,
+  },
+  stayPriceValue: {
+    fontSize: 16,
+    fontWeight: '600' as const,
+    color: Colors.text,
+  },
+  stayRefRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    marginBottom: 12,
+  },
+  stayRefLabel: {
+    fontSize: 12,
+    color: Colors.textMuted,
+  },
+  stayRefValue: {
+    fontSize: 12,
+    fontWeight: '500' as const,
+    color: Colors.textSecondary,
+  },
+  stayActions: {
+    borderTopWidth: 1,
+    borderTopColor: Colors.borderLight,
+    paddingTop: 12,
+  },
+  stayActionButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 6,
+    paddingVertical: 10,
+    backgroundColor: Colors.primary + '10',
+    borderRadius: 10,
+  },
+  stayActionText: {
+    fontSize: 14,
+    fontWeight: '500' as const,
+    color: Colors.primary,
+  },
+  
+  memoriesGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 8,
+    marginBottom: 16,
+  },
+  memoryPlaceholder: {
+    width: (SCREEN_WIDTH - 56) / 3,
+    aspectRatio: 1,
+    backgroundColor: Colors.surface,
+    borderRadius: 12,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+});
