@@ -225,7 +225,7 @@ export default function DiscoverScreen() {
         contentContainerStyle={styles.scrollContent}
       >
         <View style={styles.header}>
-          <Text style={styles.title}>Explore</Text>
+          <Text style={styles.title}>Explore!</Text>
           <Text style={styles.subtitle}>Destinations, flights & stays</Text>
         </View>
 

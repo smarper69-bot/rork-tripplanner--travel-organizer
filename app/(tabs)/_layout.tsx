@@ -56,7 +56,7 @@ export default function TabLayout() {
       <Tabs.Screen
         name="concierge"
         options={{
-          title: 'Concierge',
+          title: 'Guide',
           tabBarIcon: ({ color, size }) => <Sparkles size={size} color={color} />,
         }}
       />
