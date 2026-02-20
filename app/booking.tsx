@@ -9,6 +9,7 @@ import {
 import Colors from '@/constants/colors';
 import { mockBookings } from '@/mocks/trips';
 import { Booking } from '@/types/trip';
+import CalendarPicker from '@/components/CalendarPicker';
 
 const tabs = [
   { id: 'hotels', label: 'Hotels', icon: Hotel },
@@ -20,6 +21,21 @@ export default function BookingScreen() {
   const [activeTab, setActiveTab] = useState('hotels');
   const [searchQuery, setSearchQuery] = useState('');
   const [favorites, setFavorites] = useState<string[]>([]);
+  const [checkInDate, setCheckInDate] = useState('');
+  const [checkOutDate, setCheckOutDate] = useState('');
+  const [showCheckInCalendar, setShowCheckInCalendar] = useState(false);
+  const [showCheckOutCalendar, setShowCheckOutCalendar] = useState(false);
+
+  const formatDisplayDate = (date: string) => {
+    if (!date) return '';
+    return new Date(date + 'T00:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+  };
+
+  const dateRangeLabel = checkInDate && checkOutDate
+    ? `${formatDisplayDate(checkInDate)} - ${formatDisplayDate(checkOutDate)}`
+    : checkInDate
+      ? `${formatDisplayDate(checkInDate)} - Select`
+      : 'Select dates';
 
   const filteredBookings = mockBookings.filter(b => {
     const matchesTab = activeTab === 'hotels' ? b.type === 'hotel' : b.type === 'activity';
@@ -136,9 +152,9 @@ export default function BookingScreen() {
         </View>
 
         <View style={styles.dateSelector}>
-          <TouchableOpacity style={styles.dateButton}>
+          <TouchableOpacity style={styles.dateButton} onPress={() => setShowCheckInCalendar(true)}>
             <Calendar size={18} color={Colors.primary} />
-            <Text style={styles.dateText}>Mar 15 - Mar 25</Text>
+            <Text style={styles.dateText}>{dateRangeLabel}</Text>
           </TouchableOpacity>
           <TouchableOpacity style={styles.guestButton}>
             <Users size={18} color={Colors.primary} />
@@ -163,6 +179,32 @@ export default function BookingScreen() {
             </TouchableOpacity>
           ))}
         </View>
+
+        <CalendarPicker
+          visible={showCheckInCalendar}
+          onClose={() => setShowCheckInCalendar(false)}
+          onSelect={(date) => {
+            setCheckInDate(date);
+            setShowCheckInCalendar(false);
+            if (checkOutDate && date > checkOutDate) {
+              setCheckOutDate('');
+            }
+            setTimeout(() => setShowCheckOutCalendar(true), 300);
+          }}
+          selectedDate={checkInDate}
+          title="Check-in Date"
+        />
+        <CalendarPicker
+          visible={showCheckOutCalendar}
+          onClose={() => setShowCheckOutCalendar(false)}
+          onSelect={(date) => {
+            setCheckOutDate(date);
+            setShowCheckOutCalendar(false);
+          }}
+          selectedDate={checkOutDate}
+          minDate={checkInDate || undefined}
+          title="Check-out Date"
+        />
 
         <ScrollView 
           showsVerticalScrollIndicator={false}

@@ -5,6 +5,7 @@ import { useRouter, useLocalSearchParams, Stack } from 'expo-router';
 import { MapPin, Calendar, Users, DollarSign, Camera, X } from 'lucide-react-native';
 import Colors from '@/constants/colors';
 import { useTripsStore } from '@/store/useTripsStore';
+import CalendarPicker from '@/components/CalendarPicker';
 
 const coverImages = [
   'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=800',
@@ -27,12 +28,8 @@ export default function CreateTripScreen() {
   const [destination, setDestination] = useState('');
   const [startDate, setStartDate] = useState('');
   const [endDate, setEndDate] = useState('');
-  
-  // These setters will be used with date picker implementation
-  const _setStartDate = setStartDate;
-  const _setEndDate = setEndDate;
-  void _setStartDate;
-  void _setEndDate;
+  const [showStartCalendar, setShowStartCalendar] = useState(false);
+  const [showEndCalendar, setShowEndCalendar] = useState(false);
   const [budget, setBudget] = useState('');
   const [selectedCover, setSelectedCover] = useState(0);
   const [customCoverImage, setCustomCoverImage] = useState<string | null>(null);
@@ -172,23 +169,48 @@ export default function CreateTripScreen() {
           <View style={styles.row}>
             <View style={[styles.inputGroup, styles.halfWidth]}>
               <Text style={styles.label}>Start Date</Text>
-              <TouchableOpacity style={styles.inputContainer}>
+              <TouchableOpacity style={styles.inputContainer} onPress={() => setShowStartCalendar(true)}>
                 <Calendar size={20} color={Colors.textMuted} />
                 <Text style={[styles.inputText, !startDate && styles.placeholder]}>
-                  {startDate || 'Select'}
+                  {startDate ? new Date(startDate + 'T00:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : 'Select'}
                 </Text>
               </TouchableOpacity>
             </View>
             <View style={[styles.inputGroup, styles.halfWidth]}>
               <Text style={styles.label}>End Date</Text>
-              <TouchableOpacity style={styles.inputContainer}>
+              <TouchableOpacity style={styles.inputContainer} onPress={() => setShowEndCalendar(true)}>
                 <Calendar size={20} color={Colors.textMuted} />
                 <Text style={[styles.inputText, !endDate && styles.placeholder]}>
-                  {endDate || 'Select'}
+                  {endDate ? new Date(endDate + 'T00:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : 'Select'}
                 </Text>
               </TouchableOpacity>
             </View>
           </View>
+
+          <CalendarPicker
+            visible={showStartCalendar}
+            onClose={() => setShowStartCalendar(false)}
+            onSelect={(date) => {
+              setStartDate(date);
+              setShowStartCalendar(false);
+              if (endDate && date > endDate) {
+                setEndDate('');
+              }
+            }}
+            selectedDate={startDate}
+            title="Start Date"
+          />
+          <CalendarPicker
+            visible={showEndCalendar}
+            onClose={() => setShowEndCalendar(false)}
+            onSelect={(date) => {
+              setEndDate(date);
+              setShowEndCalendar(false);
+            }}
+            selectedDate={endDate}
+            minDate={startDate || undefined}
+            title="End Date"
+          />
 
           <View style={styles.inputGroup}>
             <Text style={styles.label}>Budget</Text>
