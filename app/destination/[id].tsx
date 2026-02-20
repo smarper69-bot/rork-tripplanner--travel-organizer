@@ -36,7 +36,7 @@ export default function DestinationOverviewScreen() {
 
   const handlePlanTrip = () => {
     router.push({
-      pathname: '/create-trip',
+      pathname: '/create-trip' as any,
       params: {
         prefillName: `Trip to ${destination.city}`,
         prefillDestination: `${destination.city}, ${destination.country}`,

@@ -112,11 +112,11 @@ export default function HomeScreen() {
               <View key={trip.id}>
                 <TripCard
                   trip={trip}
-                  onPress={() => router.push(`/trip/${trip.id}`)}
+                  onPress={() => router.push(`/trip/${trip.id}` as any)}
                 />
                 <TouchableOpacity 
                   style={styles.continueButton}
-                  onPress={() => router.push(`/trip/${trip.id}`)}
+                  onPress={() => router.push(`/trip/${trip.id}` as any)}
                 >
                   <Text style={styles.continueButtonText}>Continue Planning</Text>
                   <ArrowRight size={18} color={Colors.textLight} />
@@ -130,7 +130,7 @@ export default function HomeScreen() {
           <View style={styles.section}>
             <View style={styles.sectionHeader}>
               <Text style={styles.sectionTitle}>Upcoming Trips</Text>
-              <TouchableOpacity onPress={() => router.push('/trips')}>
+              <TouchableOpacity onPress={() => router.push('/trips' as any)}>
                 <Text style={styles.seeAll}>See all</Text>
               </TouchableOpacity>
             </View>
@@ -138,7 +138,7 @@ export default function HomeScreen() {
               <TripCard
                 key={trip.id}
                 trip={trip}
-                onPress={() => router.push(`/trip/${trip.id}`)}
+                onPress={() => router.push(`/trip/${trip.id}` as any)}
               />
             ))}
           </View>
@@ -147,7 +147,7 @@ export default function HomeScreen() {
         <View style={styles.section}>
           <View style={styles.sectionHeader}>
             <Text style={styles.sectionTitle}>Inspiration</Text>
-            <TouchableOpacity onPress={() => router.push('/discover')}>
+            <TouchableOpacity onPress={() => router.push('/discover' as any)}>
               <Text style={styles.seeAll}>Explore</Text>
             </TouchableOpacity>
           </View>
@@ -163,7 +163,7 @@ export default function HomeScreen() {
                   key={dest.id} 
                   style={[styles.destinationCard, { backgroundColor: dest.iconColor + '12' }]}
                   activeOpacity={0.9}
-                  onPress={() => router.push(`/destination/${dest.id}`)}
+                  onPress={() => router.push(`/destination/${dest.id}` as any)}
                 >
                   <View style={styles.destinationIconContainer}>
                     <IconComponent size={44} color={dest.iconColor} />
@@ -190,7 +190,7 @@ export default function HomeScreen() {
           </Text>
           <TouchableOpacity 
             style={styles.proButton}
-            onPress={() => router.push('/profile')}
+            onPress={() => router.push('/profile' as any)}
           >
             <Text style={styles.proButtonText}>Learn More</Text>
           </TouchableOpacity>
@@ -198,7 +198,7 @@ export default function HomeScreen() {
 
         <TouchableOpacity 
           style={styles.createTripFab}
-          onPress={() => router.push('/create-trip')}
+          onPress={() => router.push('/create-trip' as any)}
         >
           <Plus size={24} color={Colors.textLight} />
           <Text style={styles.createTripText}>New Trip</Text>

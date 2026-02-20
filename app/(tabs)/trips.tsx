@@ -34,7 +34,7 @@ export default function TripsScreen() {
         </View>
         <TouchableOpacity 
           style={styles.addButton}
-          onPress={() => router.push('/create-trip')}
+          onPress={() => router.push('/create-trip' as any)}
         >
           <Plus size={24} color={Colors.textLight} />
         </TouchableOpacity>
@@ -67,7 +67,7 @@ export default function TripsScreen() {
             <TripCard
               key={trip.id}
               trip={trip}
-              onPress={() => router.push(`/trip/${trip.id}`)}
+              onPress={() => router.push(`/trip/${trip.id}` as any)}
             />
           ))
         ) : (
@@ -81,7 +81,7 @@ export default function TripsScreen() {
             </Text>
             <TouchableOpacity 
               style={styles.emptyButton}
-              onPress={() => router.push('/create-trip')}
+              onPress={() => router.push('/create-trip' as any)}
             >
               <Text style={styles.emptyButtonText}>Create a Trip</Text>
             </TouchableOpacity>

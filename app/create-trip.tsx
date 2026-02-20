@@ -78,7 +78,7 @@ export default function CreateTripScreen() {
     console.log('[CreateTrip] Created trip:', tripId);
     router.dismiss();
     setTimeout(() => {
-      router.push(`/trip/${tripId}`);
+      router.push(`/trip/${tripId}` as any);
     }, 100);
   };
 

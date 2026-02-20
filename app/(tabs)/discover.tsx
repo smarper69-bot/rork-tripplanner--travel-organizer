@@ -210,7 +210,7 @@ export default function DiscoverScreen() {
 
   const handleDestinationPress = (destination: DiscoverDestination) => {
     router.push({
-      pathname: '/destination/[id]',
+      pathname: '/destination/[id]' as any,
       params: { id: destination.id },
     });
   };

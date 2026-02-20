@@ -311,7 +311,7 @@ export default function TripDetailScreen() {
 
       <TouchableOpacity 
         style={styles.viewDetailButton}
-        onPress={() => router.push(`/budget/${trip.id}`)}
+        onPress={() => router.push(`/budget/${trip.id}` as any)}
       >
         <Text style={styles.viewDetailButtonText}>View Full Budget</Text>
         <ChevronRight size={18} color={Colors.primary} />
@@ -510,7 +510,7 @@ export default function TripDetailScreen() {
                 ))}
                 <TouchableOpacity 
                   style={styles.addCollaborator}
-                  onPress={() => router.push(`/collaboration/${trip.id}`)}
+                  onPress={() => router.push(`/collaboration/${trip.id}` as any)}
                 >
                   <Users size={16} color={Colors.primary} />
                 </TouchableOpacity>
