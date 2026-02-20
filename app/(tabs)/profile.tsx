@@ -7,7 +7,7 @@ import {
   Sparkles, Briefcase, Users, BarChart3, Check
 } from 'lucide-react-native';
 import Colors from '@/constants/colors';
-import { mockTrips } from '@/mocks/trips';
+import { useTripsStore } from '@/store/useTripsStore';
 
 interface SettingsItemProps {
   icon: React.ReactNode;
@@ -64,8 +64,15 @@ export default function ProfileScreen() {
   const [notifications, setNotifications] = React.useState(true);
   const [isPro] = React.useState(false);
 
-  const completedTrips = mockTrips.filter(t => t.status === 'completed').length;
-  const countriesVisited = new Set(mockTrips.map(t => t.country)).size;
+  const trips = useTripsStore((s) => s.trips);
+  const completedTrips = trips.filter(t => t.status === 'completed').length;
+  const countriesVisited = new Set(trips.filter(t => t.status === 'completed').map(t => t.country)).size;
+  const totalNights = trips
+    .filter(t => t.status === 'completed')
+    .reduce((sum, t) => {
+      const diff = Math.ceil((new Date(t.endDate).getTime() - new Date(t.startDate).getTime()) / (1000 * 60 * 60 * 24));
+      return sum + Math.max(diff, 0);
+    }, 0);
 
   return (
     <SafeAreaView style={styles.container} edges={['top']}>
@@ -90,7 +97,7 @@ export default function ProfileScreen() {
 
         <View style={styles.statsRow}>
           <View style={styles.statItem}>
-            <Text style={styles.statValue}>{mockTrips.length}</Text>
+            <Text style={styles.statValue}>{trips.length}</Text>
             <Text style={styles.statLabel}>Trips</Text>
           </View>
           <View style={styles.statDivider} />
@@ -100,8 +107,8 @@ export default function ProfileScreen() {
           </View>
           <View style={styles.statDivider} />
           <View style={styles.statItem}>
-            <Text style={styles.statValue}>{completedTrips}</Text>
-            <Text style={styles.statLabel}>Completed</Text>
+            <Text style={styles.statValue}>{totalNights}</Text>
+            <Text style={styles.statLabel}>Nights</Text>
           </View>
         </View>
 

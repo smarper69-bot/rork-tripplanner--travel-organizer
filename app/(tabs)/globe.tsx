@@ -23,7 +23,8 @@ import {
   Moon,
   Image,
 } from 'lucide-react-native';
-import { mockTravelStats, mockVisitedPlaces, mockTrips } from '@/mocks/trips';
+import { Image as RNImage } from 'react-native';
+import { useTripsStore } from '@/store/useTripsStore';
 
 const { width } = Dimensions.get('window');
 const MAP_CARD_WIDTH = width - 40;
@@ -228,7 +229,7 @@ const SVG_HEIGHT = 960;
 interface CountryGroup {
   country: string;
   countryCode: string;
-  places: typeof mockVisitedPlaces;
+  trips: { id: string; name: string; destination: string; startDate: string; endDate: string; nights: number }[];
   totalTrips: number;
   totalNights: number;
 }
@@ -240,8 +241,8 @@ interface TripMemory {
   country: string;
   startDate: string;
   endDate: string;
-  hotels: string[];
   nights: number;
+  memoryThumbnails: string[];
 }
 
 interface PlaceDetail {
@@ -252,45 +253,6 @@ interface PlaceDetail {
   hotels: string[];
   totalNights: number;
   tripName: string;
-}
-
-function buildCountryGroups(): CountryGroup[] {
-  const map = new Map<string, CountryGroup>();
-  for (const place of mockVisitedPlaces) {
-    const existing = map.get(place.country);
-    if (existing) {
-      existing.places.push(place);
-      existing.totalTrips += place.trips.length;
-      existing.totalNights += place.totalNights;
-    } else {
-      map.set(place.country, {
-        country: place.country,
-        countryCode: place.countryCode,
-        places: [place],
-        totalTrips: place.trips.length,
-        totalNights: place.totalNights,
-      });
-    }
-  }
-  return Array.from(map.values()).sort((a, b) => b.totalNights - a.totalNights);
-}
-
-function buildTripMemories(countryGroup: CountryGroup): TripMemory[] {
-  const memories: TripMemory[] = [];
-  for (const place of countryGroup.places) {
-    const matchedTrip = mockTrips.find((t) => place.trips.includes(t.id));
-    memories.push({
-      id: place.id,
-      name: matchedTrip ? matchedTrip.name : `Trip to ${place.destination}`,
-      city: place.destination,
-      country: place.country,
-      startDate: place.firstVisited,
-      endDate: place.lastVisited,
-      hotels: place.hotels,
-      nights: place.totalNights,
-    });
-  }
-  return memories.sort((a, b) => b.startDate.localeCompare(a.startDate));
 }
 
 function formatDateRange(start: string, end: string): string {
@@ -447,6 +409,26 @@ function WorldMapSvg({
   );
 }
 
+const COUNTRY_NAME_TO_CODE: Record<string, string> = {};
+for (const cp of COUNTRY_PATHS) {
+  COUNTRY_NAME_TO_CODE[cp.name] = cp.id;
+}
+
+function getCountryCode(countryName: string): string {
+  if (COUNTRY_NAME_TO_CODE[countryName]) return COUNTRY_NAME_TO_CODE[countryName];
+  for (const cp of COUNTRY_PATHS) {
+    if (cp.name.toLowerCase() === countryName.toLowerCase()) return cp.id;
+  }
+  return '';
+}
+
+function calculateNights(startDate: string, endDate: string): number {
+  const start = new Date(startDate);
+  const end = new Date(endDate);
+  const diff = Math.ceil((end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24));
+  return Math.max(diff, 0);
+}
+
 export default function GlobeScreen() {
   const [expandedCountry, setExpandedCountry] = useState<string | null>(null);
   const [selectedDetail, setSelectedDetail] = useState<PlaceDetail | null>(null);
@@ -454,23 +436,57 @@ export default function GlobeScreen() {
   const scrollViewRef = useRef<ScrollView>(null);
   const countryLayoutsRef = useRef<Record<string, number>>({});
 
-  const countryGroups = useMemo(() => buildCountryGroups(), []);
+  const trips = useTripsStore((s) => s.trips);
+  const storedMemories = useTripsStore((s) => s.memories);
+
+  const completedTrips = useMemo(() => trips.filter((t) => t.status === 'completed'), [trips]);
+
+  const countryGroups = useMemo(() => {
+    const map = new Map<string, CountryGroup>();
+    for (const trip of completedTrips) {
+      const country = trip.country;
+      if (!country) continue;
+      const nights = calculateNights(trip.startDate, trip.endDate);
+      const existing = map.get(country);
+      const tripData = { id: trip.id, name: trip.name, destination: trip.destination, startDate: trip.startDate, endDate: trip.endDate, nights };
+      if (existing) {
+        existing.trips.push(tripData);
+        existing.totalTrips += 1;
+        existing.totalNights += nights;
+      } else {
+        map.set(country, {
+          country,
+          countryCode: getCountryCode(country),
+          trips: [tripData],
+          totalTrips: 1,
+          totalNights: nights,
+        });
+      }
+    }
+    return Array.from(map.values()).sort((a, b) => a.country.localeCompare(b.country));
+  }, [completedTrips]);
+
   const visitedCountries = useMemo(
-    () => Array.from(new Set(mockVisitedPlaces.map((p) => p.country))),
-    [],
+    () => countryGroups.map((g) => g.country),
+    [countryGroups],
   );
   const visitedCodes = useMemo(
-    () => Array.from(new Set(mockVisitedPlaces.map((p) => p.countryCode))),
-    [],
+    () => countryGroups.map((g) => g.countryCode).filter(Boolean),
+    [countryGroups],
   );
 
   const codeToCountryName = useMemo(() => {
     const map = new Map<string, string>();
-    for (const place of mockVisitedPlaces) {
-      map.set(place.countryCode, place.country);
+    for (const group of countryGroups) {
+      if (group.countryCode) map.set(group.countryCode, group.country);
     }
     return map;
-  }, []);
+  }, [countryGroups]);
+
+  const totalNightsTraveled = useMemo(
+    () => completedTrips.reduce((sum, t) => sum + calculateNights(t.startDate, t.endDate), 0),
+    [completedTrips],
+  );
 
   const worldPercent = Math.round((visitedCountries.length / TOTAL_COUNTRIES_WORLD) * 100);
 
@@ -505,13 +521,34 @@ export default function GlobeScreen() {
     setExpandedCountry((prev) => (prev === country ? null : country));
   }, []);
 
+  const buildTripMemories = useCallback((group: CountryGroup): TripMemory[] => {
+    return group.trips
+      .sort((a, b) => b.startDate.localeCompare(a.startDate))
+      .map((t) => {
+        const thumbs = storedMemories
+          .filter((m) => m.tripId === t.id)
+          .slice(0, 3)
+          .map((m) => m.uri);
+        return {
+          id: t.id,
+          name: t.name,
+          city: t.destination,
+          country: group.country,
+          startDate: t.startDate,
+          endDate: t.endDate,
+          nights: t.nights,
+          memoryThumbnails: thumbs,
+        };
+      });
+  }, [storedMemories]);
+
   const openTripMemory = useCallback((memory: TripMemory) => {
     setSelectedDetail({
       id: memory.id,
       name: memory.city,
       country: memory.country,
       dateVisited: formatDateRange(memory.startDate, memory.endDate),
-      hotels: memory.hotels,
+      hotels: [],
       totalNights: memory.nights,
       tripName: memory.name,
     });
@@ -577,19 +614,15 @@ export default function GlobeScreen() {
           <Text style={styles.sectionTitle}>Travel Stats</Text>
           <View style={styles.statsGrid}>
             <View style={styles.statCard}>
-              <Text style={styles.statValue}>{mockTravelStats.totalCountries}</Text>
+              <Text style={styles.statValue}>{visitedCountries.length}</Text>
               <Text style={styles.statLabel}>Countries</Text>
             </View>
             <View style={styles.statCard}>
-              <Text style={styles.statValue}>{mockTravelStats.totalCities}</Text>
-              <Text style={styles.statLabel}>Cities</Text>
-            </View>
-            <View style={styles.statCard}>
-              <Text style={styles.statValue}>{mockTravelStats.totalTrips}</Text>
+              <Text style={styles.statValue}>{completedTrips.length}</Text>
               <Text style={styles.statLabel}>Trips</Text>
             </View>
             <View style={styles.statCard}>
-              <Text style={styles.statValue}>{mockTravelStats.totalNights}</Text>
+              <Text style={styles.statValue}>{totalNightsTraveled}</Text>
               <Text style={styles.statLabel}>Nights</Text>
             </View>
           </View>
@@ -597,6 +630,13 @@ export default function GlobeScreen() {
 
         <View style={styles.memoriesSection}>
           <Text style={styles.sectionTitle}>Memories</Text>
+
+          {countryGroups.length === 0 && (
+            <View style={styles.emptyMemories}>
+              <Plane size={32} color="#bbb" />
+              <Text style={styles.emptyMemoriesText}>Complete a trip to see your memories here</Text>
+            </View>
+          )}
 
           {countryGroups.map((group) => {
             const isExpanded = expandedCountry === group.country;
@@ -623,14 +663,6 @@ export default function GlobeScreen() {
                     <Text style={styles.countryMeta}>
                       {group.totalTrips} {group.totalTrips === 1 ? 'trip' : 'trips'} · {group.totalNights} nights
                     </Text>
-                  </View>
-
-                  <View style={styles.photoStrip}>
-                    {[0, 1, 2].map((i) => (
-                      <View key={i} style={styles.photoStripThumb}>
-                        <Image size={10} color="#666" />
-                      </View>
-                    ))}
                   </View>
 
                   {isExpanded ? (
@@ -662,13 +694,13 @@ export default function GlobeScreen() {
                           </View>
                         </View>
                         <View style={styles.tripMemoryRight}>
-                          <View style={styles.miniPhotoRow}>
-                            {[0, 1].map((i) => (
-                              <View key={i} style={styles.miniPhoto}>
-                                <Image size={8} color="#777" />
-                              </View>
-                            ))}
-                          </View>
+                          {memory.memoryThumbnails.length > 0 && (
+                            <View style={styles.miniPhotoRow}>
+                              {memory.memoryThumbnails.map((uri, i) => (
+                                <RNImage key={i} source={{ uri }} style={styles.miniPhotoImage} />
+                              ))}
+                            </View>
+                          )}
                           <ChevronRight size={16} color="#aaa" />
                         </View>
                       </TouchableOpacity>
@@ -1071,5 +1103,21 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: '500' as const,
     color: '#aaa',
+  },
+  emptyMemories: {
+    alignItems: 'center',
+    paddingVertical: 40,
+    marginHorizontal: 20,
+    gap: 10,
+  },
+  emptyMemoriesText: {
+    fontSize: 14,
+    color: '#aaa',
+    textAlign: 'center',
+  },
+  miniPhotoImage: {
+    width: 20,
+    height: 20,
+    borderRadius: 4,
   },
 });

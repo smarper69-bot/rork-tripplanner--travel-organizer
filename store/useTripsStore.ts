@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { Trip } from '@/types/trip';
+import { Trip, StoredItineraryItem, StoredStay, StoredMemory } from '@/types/trip';
 
 const STORAGE_KEY = 'tripla_data_v1';
 
@@ -14,13 +14,34 @@ interface TripDraft {
   totalBudget?: number;
 }
 
+interface PersistedData {
+  trips: Trip[];
+  itineraryItems: StoredItineraryItem[];
+  stays: StoredStay[];
+  memories: StoredMemory[];
+}
+
 interface TripsState {
   trips: Trip[];
+  itineraryItems: StoredItineraryItem[];
+  stays: StoredStay[];
+  memories: StoredMemory[];
   isHydrated: boolean;
+
   hydrate: () => Promise<void>;
   createTrip: (draft: TripDraft) => string;
   updateTrip: (tripId: string, patch: Partial<Trip>) => void;
   deleteTrip: (tripId: string) => void;
+
+  addItineraryItem: (tripId: string, draft: Omit<StoredItineraryItem, 'id' | 'tripId'>) => void;
+  updateItineraryItem: (itemId: string, patch: Partial<StoredItineraryItem>) => void;
+  deleteItineraryItem: (itemId: string) => void;
+
+  addStay: (tripId: string, draft: Omit<StoredStay, 'id' | 'tripId'>) => void;
+  deleteStay: (stayId: string) => void;
+
+  addMemory: (tripId: string, draft: Omit<StoredMemory, 'id' | 'tripId' | 'createdAt'>) => void;
+  deleteMemory: (memoryId: string) => void;
 }
 
 const generateId = () => {
@@ -53,28 +74,50 @@ const computeStatus = (startDate?: string, endDate?: string): Trip['status'] => 
   return 'upcoming';
 };
 
-const persist = async (trips: Trip[]) => {
+const persist = async (state: PersistedData) => {
   try {
-    await AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(trips));
-    console.log('[TripsStore] Persisted', trips.length, 'trips');
+    await AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+    console.log('[TripsStore] Persisted', state.trips.length, 'trips,', state.itineraryItems.length, 'itinerary items,', state.stays.length, 'stays,', state.memories.length, 'memories');
   } catch (e) {
-    console.error('[TripsStore] Failed to persist trips:', e);
+    console.error('[TripsStore] Failed to persist:', e);
   }
 };
 
+const getPersistedData = (state: TripsState): PersistedData => ({
+  trips: state.trips,
+  itineraryItems: state.itineraryItems,
+  stays: state.stays,
+  memories: state.memories,
+});
+
 export const useTripsStore = create<TripsState>((set, get) => ({
   trips: [],
+  itineraryItems: [],
+  stays: [],
+  memories: [],
   isHydrated: false,
 
   hydrate: async () => {
     try {
       const raw = await AsyncStorage.getItem(STORAGE_KEY);
       if (raw) {
-        const parsed = JSON.parse(raw) as Trip[];
-        console.log('[TripsStore] Hydrated', parsed.length, 'trips');
-        set({ trips: parsed, isHydrated: true });
+        const parsed = JSON.parse(raw);
+        if (Array.isArray(parsed)) {
+          console.log('[TripsStore] Hydrated legacy format:', parsed.length, 'trips');
+          set({ trips: parsed as Trip[], itineraryItems: [], stays: [], memories: [], isHydrated: true });
+        } else {
+          const data = parsed as PersistedData;
+          console.log('[TripsStore] Hydrated', data.trips?.length ?? 0, 'trips,', data.itineraryItems?.length ?? 0, 'itinerary items,', data.stays?.length ?? 0, 'stays,', data.memories?.length ?? 0, 'memories');
+          set({
+            trips: data.trips ?? [],
+            itineraryItems: data.itineraryItems ?? [],
+            stays: data.stays ?? [],
+            memories: data.memories ?? [],
+            isHydrated: true,
+          });
+        }
       } else {
-        console.log('[TripsStore] No stored trips found');
+        console.log('[TripsStore] No stored data found');
         set({ isHydrated: true });
       }
     } catch (e) {
@@ -118,7 +161,7 @@ export const useTripsStore = create<TripsState>((set, get) => ({
 
     const updated = [newTrip, ...get().trips];
     set({ trips: updated });
-    persist(updated);
+    persist(getPersistedData({ ...get(), trips: updated }));
     console.log('[TripsStore] Created trip:', id, draft.title);
     return id;
   },
@@ -128,14 +171,85 @@ export const useTripsStore = create<TripsState>((set, get) => ({
       t.id === tripId ? { ...t, ...patch } : t
     );
     set({ trips: updated });
-    persist(updated);
+    persist(getPersistedData({ ...get(), trips: updated }));
     console.log('[TripsStore] Updated trip:', tripId);
   },
 
   deleteTrip: (tripId: string) => {
-    const updated = get().trips.filter((t) => t.id !== tripId);
-    set({ trips: updated });
-    persist(updated);
+    const state = get();
+    const trips = state.trips.filter((t) => t.id !== tripId);
+    const itineraryItems = state.itineraryItems.filter((i) => i.tripId !== tripId);
+    const stays = state.stays.filter((s) => s.tripId !== tripId);
+    const memories = state.memories.filter((m) => m.tripId !== tripId);
+    set({ trips, itineraryItems, stays, memories });
+    persist({ trips, itineraryItems, stays, memories });
     console.log('[TripsStore] Deleted trip:', tripId);
+  },
+
+  addItineraryItem: (tripId, draft) => {
+    const item: StoredItineraryItem = {
+      id: generateId(),
+      tripId,
+      ...draft,
+    };
+    const updated = [...get().itineraryItems, item];
+    set({ itineraryItems: updated });
+    persist(getPersistedData({ ...get(), itineraryItems: updated }));
+    console.log('[TripsStore] Added itinerary item:', item.id, 'to trip:', tripId);
+  },
+
+  updateItineraryItem: (itemId, patch) => {
+    const updated = get().itineraryItems.map((i) =>
+      i.id === itemId ? { ...i, ...patch } : i
+    );
+    set({ itineraryItems: updated });
+    persist(getPersistedData({ ...get(), itineraryItems: updated }));
+    console.log('[TripsStore] Updated itinerary item:', itemId);
+  },
+
+  deleteItineraryItem: (itemId) => {
+    const updated = get().itineraryItems.filter((i) => i.id !== itemId);
+    set({ itineraryItems: updated });
+    persist(getPersistedData({ ...get(), itineraryItems: updated }));
+    console.log('[TripsStore] Deleted itinerary item:', itemId);
+  },
+
+  addStay: (tripId, draft) => {
+    const stay: StoredStay = {
+      id: generateId(),
+      tripId,
+      ...draft,
+    };
+    const updated = [...get().stays, stay];
+    set({ stays: updated });
+    persist(getPersistedData({ ...get(), stays: updated }));
+    console.log('[TripsStore] Added stay:', stay.id, 'to trip:', tripId);
+  },
+
+  deleteStay: (stayId) => {
+    const updated = get().stays.filter((s) => s.id !== stayId);
+    set({ stays: updated });
+    persist(getPersistedData({ ...get(), stays: updated }));
+    console.log('[TripsStore] Deleted stay:', stayId);
+  },
+
+  addMemory: (tripId, draft) => {
+    const memory: StoredMemory = {
+      id: generateId(),
+      tripId,
+      ...draft,
+      createdAt: new Date().toISOString(),
+    };
+    const updated = [...get().memories, memory];
+    set({ memories: updated });
+    persist(getPersistedData({ ...get(), memories: updated }));
+    console.log('[TripsStore] Added memory:', memory.id, 'to trip:', tripId);
+  },
+
+  deleteMemory: (memoryId) => {
+    const updated = get().memories.filter((m) => m.id !== memoryId);
+    set({ memories: updated });
+    persist(getPersistedData({ ...get(), memories: updated }));
+    console.log('[TripsStore] Deleted memory:', memoryId);
   },
 }));

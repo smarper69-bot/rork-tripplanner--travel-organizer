@@ -203,3 +203,29 @@ export interface ProSubscription {
   plan?: 'monthly' | 'annual';
   expiresAt?: string;
 }
+
+export interface StoredItineraryItem {
+  id: string;
+  tripId: string;
+  date: string;
+  title: string;
+  time?: string;
+  notes?: string;
+}
+
+export interface StoredStay {
+  id: string;
+  tripId: string;
+  name: string;
+  address?: string;
+  checkIn: string;
+  checkOut: string;
+}
+
+export interface StoredMemory {
+  id: string;
+  tripId: string;
+  uri: string;
+  type: 'photo' | 'video';
+  createdAt: string;
+}
