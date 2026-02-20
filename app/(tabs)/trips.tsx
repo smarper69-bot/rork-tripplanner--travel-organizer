@@ -5,7 +5,7 @@ import { useRouter } from 'expo-router';
 import { Plus, Plane, Clock, CheckCircle } from 'lucide-react-native';
 import Colors from '@/constants/colors';
 import TripCard from '@/components/TripCard';
-import { mockTrips } from '@/mocks/trips';
+import { useTripsStore } from '@/store/useTripsStore';
 
 const tabs = [
   { id: 'upcoming', label: 'Upcoming', icon: Plane },
@@ -16,8 +16,9 @@ const tabs = [
 export default function TripsScreen() {
   const router = useRouter();
   const [activeTab, setActiveTab] = useState('upcoming');
+  const { trips, isHydrated } = useTripsStore();
 
-  const filteredTrips = mockTrips.filter((trip) => {
+  const filteredTrips = trips.filter((trip) => {
     if (activeTab === 'upcoming') return trip.status === 'upcoming' || trip.status === 'ongoing';
     if (activeTab === 'planning') return trip.status === 'planning';
     if (activeTab === 'completed') return trip.status === 'completed';
@@ -29,7 +30,7 @@ export default function TripsScreen() {
       <View style={styles.header}>
         <View>
           <Text style={styles.title}>My Trips</Text>
-          <Text style={styles.subtitle}>{mockTrips.length} trips total</Text>
+          <Text style={styles.subtitle}>{trips.length} trips total</Text>
         </View>
         <TouchableOpacity 
           style={styles.addButton}

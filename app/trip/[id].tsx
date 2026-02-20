@@ -15,7 +15,8 @@ import {
 } from 'lucide-react-native';
 import Colors from '@/constants/colors';
 import ActivityCard from '@/components/ActivityCard';
-import { mockTrips, mockStays } from '@/mocks/trips';
+import { mockStays } from '@/mocks/trips';
+import { useTripsStore } from '@/store/useTripsStore';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
@@ -37,7 +38,7 @@ export default function TripDetailScreen() {
   const scrollViewRef = useRef<ScrollView>(null);
   const tabScrollRef = useRef<ScrollView>(null);
 
-  const trip = mockTrips.find(t => t.id === id);
+  const trip = useTripsStore((s) => s.trips.find((t) => t.id === id));
   const tripStays = mockStays.filter(s => s.tripId === id);
 
   const getIconComponent = (iconName: TripIcon) => {

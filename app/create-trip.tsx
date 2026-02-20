@@ -4,6 +4,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter, useLocalSearchParams, Stack } from 'expo-router';
 import { MapPin, Calendar, Users, DollarSign, Camera, X } from 'lucide-react-native';
 import Colors from '@/constants/colors';
+import { useTripsStore } from '@/store/useTripsStore';
 
 const coverImages = [
   'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=800',
@@ -48,15 +49,37 @@ export default function CreateTripScreen() {
     }
   }, [params.prefillName, params.prefillDestination, params.prefillImage]);
 
+  const createTrip = useTripsStore((s) => s.createTrip);
   const isValid = tripName.trim() && destination.trim();
+
+  const parseDestination = (dest: string) => {
+    const parts = dest.split(',').map((s) => s.trim());
+    if (parts.length >= 2) {
+      return { city: parts[0], country: parts.slice(1).join(', ') };
+    }
+    return { city: dest.trim(), country: '' };
+  };
 
   const handleCreate = () => {
     if (!isValid) return;
     const coverImage = selectedCover === -1 && customCoverImage 
       ? customCoverImage 
       : coverImages[selectedCover];
-    console.log('Creating trip:', { tripName, destination, startDate, endDate, budget, coverImage });
-    router.back();
+    const { city, country } = parseDestination(destination);
+    const tripId = createTrip({
+      title: tripName.trim(),
+      destinationCity: city,
+      destinationCountry: country,
+      startDate: startDate || undefined,
+      endDate: endDate || undefined,
+      coverImage: coverImage || undefined,
+      totalBudget: budget ? parseFloat(budget) : undefined,
+    });
+    console.log('[CreateTrip] Created trip:', tripId);
+    router.dismiss();
+    setTimeout(() => {
+      router.push(`/trip/${tripId}`);
+    }, 100);
   };
 
   useEffect(() => {

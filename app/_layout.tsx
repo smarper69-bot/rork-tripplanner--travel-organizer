@@ -4,6 +4,7 @@ import * as SplashScreen from "expo-splash-screen";
 import React, { useEffect } from "react";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import Colors from "@/constants/colors";
+import { useTripsStore } from "@/store/useTripsStore";
 
 SplashScreen.preventAutoHideAsync();
 
@@ -62,8 +63,12 @@ function RootLayoutNav() {
 }
 
 export default function RootLayout() {
+  const hydrate = useTripsStore((s) => s.hydrate);
+
   useEffect(() => {
-    SplashScreen.hideAsync();
+    hydrate().then(() => {
+      SplashScreen.hideAsync();
+    });
   }, []);
 
   return (
