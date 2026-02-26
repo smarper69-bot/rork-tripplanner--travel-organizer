@@ -38,10 +38,10 @@ export default function TripDetailScreen() {
   const scrollViewRef = useRef<ScrollView>(null);
   const tabScrollRef = useRef<ScrollView>(null);
 
-  const trip = useTripsStore((s) => s.trips.find((t) => t.id === id));
-  const itineraryItems = useTripsStore((s) => s.itineraryItems.filter((i) => i.tripId === id));
-  const tripStays = useTripsStore((s) => s.stays.filter((s) => s.tripId === id));
-  const tripMemories = useTripsStore((s) => s.memories.filter((m) => m.tripId === id));
+  const trips = useTripsStore((s) => s.trips);
+  const allItineraryItems = useTripsStore((s) => s.itineraryItems);
+  const allStays = useTripsStore((s) => s.stays);
+  const allMemories = useTripsStore((s) => s.memories);
   const updateTrip = useTripsStore((s) => s.updateTrip);
   const addItineraryItem = useTripsStore((s) => s.addItineraryItem);
   const deleteItineraryItem = useTripsStore((s) => s.deleteItineraryItem);
@@ -49,6 +49,11 @@ export default function TripDetailScreen() {
   const deleteStay = useTripsStore((s) => s.deleteStay);
   const addMemory = useTripsStore((s) => s.addMemory);
   const deleteMemory = useTripsStore((s) => s.deleteMemory);
+
+  const trip = useMemo(() => trips.find((t) => t.id === id), [trips, id]);
+  const itineraryItems = useMemo(() => allItineraryItems.filter((i) => i.tripId === id), [allItineraryItems, id]);
+  const tripStays = useMemo(() => allStays.filter((s) => s.tripId === id), [allStays, id]);
+  const tripMemories = useMemo(() => allMemories.filter((m) => m.tripId === id), [allMemories, id]);
 
   const [showItineraryForm, setShowItineraryForm] = useState(false);
   const [itineraryTitle, setItineraryTitle] = useState('');
