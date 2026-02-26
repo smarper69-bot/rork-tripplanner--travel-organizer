@@ -11,13 +11,14 @@ import {
   Users, ChevronRight, Plus, Clock, DollarSign,
   Hotel, Image as ImageIcon, Camera, Utensils, Car, ShoppingBag,
   Flower2, Church, Palmtree, Mountain, Sun, Landmark, Trees, Snowflake, Tent,
-  Check, X, Trash2, FileText
+  Check, X, Trash2, FileText, ExternalLink, Plane
 } from 'lucide-react-native';
 import * as ImagePicker from 'expo-image-picker';
 import Colors from '@/constants/colors';
 import ActivityCard from '@/components/ActivityCard';
 import CalendarPicker from '@/components/CalendarPicker';
 import { useTripsStore } from '@/store/useTripsStore';
+import { openHotelSearch, openFlightSearch } from '@/utils/bookingLinks';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
@@ -287,6 +288,39 @@ export default function TripDetailScreen() {
         </View>
       )}
 
+      <View style={styles.bookingCtaSection}>
+        <Text style={styles.overviewCardTitle}>Book for this trip</Text>
+        <TouchableOpacity
+          style={styles.bookingCtaRow}
+          activeOpacity={0.7}
+          onPress={() => openHotelSearch({ city: trip.destination, country: trip.country, checkIn: trip.startDate, checkOut: trip.endDate })}
+        >
+          <View style={[styles.quickActionIcon, { backgroundColor: '#FEF3C7' }]}>
+            <Hotel size={20} color="#D97706" />
+          </View>
+          <View style={{ flex: 1 }}>
+            <Text style={styles.bookingCtaTitle}>Find Hotels</Text>
+            <Text style={styles.bookingCtaSub}>{trip.destination}</Text>
+          </View>
+          <ExternalLink size={16} color={Colors.textMuted} />
+        </TouchableOpacity>
+        <TouchableOpacity
+          style={styles.bookingCtaRow}
+          activeOpacity={0.7}
+          onPress={() => openFlightSearch({ city: trip.destination, country: trip.country, departDate: trip.startDate, returnDate: trip.endDate })}
+        >
+          <View style={[styles.quickActionIcon, { backgroundColor: '#EEF2FF' }]}>
+            <Plane size={20} color="#6366F1" />
+          </View>
+          <View style={{ flex: 1 }}>
+            <Text style={styles.bookingCtaTitle}>Find Flights</Text>
+            <Text style={styles.bookingCtaSub}>{trip.destination}</Text>
+          </View>
+          <ExternalLink size={16} color={Colors.textMuted} />
+        </TouchableOpacity>
+        <Text style={styles.bookingDisclaimer}>Opens partner site. We may earn a commission.</Text>
+      </View>
+
       <Text style={styles.sectionTitle}>Quick Actions</Text>
       <View style={styles.quickActionsGrid}>
         <TouchableOpacity 
@@ -446,6 +480,21 @@ export default function TripDetailScreen() {
 
   const renderStays = () => (
     <View style={styles.tabContentInner}>
+      <TouchableOpacity
+        style={styles.bookingCtaRow}
+        activeOpacity={0.7}
+        onPress={() => openHotelSearch({ city: trip.destination, country: trip.country, checkIn: trip.startDate, checkOut: trip.endDate })}
+      >
+        <View style={[styles.quickActionIcon, { backgroundColor: '#FEF3C7' }]}>
+          <Hotel size={18} color="#D97706" />
+        </View>
+        <View style={{ flex: 1 }}>
+          <Text style={styles.bookingCtaTitle}>Search Hotels</Text>
+          <Text style={styles.bookingCtaSub}>Find stays in {trip.destination}</Text>
+        </View>
+        <ExternalLink size={16} color={Colors.textMuted} />
+      </TouchableOpacity>
+
       {tripStays.length > 0 ? (
         <>
           {tripStays.map((stay) => (
@@ -1420,5 +1469,35 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: '600' as const,
     color: Colors.textLight,
+  },
+  bookingCtaSection: {
+    backgroundColor: Colors.surface,
+    borderRadius: 16,
+    padding: 16,
+    marginBottom: 16,
+  },
+  bookingCtaRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+    paddingVertical: 12,
+    borderBottomWidth: 1,
+    borderBottomColor: Colors.borderLight,
+  },
+  bookingCtaTitle: {
+    fontSize: 14,
+    fontWeight: '600' as const,
+    color: Colors.text,
+  },
+  bookingCtaSub: {
+    fontSize: 12,
+    color: Colors.textSecondary,
+    marginTop: 1,
+  },
+  bookingDisclaimer: {
+    fontSize: 11,
+    color: Colors.textMuted,
+    textAlign: 'center',
+    marginTop: 8,
   },
 });

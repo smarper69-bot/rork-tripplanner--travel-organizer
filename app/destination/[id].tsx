@@ -4,8 +4,9 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { useLocalSearchParams, useRouter, Stack } from 'expo-router';
 import { 
   ArrowLeft, DollarSign, Star, Calendar, MapPin,
-  Hotel, Ticket, ChevronRight, Plane
+  Hotel, Ticket, ChevronRight, Plane, ExternalLink
 } from 'lucide-react-native';
+import { openHotelSearch, openFlightSearch } from '@/utils/bookingLinks';
 import Colors from '@/constants/colors';
 import { destinations, getDestinationWithDefaults } from '@/mocks/destinations';
 
@@ -158,6 +159,43 @@ export default function DestinationOverviewScreen() {
                   </TouchableOpacity>
                 ))}
               </View>
+            </View>
+
+            <View style={styles.bookingSection}>
+              <Text style={styles.sectionTitle}>Book Your Trip</Text>
+              <TouchableOpacity
+                style={styles.bookingCta}
+                activeOpacity={0.7}
+                onPress={() => openHotelSearch({ city: destination.city, country: destination.country })}
+              >
+                <View style={styles.bookingCtaLeft}>
+                  <View style={[styles.bookingCtaIcon, { backgroundColor: '#FEF3C7' }]}>
+                    <Hotel size={20} color="#D97706" />
+                  </View>
+                  <View>
+                    <Text style={styles.bookingCtaTitle}>Find Hotels</Text>
+                    <Text style={styles.bookingCtaSubtitle}>Search accommodations in {destination.city}</Text>
+                  </View>
+                </View>
+                <ExternalLink size={18} color={Colors.textMuted} />
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={styles.bookingCta}
+                activeOpacity={0.7}
+                onPress={() => openFlightSearch({ city: destination.city, country: destination.country })}
+              >
+                <View style={styles.bookingCtaLeft}>
+                  <View style={[styles.bookingCtaIcon, { backgroundColor: '#EEF2FF' }]}>
+                    <Plane size={20} color="#6366F1" />
+                  </View>
+                  <View>
+                    <Text style={styles.bookingCtaTitle}>Find Flights</Text>
+                    <Text style={styles.bookingCtaSubtitle}>Search flights to {destination.city}</Text>
+                  </View>
+                </View>
+                <ExternalLink size={18} color={Colors.textMuted} />
+              </TouchableOpacity>
+              <Text style={styles.bookingDisclaimer}>Opens partner site. We may earn a commission.</Text>
             </View>
 
             <View style={styles.highlightsSection}>
@@ -449,6 +487,49 @@ const styles = StyleSheet.create({
   highlightText: {
     fontSize: 15,
     color: Colors.text,
+  },
+  bookingSection: {
+    marginBottom: 24,
+  },
+  bookingCta: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    backgroundColor: Colors.surface,
+    padding: 14,
+    borderRadius: 14,
+    borderWidth: 1,
+    borderColor: Colors.border,
+    marginBottom: 10,
+  },
+  bookingCtaLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+    flex: 1,
+  },
+  bookingCtaIcon: {
+    width: 44,
+    height: 44,
+    borderRadius: 12,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  bookingCtaTitle: {
+    fontSize: 15,
+    fontWeight: '600' as const,
+    color: Colors.text,
+    marginBottom: 2,
+  },
+  bookingCtaSubtitle: {
+    fontSize: 12,
+    color: Colors.textSecondary,
+  },
+  bookingDisclaimer: {
+    fontSize: 11,
+    color: Colors.textMuted,
+    textAlign: 'center',
+    marginTop: 4,
   },
   footer: {
     position: 'absolute',
