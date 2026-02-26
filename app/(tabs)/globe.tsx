@@ -247,12 +247,12 @@ export default function GlobeScreen() {
   const trips = useTripsStore((s) => s.trips);
   const storedMemories = useTripsStore((s) => s.memories);
 
-  const completedTrips = useMemo(() => trips.filter((t) => t.status === 'completed'), [trips]);
+  const allTrips = trips;
 
   const countryGroups = useMemo(() => {
     const map = new Map<string, CountryGroup>();
-    for (const trip of completedTrips) {
-      const country = trip.country;
+    for (const trip of allTrips) {
+      const country = trip.country || trip.destination;
       if (!country) continue;
       const nights = calculateNights(trip.startDate, trip.endDate);
       const existing = map.get(country);
@@ -272,7 +272,7 @@ export default function GlobeScreen() {
       }
     }
     return Array.from(map.values()).sort((a, b) => a.country.localeCompare(b.country));
-  }, [completedTrips]);
+  }, [allTrips]);
 
   const visitedCountries = useMemo(
     () => countryGroups.map((g) => g.country),
@@ -292,11 +292,14 @@ export default function GlobeScreen() {
   }, [countryGroups]);
 
   const totalNightsTraveled = useMemo(
-    () => completedTrips.reduce((sum, t) => sum + calculateNights(t.startDate, t.endDate), 0),
-    [completedTrips],
+    () => allTrips.reduce((sum, t) => {
+      if (!t.startDate || !t.endDate) return sum;
+      return sum + calculateNights(t.startDate, t.endDate);
+    }, 0),
+    [allTrips],
   );
 
-  const worldPercent = Math.round((visitedCountries.length / TOTAL_COUNTRIES_WORLD) * 100);
+  const worldPercent = Math.floor((visitedCountries.length / TOTAL_COUNTRIES_WORLD) * 100);
 
   const expandAndScrollToCountry = useCallback((countryName: string) => {
     setExpandedCountry(countryName);
@@ -426,7 +429,7 @@ export default function GlobeScreen() {
               <Text style={styles.statLabel}>Countries</Text>
             </View>
             <View style={styles.statCard}>
-              <Text style={styles.statValue}>{completedTrips.length}</Text>
+              <Text style={styles.statValue}>{allTrips.length}</Text>
               <Text style={styles.statLabel}>Trips</Text>
             </View>
             <View style={styles.statCard}>

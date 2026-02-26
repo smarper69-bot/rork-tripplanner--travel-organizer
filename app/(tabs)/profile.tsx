@@ -65,14 +65,12 @@ export default function ProfileScreen() {
   const [isPro] = React.useState(false);
 
   const trips = useTripsStore((s) => s.trips);
-  const completedTrips = trips.filter(t => t.status === 'completed').length;
-  const countriesVisited = new Set(trips.filter(t => t.status === 'completed').map(t => t.country)).size;
-  const totalNights = trips
-    .filter(t => t.status === 'completed')
-    .reduce((sum, t) => {
-      const diff = Math.ceil((new Date(t.endDate).getTime() - new Date(t.startDate).getTime()) / (1000 * 60 * 60 * 24));
-      return sum + Math.max(diff, 0);
-    }, 0);
+  const countriesVisited = new Set(trips.map(t => t.country || t.destination).filter(Boolean)).size;
+  const totalNights = trips.reduce((sum, t) => {
+    if (!t.startDate || !t.endDate) return sum;
+    const diff = Math.ceil((new Date(t.endDate).getTime() - new Date(t.startDate).getTime()) / (1000 * 60 * 60 * 24));
+    return sum + Math.max(diff, 0);
+  }, 0);
 
   return (
     <SafeAreaView style={styles.container} edges={['top']}>
