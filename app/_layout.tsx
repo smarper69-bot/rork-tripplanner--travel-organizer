@@ -58,6 +58,12 @@ function RootLayoutNav() {
           headerShown: false,
         }} 
       />
+      <Stack.Screen 
+        name="hotels/[city]" 
+        options={{ 
+          headerShown: false,
+        }} 
+      />
     </Stack>
   );
 }

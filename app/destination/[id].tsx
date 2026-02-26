@@ -110,14 +110,14 @@ export default function DestinationOverviewScreen() {
             <View style={styles.section}>
               <View style={styles.sectionHeader}>
                 <Text style={styles.sectionTitle}>Hotels</Text>
-                <TouchableOpacity style={styles.seeAllButton}>
+                <TouchableOpacity style={styles.seeAllButton} onPress={() => router.push(`/hotels/${destination.city}` as any)}>
                   <Text style={styles.seeAllText}>See all</Text>
                   <ChevronRight size={16} color={Colors.textSecondary} />
                 </TouchableOpacity>
               </View>
               <View style={styles.hotelsList}>
                 {destination.hotels.map((hotel, index) => (
-                  <TouchableOpacity key={index} style={styles.hotelCard}>
+                  <TouchableOpacity key={index} style={styles.hotelCard} onPress={() => router.push(`/hotels/${destination.city}` as any)}>
                     <View style={styles.hotelIcon}>
                       <Hotel size={18} color={Colors.primary} />
                     </View>
