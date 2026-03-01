@@ -4,7 +4,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { useLocalSearchParams, useRouter, Stack } from 'expo-router';
 import { 
   ArrowLeft, DollarSign, Star, Calendar, MapPin,
-  Hotel, Ticket, ChevronRight, Plane, ExternalLink
+  Hotel, Ticket, ChevronRight, Plane, ExternalLink, ArrowRight
 } from 'lucide-react-native';
 import { openHotelSearch, openFlightSearch } from '@/utils/bookingLinks';
 import Colors from '@/constants/colors';
@@ -108,33 +108,16 @@ export default function DestinationOverviewScreen() {
             </View>
 
             <View style={styles.section}>
-              <View style={styles.sectionHeader}>
-                <Text style={styles.sectionTitle}>Hotels</Text>
-                <TouchableOpacity style={styles.seeAllButton} onPress={() => router.push(`/hotels/${destination.city}` as any)}>
-                  <Text style={styles.seeAllText}>See all</Text>
-                  <ChevronRight size={16} color={Colors.textSecondary} />
-                </TouchableOpacity>
-              </View>
-              <View style={styles.hotelsList}>
-                {destination.hotels.map((hotel, index) => (
-                  <TouchableOpacity key={index} style={styles.hotelCard} onPress={() => router.push(`/hotels/${destination.city}` as any)}>
-                    <View style={styles.hotelIcon}>
-                      <Hotel size={18} color={Colors.primary} />
-                    </View>
-                    <View style={styles.hotelInfo}>
-                      <Text style={styles.hotelName}>{hotel.name}</Text>
-                      <View style={styles.hotelMeta}>
-                        <Text style={styles.hotelPrice}>{hotel.priceRange}</Text>
-                        <View style={styles.hotelRating}>
-                          <Star size={12} color="#FFD700" fill="#FFD700" />
-                          <Text style={styles.hotelRatingText}>{hotel.rating}</Text>
-                        </View>
-                      </View>
-                    </View>
-                    <ChevronRight size={18} color={Colors.textMuted} />
-                  </TouchableOpacity>
-                ))}
-              </View>
+              <Text style={styles.sectionTitle}>Hotels</Text>
+              <TouchableOpacity
+                style={styles.hotelsCta}
+                activeOpacity={0.8}
+                onPress={() => router.push(`/hotels/${destination.city}` as any)}
+              >
+                <Text style={styles.hotelsCtaText}>Take me to hotels</Text>
+                <ArrowRight size={20} color="#fff" />
+              </TouchableOpacity>
+              <Text style={styles.hotelsCtaCaption}>We may earn a commission on bookings.</Text>
             </View>
 
             <View style={styles.section}>
@@ -386,53 +369,25 @@ const styles = StyleSheet.create({
     lineHeight: 24,
     color: Colors.textSecondary,
   },
-  hotelsList: {
+  hotelsCta: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: '#111',
+    height: 60,
+    borderRadius: 18,
     gap: 10,
   },
-  hotelCard: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: Colors.surface,
-    padding: 14,
-    borderRadius: 14,
-    borderWidth: 1,
-    borderColor: Colors.border,
+  hotelsCtaText: {
+    fontSize: 17,
+    fontWeight: '700' as const,
+    color: '#fff',
   },
-  hotelIcon: {
-    width: 40,
-    height: 40,
-    borderRadius: 12,
-    backgroundColor: Colors.primary + '12',
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginRight: 12,
-  },
-  hotelInfo: {
-    flex: 1,
-  },
-  hotelName: {
-    fontSize: 15,
-    fontWeight: '600' as const,
-    color: Colors.text,
-    marginBottom: 4,
-  },
-  hotelMeta: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 12,
-  },
-  hotelPrice: {
-    fontSize: 13,
-    color: Colors.textSecondary,
-  },
-  hotelRating: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 4,
-  },
-  hotelRatingText: {
-    fontSize: 13,
-    color: Colors.textSecondary,
+  hotelsCtaCaption: {
+    fontSize: 11,
+    color: Colors.textMuted,
+    textAlign: 'center',
+    marginTop: 10,
   },
   activitiesList: {
     gap: 10,
