@@ -10,6 +10,7 @@ import {
   MessageCircle, Crown, Edit3, Eye, MoreVertical
 } from 'lucide-react-native';
 import Colors from '@/constants/colors';
+import { openComingSoon } from '@/utils/comingSoon';
 import { mockTrips, mockComments } from '@/mocks/trips';
 import { Collaborator, GroupComment } from '@/types/trip';
 
@@ -72,7 +73,7 @@ export default function CollaborationScreen() {
     <View style={styles.tabContent}>
       <View style={styles.membersHeader}>
         <Text style={styles.membersCount}>{trip.collaborators.length} members</Text>
-        <TouchableOpacity style={styles.inviteButton}>
+        <TouchableOpacity style={styles.inviteButton} onPress={() => openComingSoon('Invite collaborators')}>
           <UserPlus size={18} color={Colors.textLight} />
           <Text style={styles.inviteButtonText}>Invite</Text>
         </TouchableOpacity>
@@ -89,7 +90,7 @@ export default function CollaborationScreen() {
             </View>
           </View>
           {member.role !== 'owner' && (
-            <TouchableOpacity style={styles.memberOptions}>
+            <TouchableOpacity style={styles.memberOptions} onPress={() => openComingSoon('Member settings')}>
               <MoreVertical size={20} color={Colors.textMuted} />
             </TouchableOpacity>
           )}

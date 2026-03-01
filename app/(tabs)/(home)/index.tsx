@@ -8,6 +8,7 @@ import {
 } from 'lucide-react-native';
 import { DestinationIcon } from '@/types/trip';
 import Colors from '@/constants/colors';
+import { openComingSoon } from '@/utils/comingSoon';
 import TripCard from '@/components/TripCard';
 import { mockTrips, mockAlerts, mockDestinations } from '@/mocks/trips';
 
@@ -72,7 +73,7 @@ export default function HomeScreen() {
           </View>
           <TouchableOpacity 
             style={styles.notificationButton}
-            onPress={() => console.log('Notifications')}
+            onPress={() => openComingSoon('Notifications')}
           >
             <Bell size={24} color={Colors.text} />
             {unreadAlerts > 0 && (

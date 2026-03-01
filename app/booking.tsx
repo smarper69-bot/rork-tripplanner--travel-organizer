@@ -7,6 +7,7 @@ import {
   Star, MapPin, Heart, Calendar, Users 
 } from 'lucide-react-native';
 import Colors from '@/constants/colors';
+import { openComingSoon } from '@/utils/comingSoon';
 import { mockBookings } from '@/mocks/trips';
 import { Booking } from '@/types/trip';
 import CalendarPicker from '@/components/CalendarPicker';
@@ -51,7 +52,7 @@ export default function BookingScreen() {
   };
 
   const renderBookingCard = (booking: Booking) => (
-    <TouchableOpacity key={booking.id} style={styles.bookingCard} activeOpacity={0.9}>
+    <TouchableOpacity key={booking.id} style={styles.bookingCard} activeOpacity={0.9} onPress={() => openComingSoon('Booking details')}>
       <View style={styles.imageContainer}>
         <Image source={{ uri: booking.image }} style={styles.bookingImage} />
         <TouchableOpacity 
@@ -111,7 +112,7 @@ export default function BookingScreen() {
               {booking.type === 'hotel' && <Text style={styles.priceUnit}>/night</Text>}
             </Text>
           </View>
-          <TouchableOpacity style={styles.bookButton}>
+          <TouchableOpacity style={styles.bookButton} onPress={() => openComingSoon('Online booking')}>
             <Text style={styles.bookButtonText}>
               {booking.type === 'hotel' ? 'View Rooms' : 'Book Now'}
             </Text>
@@ -146,7 +147,7 @@ export default function BookingScreen() {
               onChangeText={setSearchQuery}
             />
           </View>
-          <TouchableOpacity style={styles.filterButton}>
+          <TouchableOpacity style={styles.filterButton} onPress={() => openComingSoon('Booking filters')}>
             <SlidersHorizontal size={20} color={Colors.primary} />
           </TouchableOpacity>
         </View>
@@ -156,7 +157,7 @@ export default function BookingScreen() {
             <Calendar size={18} color={Colors.primary} />
             <Text style={styles.dateText}>{dateRangeLabel}</Text>
           </TouchableOpacity>
-          <TouchableOpacity style={styles.guestButton}>
+          <TouchableOpacity style={styles.guestButton} onPress={() => openComingSoon('Guest selection')}>
             <Users size={18} color={Colors.primary} />
             <Text style={styles.guestText}>2 guests</Text>
           </TouchableOpacity>

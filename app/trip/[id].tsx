@@ -19,6 +19,7 @@ import ActivityCard from '@/components/ActivityCard';
 import CalendarPicker from '@/components/CalendarPicker';
 import { useTripsStore } from '@/store/useTripsStore';
 import { openHotelSearch, openFlightSearch } from '@/utils/bookingLinks';
+import { openComingSoon } from '@/utils/comingSoon';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
@@ -622,10 +623,10 @@ export default function TripDetailScreen() {
                   <ArrowLeft size={24} color={Colors.text} />
                 </TouchableOpacity>
                 <View style={styles.heroActions}>
-                  <TouchableOpacity style={styles.actionButton}>
+                  <TouchableOpacity style={styles.actionButton} onPress={() => openComingSoon('Trip editing')}>
                     <Edit3 size={18} color={Colors.text} />
                   </TouchableOpacity>
-                  <TouchableOpacity style={styles.actionButton}>
+                  <TouchableOpacity style={styles.actionButton} onPress={() => openComingSoon('Trip sharing')}>
                     <Share2 size={18} color={Colors.text} />
                   </TouchableOpacity>
                 </View>

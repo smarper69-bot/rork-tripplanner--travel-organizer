@@ -8,6 +8,7 @@ import {
 } from 'lucide-react-native';
 import { openHotelSearch, openFlightSearch } from '@/utils/bookingLinks';
 import Colors from '@/constants/colors';
+import { openComingSoon } from '@/utils/comingSoon';
 import { destinations, getDestinationWithDefaults } from '@/mocks/destinations';
 
 export default function DestinationOverviewScreen() {
@@ -123,14 +124,14 @@ export default function DestinationOverviewScreen() {
             <View style={styles.section}>
               <View style={styles.sectionHeader}>
                 <Text style={styles.sectionTitle}>Things to Do</Text>
-                <TouchableOpacity style={styles.seeAllButton}>
+                <TouchableOpacity style={styles.seeAllButton} onPress={() => openComingSoon('All activities')}>
                   <Text style={styles.seeAllText}>See all</Text>
                   <ChevronRight size={16} color={Colors.textSecondary} />
                 </TouchableOpacity>
               </View>
               <View style={styles.activitiesList}>
                 {destination.activities.map((activity, index) => (
-                  <TouchableOpacity key={index} style={styles.activityCard}>
+                  <TouchableOpacity key={index} style={styles.activityCard} onPress={() => openComingSoon('Activity details')}>
                     <View style={styles.activityIcon}>
                       <Ticket size={18} color={Colors.primary} />
                     </View>

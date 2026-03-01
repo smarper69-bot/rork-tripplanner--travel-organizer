@@ -4,6 +4,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { Search, SlidersHorizontal, TrendingUp, MapPin, Sun, Mountain, Utensils, Compass, ChevronRight, DollarSign, Calendar, Heart, Plane, Star } from 'lucide-react-native';
 import Colors from '@/constants/colors';
+import { openComingSoon } from '@/utils/comingSoon';
 import { destinations, DiscoverDestination, TripType } from '@/mocks/destinations';
 import { mockTrips } from '@/mocks/trips';
 
@@ -239,7 +240,7 @@ export default function DiscoverScreen() {
               value={searchQuery}
               onChangeText={setSearchQuery}
             />
-            <TouchableOpacity style={styles.filterIcon}>
+            <TouchableOpacity style={styles.filterIcon} onPress={() => openComingSoon('Filters')}>
               <SlidersHorizontal size={18} color={Colors.text} />
             </TouchableOpacity>
           </View>
@@ -286,7 +287,7 @@ export default function DiscoverScreen() {
                   <TrendingUp size={18} color={Colors.primary} />
                   <Text style={styles.sectionTitle}>Trending Now</Text>
                 </View>
-                <TouchableOpacity style={styles.seeAllButton}>
+                <TouchableOpacity style={styles.seeAllButton} onPress={() => { setSelectedCategory('trending'); }}>
                   <Text style={styles.seeAllText}>See all</Text>
                   <ChevronRight size={16} color={Colors.textSecondary} />
                 </TouchableOpacity>
@@ -312,7 +313,7 @@ export default function DiscoverScreen() {
                   <DollarSign size={18} color="#27AE60" />
                   <Text style={styles.sectionTitle}>Budget-Friendly</Text>
                 </View>
-                <TouchableOpacity style={styles.seeAllButton}>
+                <TouchableOpacity style={styles.seeAllButton} onPress={() => openComingSoon('Budget-friendly destinations')}>
                   <Text style={styles.seeAllText}>See all</Text>
                   <ChevronRight size={16} color={Colors.textSecondary} />
                 </TouchableOpacity>
@@ -361,7 +362,7 @@ export default function DiscoverScreen() {
                   <Calendar size={18} color="#E67E22" />
                   <Text style={styles.sectionTitle}>Best in {currentMonthName}</Text>
                 </View>
-                <TouchableOpacity style={styles.seeAllButton}>
+                <TouchableOpacity style={styles.seeAllButton} onPress={() => openComingSoon('Seasonal destinations')}>
                   <Text style={styles.seeAllText}>See all</Text>
                   <ChevronRight size={16} color={Colors.textSecondary} />
                 </TouchableOpacity>
@@ -387,7 +388,7 @@ export default function DiscoverScreen() {
                   <Heart size={18} color="#E74C3C" />
                   <Text style={styles.sectionTitle}>Recommended for You</Text>
                 </View>
-                <TouchableOpacity style={styles.seeAllButton}>
+                <TouchableOpacity style={styles.seeAllButton} onPress={() => openComingSoon('Personalized recommendations')}>
                   <Text style={styles.seeAllText}>See all</Text>
                   <ChevronRight size={16} color={Colors.textSecondary} />
                 </TouchableOpacity>
@@ -410,7 +411,7 @@ export default function DiscoverScreen() {
                   <Plane size={18} color="#3498DB" />
                   <Text style={styles.sectionTitle}>Weekend Getaways</Text>
                 </View>
-                <TouchableOpacity style={styles.seeAllButton}>
+                <TouchableOpacity style={styles.seeAllButton} onPress={() => openComingSoon('Weekend getaways')}>
                   <Text style={styles.seeAllText}>See all</Text>
                   <ChevronRight size={16} color={Colors.textSecondary} />
                 </TouchableOpacity>

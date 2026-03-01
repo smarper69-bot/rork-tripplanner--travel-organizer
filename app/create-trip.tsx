@@ -4,6 +4,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter, useLocalSearchParams, Stack } from 'expo-router';
 import { MapPin, Calendar, Users, DollarSign, Camera, X } from 'lucide-react-native';
 import Colors from '@/constants/colors';
+import { openComingSoon } from '@/utils/comingSoon';
 import { useTripsStore } from '@/store/useTripsStore';
 import CalendarPicker from '@/components/CalendarPicker';
 
@@ -229,7 +230,7 @@ export default function CreateTripScreen() {
 
           <View style={styles.inputGroup}>
             <Text style={styles.label}>Invite Travelers</Text>
-            <TouchableOpacity style={styles.inputContainer}>
+            <TouchableOpacity style={styles.inputContainer} onPress={() => openComingSoon('Invite collaborators')}>
               <Users size={20} color={Colors.textMuted} />
               <Text style={[styles.inputText, styles.placeholder]}>
                 Add collaborators

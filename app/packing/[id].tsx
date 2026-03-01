@@ -4,6 +4,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { useLocalSearchParams, useRouter, Stack } from 'expo-router';
 import { ArrowLeft, Plus, Sparkles, Check } from 'lucide-react-native';
 import Colors from '@/constants/colors';
+import { openComingSoon } from '@/utils/comingSoon';
 import PackingItem from '@/components/PackingItem';
 import { mockTrips } from '@/mocks/trips';
 import { PackingItem as PackingItemType, PackingCategory } from '@/types/trip';
@@ -80,7 +81,7 @@ export default function PackingScreen() {
             <Text style={styles.headerTitle}>Packing List</Text>
             <Text style={styles.headerSubtitle}>{trip.name}</Text>
           </View>
-          <TouchableOpacity style={styles.aiButton}>
+          <TouchableOpacity style={styles.aiButton} onPress={() => openComingSoon('AI packing suggestions')}>
             <Sparkles size={20} color={Colors.secondary} />
           </TouchableOpacity>
         </View>
@@ -121,7 +122,7 @@ export default function PackingScreen() {
             <View style={styles.emptyState}>
               <Text style={styles.emptyTitle}>No items yet</Text>
               <Text style={styles.emptyText}>Add items to your packing list</Text>
-              <TouchableOpacity style={styles.suggestButton}>
+              <TouchableOpacity style={styles.suggestButton} onPress={() => openComingSoon('AI packing suggestions')}>
                 <Sparkles size={16} color={Colors.textLight} />
                 <Text style={styles.suggestText}>Get AI Suggestions</Text>
               </TouchableOpacity>

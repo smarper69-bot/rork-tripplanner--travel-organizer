@@ -4,6 +4,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { useLocalSearchParams, useRouter, Stack } from 'expo-router';
 import { ArrowLeft, Plus, TrendingUp, TrendingDown } from 'lucide-react-native';
 import Colors from '@/constants/colors';
+import { openComingSoon } from '@/utils/comingSoon';
 import BudgetChart from '@/components/BudgetChart';
 import { mockTrips } from '@/mocks/trips';
 import { ActivityCategory } from '@/types/trip';
@@ -58,7 +59,7 @@ export default function BudgetScreen() {
             <Text style={styles.headerTitle}>Budget</Text>
             <Text style={styles.headerSubtitle}>{trip.name}</Text>
           </View>
-          <TouchableOpacity style={styles.addButton}>
+          <TouchableOpacity style={styles.addButton} onPress={() => openComingSoon('Add expense category')}>
             <Plus size={24} color={Colors.primary} />
           </TouchableOpacity>
         </View>
@@ -74,7 +75,7 @@ export default function BudgetScreen() {
           <View style={styles.section}>
             <View style={styles.sectionHeader}>
               <Text style={styles.sectionTitle}>Recent Expenses</Text>
-              <TouchableOpacity>
+              <TouchableOpacity onPress={() => openComingSoon('All expenses')}>
                 <Text style={styles.seeAll}>See all</Text>
               </TouchableOpacity>
             </View>
@@ -115,7 +116,7 @@ export default function BudgetScreen() {
         </ScrollView>
 
         <View style={styles.footer}>
-          <TouchableOpacity style={styles.addExpenseButton}>
+          <TouchableOpacity style={styles.addExpenseButton} onPress={() => openComingSoon('Add expense')}>
             <Plus size={20} color={Colors.textLight} />
             <Text style={styles.addExpenseText}>Add Expense</Text>
           </TouchableOpacity>

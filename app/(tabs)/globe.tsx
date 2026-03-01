@@ -24,6 +24,7 @@ import {
   Image,
 } from 'lucide-react-native';
 import { Image as RNImage } from 'react-native';
+import { openComingSoon } from '@/utils/comingSoon';
 import { useTripsStore } from '@/store/useTripsStore';
 import {
   COUNTRY_PATHS,
@@ -137,7 +138,7 @@ function TripMemoryModal({
           </View>
 
           <View style={styles.modalActions}>
-            <TouchableOpacity style={styles.addMediaBtn} activeOpacity={0.8}>
+            <TouchableOpacity style={styles.addMediaBtn} activeOpacity={0.8} onPress={() => openComingSoon('Adding photos from Globe')}>
               <ImagePlus size={18} color="#fff" />
               <Text style={styles.addMediaText}>Add photos/videos</Text>
             </TouchableOpacity>

@@ -7,6 +7,7 @@ import {
   Sparkles, Briefcase, Users, BarChart3, Check
 } from 'lucide-react-native';
 import Colors from '@/constants/colors';
+import { openComingSoon } from '@/utils/comingSoon';
 import { useTripsStore } from '@/store/useTripsStore';
 
 interface SettingsItemProps {
@@ -88,7 +89,7 @@ export default function ProfileScreen() {
             <Text style={styles.profileName}>Alex Traveler</Text>
             <Text style={styles.profileEmail}>alex@travel.com</Text>
           </View>
-          <TouchableOpacity style={styles.editButton}>
+          <TouchableOpacity style={styles.editButton} onPress={() => openComingSoon('Profile editing')}>
             <Text style={styles.editButtonText}>Edit</Text>
           </TouchableOpacity>
         </View>
@@ -135,12 +136,12 @@ export default function ProfileScreen() {
               </View>
 
               <View style={styles.pricingOptions}>
-                <TouchableOpacity style={styles.pricingCard}>
+                <TouchableOpacity style={styles.pricingCard} onPress={() => openComingSoon('Tripla Pro subscription')}>
                   <Text style={styles.pricingLabel}>Monthly</Text>
                   <Text style={styles.pricingPrice}>$4.99</Text>
                   <Text style={styles.pricingPeriod}>/month</Text>
                 </TouchableOpacity>
-                <TouchableOpacity style={[styles.pricingCard, styles.pricingCardHighlight]}>
+                <TouchableOpacity style={[styles.pricingCard, styles.pricingCardHighlight]} onPress={() => openComingSoon('Tripla Pro subscription')}>
                   <View style={styles.bestValueBadge}>
                     <Text style={styles.bestValueText}>Best Value</Text>
                   </View>
@@ -151,7 +152,7 @@ export default function ProfileScreen() {
                 </TouchableOpacity>
               </View>
 
-              <TouchableOpacity style={styles.upgradeButton}>
+              <TouchableOpacity style={styles.upgradeButton} onPress={() => openComingSoon('Tripla Pro subscription')}>
                 <Text style={styles.upgradeButtonText}>Upgrade to Pro</Text>
               </TouchableOpacity>
 
@@ -185,13 +186,13 @@ export default function ProfileScreen() {
               icon={<Globe size={20} color={Colors.primary} />}
               label="Currency"
               value="USD"
-              onPress={() => console.log('Currency')}
+              onPress={() => openComingSoon('Currency settings')}
             />
             <SettingsItem
               icon={<Moon size={20} color={Colors.primary} />}
               label="Appearance"
               value="Light"
-              onPress={() => console.log('Appearance')}
+              onPress={() => openComingSoon('Appearance settings')}
             />
           </View>
         </View>
@@ -202,17 +203,17 @@ export default function ProfileScreen() {
             <SettingsItem
               icon={<User size={20} color={Colors.textSecondary} />}
               label="Personal Information"
-              onPress={() => console.log('Personal')}
+              onPress={() => openComingSoon('Personal information')}
             />
             <SettingsItem
               icon={<CreditCard size={20} color={Colors.textSecondary} />}
               label="Payment Methods"
-              onPress={() => console.log('Payment')}
+              onPress={() => openComingSoon('Payment methods')}
             />
             <SettingsItem
               icon={<Shield size={20} color={Colors.textSecondary} />}
               label="Privacy & Security"
-              onPress={() => console.log('Privacy')}
+              onPress={() => openComingSoon('Privacy & Security')}
             />
           </View>
         </View>
@@ -223,17 +224,17 @@ export default function ProfileScreen() {
             <SettingsItem
               icon={<HelpCircle size={20} color={Colors.textSecondary} />}
               label="Help Center"
-              onPress={() => console.log('Help')}
+              onPress={() => openComingSoon('Help Center')}
             />
             <SettingsItem
               icon={<Settings size={20} color={Colors.textSecondary} />}
               label="App Settings"
-              onPress={() => console.log('Settings')}
+              onPress={() => openComingSoon('App Settings')}
             />
           </View>
         </View>
 
-        <TouchableOpacity style={styles.logoutButton}>
+        <TouchableOpacity style={styles.logoutButton} onPress={() => openComingSoon('Sign out')}>
           <LogOut size={20} color={Colors.accent} />
           <Text style={styles.logoutText}>Sign Out</Text>
         </TouchableOpacity>
