@@ -64,6 +64,12 @@ function RootLayoutNav() {
           headerShown: false,
         }} 
       />
+      <Stack.Screen 
+        name="destination/[id]" 
+        options={{ 
+          headerShown: false,
+        }} 
+      />
     </Stack>
   );
 }

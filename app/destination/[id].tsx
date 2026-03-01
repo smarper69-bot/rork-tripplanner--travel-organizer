@@ -9,22 +9,48 @@ import {
 import { openHotelSearch, openFlightSearch } from '@/utils/bookingLinks';
 import Colors from '@/constants/colors';
 import { openComingSoon } from '@/utils/comingSoon';
-import { destinations, getDestinationWithDefaults } from '@/mocks/destinations';
+import { destinations, getDestinationWithDefaults, DiscoverDestination } from '@/mocks/destinations';
 
 export default function DestinationOverviewScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const router = useRouter();
 
-  const rawDestination = destinations.find(d => d.id === id);
-  
+  const rawDestination: DiscoverDestination | undefined =
+    destinations.find(d => d.id === id) ??
+    destinations.find(d => d.city.toLowerCase() === (id ?? '').toLowerCase()) ??
+    destinations.find(d => d.city.toLowerCase().replace(/\s+/g, '-') === (id ?? '').toLowerCase());
+
+  const suggestedDestinations = destinations.slice(0, 3);
+
   if (!rawDestination) {
     return (
-      <View style={styles.notFound}>
-        <Text style={styles.notFoundText}>Destination not found</Text>
-        <TouchableOpacity style={styles.backLink} onPress={() => router.back()}>
-          <Text style={styles.backLinkText}>Go back</Text>
-        </TouchableOpacity>
-      </View>
+      <>
+        <Stack.Screen options={{ title: 'Not Found' }} />
+        <View style={styles.notFound}>
+          <MapPin size={48} color={Colors.textMuted} />
+          <Text style={styles.notFoundTitle}>Destination not found</Text>
+          <Text style={styles.notFoundSubtitle}>We couldn{"'"}t find that destination. Try one of these instead:</Text>
+          <TouchableOpacity style={styles.backExploreButton} onPress={() => router.replace('/discover' as any)}>
+            <Text style={styles.backExploreText}>Back to Explore</Text>
+          </TouchableOpacity>
+          <View style={styles.suggestedList}>
+            {suggestedDestinations.map((dest) => (
+              <TouchableOpacity
+                key={dest.id}
+                style={styles.suggestedCard}
+                onPress={() => router.replace({ pathname: '/destination/[id]' as any, params: { id: dest.id } })}
+              >
+                <Image source={{ uri: dest.imageUrl }} style={styles.suggestedImage} />
+                <View style={styles.suggestedInfo}>
+                  <Text style={styles.suggestedCity}>{dest.city}</Text>
+                  <Text style={styles.suggestedCountry}>{dest.country}</Text>
+                </View>
+                <ChevronRight size={18} color={Colors.textMuted} />
+              </TouchableOpacity>
+            ))}
+          </View>
+        </View>
+      </>
     );
   }
 
@@ -49,7 +75,7 @@ export default function DestinationOverviewScreen() {
 
   return (
     <>
-      <Stack.Screen options={{ headerShown: false }} />
+      <Stack.Screen options={{ headerShown: false, title: destination.city }} />
       <View style={styles.container}>
         <ScrollView showsVerticalScrollIndicator={false}>
           <View style={styles.heroContainer}>
@@ -223,23 +249,65 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     backgroundColor: Colors.background,
-    padding: 20,
+    padding: 24,
   },
-  notFoundText: {
-    fontSize: 16,
-    color: Colors.textSecondary,
-    marginBottom: 16,
+  notFoundTitle: {
+    fontSize: 20,
+    fontWeight: '700' as const,
+    color: Colors.text,
+    marginTop: 16,
+    marginBottom: 8,
   },
-  backLink: {
-    paddingVertical: 10,
-    paddingHorizontal: 20,
-    backgroundColor: Colors.surface,
-    borderRadius: 8,
-  },
-  backLinkText: {
+  notFoundSubtitle: {
     fontSize: 14,
-    color: Colors.primary,
-    fontWeight: '500' as const,
+    color: Colors.textSecondary,
+    textAlign: 'center',
+    marginBottom: 20,
+    lineHeight: 20,
+  },
+  backExploreButton: {
+    paddingVertical: 12,
+    paddingHorizontal: 28,
+    backgroundColor: Colors.primary,
+    borderRadius: 12,
+    marginBottom: 28,
+  },
+  backExploreText: {
+    fontSize: 15,
+    fontWeight: '600' as const,
+    color: '#fff',
+  },
+  suggestedList: {
+    width: '100%',
+    gap: 10,
+  },
+  suggestedCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: Colors.surface,
+    borderRadius: 14,
+    padding: 12,
+    borderWidth: 1,
+    borderColor: Colors.border,
+  },
+  suggestedImage: {
+    width: 56,
+    height: 56,
+    borderRadius: 10,
+  },
+  suggestedInfo: {
+    flex: 1,
+    marginLeft: 12,
+  },
+  suggestedCity: {
+    fontSize: 15,
+    fontWeight: '600' as const,
+    color: Colors.text,
+    marginBottom: 2,
+  },
+  suggestedCountry: {
+    fontSize: 13,
+    color: Colors.textSecondary,
   },
   heroContainer: {
     height: 320,

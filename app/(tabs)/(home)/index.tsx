@@ -11,6 +11,7 @@ import Colors from '@/constants/colors';
 import { openComingSoon } from '@/utils/comingSoon';
 import TripCard from '@/components/TripCard';
 import { mockTrips, mockAlerts, mockDestinations } from '@/mocks/trips';
+import { destinations as discoverDestinations } from '@/mocks/destinations';
 
 export default function HomeScreen() {
   const router = useRouter();
@@ -164,7 +165,13 @@ export default function HomeScreen() {
                   key={dest.id} 
                   style={[styles.destinationCard, { backgroundColor: dest.iconColor + '12' }]}
                   activeOpacity={0.9}
-                  onPress={() => router.push(`/destination/${dest.id}` as any)}
+                  onPress={() => {
+                    const match = discoverDestinations.find(
+                      d => d.city.toLowerCase() === dest.name.toLowerCase()
+                    );
+                    const destId = match ? match.id : dest.name;
+                    router.push({ pathname: '/destination/[id]' as any, params: { id: destId } });
+                  }}
                 >
                   <View style={styles.destinationIconContainer}>
                     <IconComponent size={44} color={dest.iconColor} />
