@@ -1,16 +1,40 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { Stack } from "expo-router";
+import { Stack, useRouter, useSegments } from "expo-router";
 import * as SplashScreen from "expo-splash-screen";
 import React, { useEffect } from "react";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import Colors from "@/constants/colors";
 import { useTripsStore } from "@/store/useTripsStore";
+import { useOnboardingStore } from "@/store/useOnboardingStore";
 
 SplashScreen.preventAutoHideAsync();
 
 const queryClient = new QueryClient();
 
+function useOnboardingRedirect() {
+  const hasOnboarded = useOnboardingStore((s) => s.hasOnboarded);
+  const isLoading = useOnboardingStore((s) => s.isLoading);
+  const segments = useSegments();
+  const router = useRouter();
+
+  useEffect(() => {
+    if (isLoading) return;
+
+    const inOnboarding = segments[0] === 'onboarding';
+
+    if (!hasOnboarded && !inOnboarding) {
+      console.log('[Layout] Redirecting to onboarding');
+      router.replace('/onboarding');
+    } else if (hasOnboarded && inOnboarding) {
+      console.log('[Layout] Onboarding done, redirecting to home');
+      router.replace('/');
+    }
+  }, [hasOnboarded, isLoading, segments]);
+}
+
 function RootLayoutNav() {
+  useOnboardingRedirect();
+
   return (
     <Stack
       screenOptions={{
@@ -21,6 +45,14 @@ function RootLayoutNav() {
       }}
     >
       <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+      <Stack.Screen 
+        name="onboarding" 
+        options={{ 
+          headerShown: false,
+          gestureEnabled: false,
+          animation: 'fade',
+        }} 
+      />
       <Stack.Screen 
         name="create-trip" 
         options={{ 
@@ -75,10 +107,11 @@ function RootLayoutNav() {
 }
 
 export default function RootLayout() {
-  const hydrate = useTripsStore((s) => s.hydrate);
+  const hydrateTrips = useTripsStore((s) => s.hydrate);
+  const hydrateOnboarding = useOnboardingStore((s) => s.hydrate);
 
   useEffect(() => {
-    hydrate().then(() => {
+    Promise.all([hydrateTrips(), hydrateOnboarding()]).then(() => {
       SplashScreen.hideAsync();
     });
   }, []);
