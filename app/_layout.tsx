@@ -102,6 +102,13 @@ function RootLayoutNav() {
           headerShown: false,
         }} 
       />
+      <Stack.Screen 
+        name="edit-trip" 
+        options={{ 
+          presentation: 'modal',
+          headerShown: false,
+        }} 
+      />
     </Stack>
   );
 }

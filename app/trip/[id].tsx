@@ -644,7 +644,7 @@ export default function TripDetailScreen() {
                   <ArrowLeft size={24} color={Colors.text} />
                 </TouchableOpacity>
                 <View style={styles.heroActions}>
-                  <TouchableOpacity style={styles.actionButton} onPress={() => openComingSoon('Trip editing')}>
+                  <TouchableOpacity style={styles.actionButton} onPress={() => router.push({ pathname: '/edit-trip', params: { id: trip.id } } as any)}>
                     <Edit3 size={18} color={Colors.text} />
                   </TouchableOpacity>
                   <TouchableOpacity style={styles.actionButton} onPress={() => openComingSoon('Trip sharing')}>
