@@ -1,11 +1,12 @@
-import React, { useState } from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity } from 'react-native';
+import React, { useState, useCallback } from 'react';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Alert } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
-import { Plus, Plane, Clock, CheckCircle } from 'lucide-react-native';
+import { Plus, Plane, Clock, CheckCircle, Trash2 } from 'lucide-react-native';
 import Colors from '@/constants/colors';
 import TripCard from '@/components/TripCard';
 import { useTripsStore } from '@/store/useTripsStore';
+import { Trip } from '@/types/trip';
 
 const tabs = [
   { id: 'upcoming', label: 'Upcoming', icon: Plane },
@@ -16,7 +17,25 @@ const tabs = [
 export default function TripsScreen() {
   const router = useRouter();
   const [activeTab, setActiveTab] = useState('upcoming');
-  const { trips, isHydrated } = useTripsStore();
+  const { trips, deleteTrip } = useTripsStore();
+
+  const handleDeleteTrip = useCallback((trip: Trip) => {
+    Alert.alert(
+      'Remove this trip?',
+      'This will delete the trip and its related data.',
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Delete',
+          style: 'destructive',
+          onPress: () => {
+            deleteTrip(trip.id);
+            console.log('[MyTrips] Deleted trip:', trip.id);
+          },
+        },
+      ]
+    );
+  }, [deleteTrip]);
 
   const filteredTrips = trips.filter((trip) => {
     if (activeTab === 'upcoming') return trip.status === 'upcoming' || trip.status === 'ongoing';
@@ -64,11 +83,23 @@ export default function TripsScreen() {
       >
         {filteredTrips.length > 0 ? (
           filteredTrips.map((trip) => (
-            <TripCard
-              key={trip.id}
-              trip={trip}
-              onPress={() => router.push(`/trip/${trip.id}` as any)}
-            />
+            <View key={trip.id} style={styles.tripRow}>
+              <View style={styles.tripCardWrap}>
+                <TripCard
+                  trip={trip}
+                  onPress={() => router.push(`/trip/${trip.id}` as any)}
+                />
+              </View>
+              {(trip.status === 'planning' || trip.status === 'upcoming') && (
+                <TouchableOpacity
+                  style={styles.tripDeleteBtn}
+                  onPress={() => handleDeleteTrip(trip)}
+                  hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+                >
+                  <Trash2 size={16} color="#EF4444" />
+                </TouchableOpacity>
+              )}
+            </View>
           ))
         ) : (
           <View style={styles.emptyState}>
@@ -195,5 +226,23 @@ const styles = StyleSheet.create({
     fontSize: 15,
     fontWeight: '600',
     color: Colors.textLight,
+  },
+  tripRow: {
+    position: 'relative' as const,
+  },
+  tripCardWrap: {
+    flex: 1,
+  },
+  tripDeleteBtn: {
+    position: 'absolute' as const,
+    top: 12,
+    left: 12,
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    backgroundColor: 'rgba(255,255,255,0.85)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    zIndex: 10,
   },
 });

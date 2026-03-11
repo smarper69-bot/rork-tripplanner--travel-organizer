@@ -1,21 +1,21 @@
-import React, { useState, useRef, useCallback, useMemo } from 'react';
+import React, { useState, useRef, useMemo } from 'react';
 import { 
   View, Text, StyleSheet, ScrollView, TouchableOpacity, Image, 
   Dimensions, Modal, TextInput, Alert, Platform
 } from 'react-native';
-import { TripIcon, StoredItineraryItem, StoredStay, StoredMemory } from '@/types/trip';
+import { TripIcon, StoredItineraryItem } from '@/types/trip';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useLocalSearchParams, useRouter, Stack } from 'expo-router';
 import { 
   ArrowLeft, Share2, Edit3, Calendar, MapPin, 
-  Users, ChevronRight, Plus, Clock, DollarSign,
-  Hotel, Image as ImageIcon, Camera, Utensils, Car, ShoppingBag,
+  Users, Plus, Clock, DollarSign,
+  Hotel, Camera,
   Flower2, Church, Palmtree, Mountain, Sun, Landmark, Trees, Snowflake, Tent,
-  Check, X, Trash2, FileText, ExternalLink, Plane
+  X, Trash2, ExternalLink, Plane
 } from 'lucide-react-native';
 import * as ImagePicker from 'expo-image-picker';
 import Colors from '@/constants/colors';
-import ActivityCard from '@/components/ActivityCard';
+
 import CalendarPicker from '@/components/CalendarPicker';
 import { useTripsStore } from '@/store/useTripsStore';
 import { openHotelSearch, openFlightSearch } from '@/utils/bookingLinks';
@@ -45,6 +45,7 @@ export default function TripDetailScreen() {
   const allStays = useTripsStore((s) => s.stays);
   const allMemories = useTripsStore((s) => s.memories);
   const updateTrip = useTripsStore((s) => s.updateTrip);
+  const deleteTripAction = useTripsStore((s) => s.deleteTrip);
   const addItineraryItem = useTripsStore((s) => s.addItineraryItem);
   const deleteItineraryItem = useTripsStore((s) => s.deleteItineraryItem);
   const addStay = useTripsStore((s) => s.addStay);
@@ -239,6 +240,26 @@ export default function TripDetailScreen() {
       { text: 'Cancel', style: 'cancel' },
       { text: 'Delete', style: 'destructive', onPress: () => deleteMemory(memoryId) },
     ]);
+  };
+
+  const handleDeleteTrip = () => {
+    if (!trip) return;
+    Alert.alert(
+      'Remove this trip?',
+      'This will delete the trip and its related data.',
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Delete',
+          style: 'destructive',
+          onPress: () => {
+            deleteTripAction(trip.id);
+            console.log('[TripDetail] Deleted trip:', trip.id);
+            router.back();
+          },
+        },
+      ]
+    );
   };
 
   const handleSaveBudget = () => {
@@ -628,6 +649,9 @@ export default function TripDetailScreen() {
                   </TouchableOpacity>
                   <TouchableOpacity style={styles.actionButton} onPress={() => openComingSoon('Trip sharing')}>
                     <Share2 size={18} color={Colors.text} />
+                  </TouchableOpacity>
+                  <TouchableOpacity style={styles.actionButton} onPress={handleDeleteTrip} testID="trip-detail-delete">
+                    <Trash2 size={18} color="#EF4444" />
                   </TouchableOpacity>
                 </View>
               </View>
