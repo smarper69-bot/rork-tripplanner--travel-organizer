@@ -1,6 +1,7 @@
 import React from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Image, Switch } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Image, Switch, Alert } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { useRouter } from 'expo-router';
 import { 
   User, Settings, Bell, Download, Shield, HelpCircle, 
   LogOut, ChevronRight, Moon, Globe, CreditCard, Crown,
@@ -9,6 +10,7 @@ import {
 import Colors from '@/constants/colors';
 import { openComingSoon } from '@/utils/comingSoon';
 import { useTripsStore } from '@/store/useTripsStore';
+import { usePreferencesStore, CurrencyOption, AppearanceOption } from '@/store/usePreferencesStore';
 
 interface SettingsItemProps {
   icon: React.ReactNode;
@@ -60,10 +62,61 @@ const proFeatures = [
   { icon: Users, text: 'Advanced collaboration' },
 ];
 
+const CURRENCY_OPTIONS: CurrencyOption[] = ['USD', 'GBP', 'EUR'];
+const APPEARANCE_OPTIONS: AppearanceOption[] = ['Light', 'Dark', 'System'];
+
 export default function ProfileScreen() {
-  const [offlineMode, setOfflineMode] = React.useState(false);
-  const [notifications, setNotifications] = React.useState(true);
+  const router = useRouter();
   const [isPro] = React.useState(false);
+
+  const notifications = usePreferencesStore((s) => s.notifications);
+  const offlineMode = usePreferencesStore((s) => s.offlineMode);
+  const currency = usePreferencesStore((s) => s.currency);
+  const appearance = usePreferencesStore((s) => s.appearance);
+  const profile = usePreferencesStore((s) => s.profile);
+  const setNotifications = usePreferencesStore((s) => s.setNotifications);
+  const setOfflineMode = usePreferencesStore((s) => s.setOfflineMode);
+  const setCurrency = usePreferencesStore((s) => s.setCurrency);
+  const setAppearance = usePreferencesStore((s) => s.setAppearance);
+
+  const handleCurrencySelect = () => {
+    Alert.alert(
+      'Select Currency',
+      undefined,
+      CURRENCY_OPTIONS.map((opt) => ({
+        text: opt + (currency === opt ? ' ✓' : ''),
+        onPress: () => void setCurrency(opt),
+      })),
+    );
+  };
+
+  const handleAppearanceSelect = () => {
+    Alert.alert(
+      'Select Appearance',
+      undefined,
+      APPEARANCE_OPTIONS.map((opt) => ({
+        text: opt + (appearance === opt ? ' ✓' : ''),
+        onPress: () => void setAppearance(opt),
+      })),
+    );
+  };
+
+  const handleSignOut = () => {
+    Alert.alert(
+      'Sign Out',
+      'Are you sure you want to sign out?',
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Sign Out',
+          style: 'destructive',
+          onPress: () => {
+            Alert.alert('Signed Out', 'You have been signed out successfully.');
+          },
+        },
+      ],
+    );
+  };
 
   const trips = useTripsStore((s) => s.trips);
   const countriesVisited = new Set(trips.map(t => t.country || t.destination).filter(Boolean)).size;
@@ -86,10 +139,10 @@ export default function ProfileScreen() {
             style={styles.avatar}
           />
           <View style={styles.profileInfo}>
-            <Text style={styles.profileName}>Alex Traveler</Text>
-            <Text style={styles.profileEmail}>alex@travel.com</Text>
+            <Text style={styles.profileName}>{profile.name}</Text>
+            <Text style={styles.profileEmail}>{profile.email}</Text>
           </View>
-          <TouchableOpacity style={styles.editButton} onPress={() => openComingSoon('Profile editing')}>
+          <TouchableOpacity style={styles.editButton} onPress={() => router.push('/personal-info')}>
             <Text style={styles.editButtonText}>Edit</Text>
           </TouchableOpacity>
         </View>
@@ -171,7 +224,7 @@ export default function ProfileScreen() {
               label="Notifications"
               toggle
               toggleValue={notifications}
-              onToggle={setNotifications}
+              onToggle={(v) => void setNotifications(v)}
               showChevron={false}
             />
             <SettingsItem
@@ -179,20 +232,20 @@ export default function ProfileScreen() {
               label="Offline Mode"
               toggle
               toggleValue={offlineMode}
-              onToggle={setOfflineMode}
+              onToggle={(v) => void setOfflineMode(v)}
               showChevron={false}
             />
             <SettingsItem
               icon={<Globe size={20} color={Colors.primary} />}
               label="Currency"
-              value="USD"
-              onPress={() => openComingSoon('Currency settings')}
+              value={currency}
+              onPress={handleCurrencySelect}
             />
             <SettingsItem
               icon={<Moon size={20} color={Colors.primary} />}
               label="Appearance"
-              value="Light"
-              onPress={() => openComingSoon('Appearance settings')}
+              value={appearance}
+              onPress={handleAppearanceSelect}
             />
           </View>
         </View>
@@ -203,17 +256,17 @@ export default function ProfileScreen() {
             <SettingsItem
               icon={<User size={20} color={Colors.textSecondary} />}
               label="Personal Information"
-              onPress={() => openComingSoon('Personal information')}
+              onPress={() => router.push('/personal-info')}
             />
             <SettingsItem
               icon={<CreditCard size={20} color={Colors.textSecondary} />}
               label="Payment Methods"
-              onPress={() => openComingSoon('Payment methods')}
+              onPress={() => router.push('/payment-methods')}
             />
             <SettingsItem
               icon={<Shield size={20} color={Colors.textSecondary} />}
               label="Privacy & Security"
-              onPress={() => openComingSoon('Privacy & Security')}
+              onPress={() => router.push('/privacy-security')}
             />
           </View>
         </View>
@@ -224,17 +277,17 @@ export default function ProfileScreen() {
             <SettingsItem
               icon={<HelpCircle size={20} color={Colors.textSecondary} />}
               label="Help Center"
-              onPress={() => openComingSoon('Help Center')}
+              onPress={() => router.push('/help-center')}
             />
             <SettingsItem
               icon={<Settings size={20} color={Colors.textSecondary} />}
               label="App Settings"
-              onPress={() => openComingSoon('App Settings')}
+              onPress={() => router.push('/app-settings')}
             />
           </View>
         </View>
 
-        <TouchableOpacity style={styles.logoutButton} onPress={() => openComingSoon('Sign out')}>
+        <TouchableOpacity style={styles.logoutButton} onPress={handleSignOut}>
           <LogOut size={20} color={Colors.accent} />
           <Text style={styles.logoutText}>Sign Out</Text>
         </TouchableOpacity>

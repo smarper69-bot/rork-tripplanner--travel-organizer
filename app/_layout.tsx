@@ -6,6 +6,7 @@ import { GestureHandlerRootView } from "react-native-gesture-handler";
 import Colors from "@/constants/colors";
 import { useTripsStore } from "@/store/useTripsStore";
 import { useOnboardingStore } from "@/store/useOnboardingStore";
+import { usePreferencesStore } from "@/store/usePreferencesStore";
 
 SplashScreen.preventAutoHideAsync();
 
@@ -109,6 +110,36 @@ function RootLayoutNav() {
           headerShown: false,
         }} 
       />
+      <Stack.Screen 
+        name="personal-info" 
+        options={{ 
+          headerShown: false,
+        }} 
+      />
+      <Stack.Screen 
+        name="payment-methods" 
+        options={{ 
+          headerShown: false,
+        }} 
+      />
+      <Stack.Screen 
+        name="privacy-security" 
+        options={{ 
+          headerShown: false,
+        }} 
+      />
+      <Stack.Screen 
+        name="help-center" 
+        options={{ 
+          headerShown: false,
+        }} 
+      />
+      <Stack.Screen 
+        name="app-settings" 
+        options={{ 
+          headerShown: false,
+        }} 
+      />
     </Stack>
   );
 }
@@ -116,9 +147,10 @@ function RootLayoutNav() {
 export default function RootLayout() {
   const hydrateTrips = useTripsStore((s) => s.hydrate);
   const hydrateOnboarding = useOnboardingStore((s) => s.hydrate);
+  const hydratePreferences = usePreferencesStore((s) => s.hydrate);
 
   useEffect(() => {
-    Promise.all([hydrateTrips(), hydrateOnboarding()]).then(() => {
+    Promise.all([hydrateTrips(), hydrateOnboarding(), hydratePreferences()]).then(() => {
       SplashScreen.hideAsync();
     });
   }, []);
