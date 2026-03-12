@@ -1,5 +1,5 @@
-import React, { useMemo, useRef, useEffect, useState } from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Alert, ImageBackground, Animated } from 'react-native';
+import React, { useMemo, useRef, useEffect, useState, useCallback } from 'react';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Alert, ImageBackground, Animated, Dimensions, FlatList, NativeSyntheticEvent, NativeScrollEvent } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { Plus, Compass, Globe, MapPin, Calendar, Trash2, ChevronRight, ArrowRight, Plane } from 'lucide-react-native';
@@ -8,30 +8,38 @@ import Colors from '@/constants/colors';
 import { useTripsStore } from '@/store/useTripsStore';
 import { Trip, TripIcon } from '@/types/trip';
 
+const { width: SCREEN_WIDTH } = Dimensions.get('window');
+const CARD_WIDTH = SCREEN_WIDTH - 40;
+const CARD_SPACING = 12;
+
 const FEATURED_DESTINATIONS = [
   {
     id: '3',
     city: 'Bali',
     country: 'Indonesia',
-    tagline: 'Temples, rice terraces & surf',
-    imageUrl: 'https://images.unsplash.com/photo-1537996194471-e657df975ab4?w=800',
-    color: '#27AE60',
+    description: 'Tropical paradise with stunning rice terraces, ancient temples, and world-class surfing.',
+    imageUrl: 'https://images.unsplash.com/photo-1537996194471-e657df975ab4?w=800&q=80',
   },
   {
     id: '1',
     city: 'Tokyo',
     country: 'Japan',
-    tagline: 'Neon lights & ancient shrines',
-    imageUrl: 'https://images.unsplash.com/photo-1540959733332-eab4deabeeaf?w=800',
-    color: '#E74C3C',
+    description: 'A dazzling blend of ultramodern and traditional, from neon-lit skyscrapers to historic temples.',
+    imageUrl: 'https://images.unsplash.com/photo-1540959733332-eab4deabeeaf?w=800&q=80',
   },
   {
-    id: '2',
-    city: 'Paris',
-    country: 'France',
-    tagline: 'Art, romance & croissants',
-    imageUrl: 'https://images.unsplash.com/photo-1502602898657-3e91760cbb34?w=800',
-    color: '#2C3E50',
+    id: '7',
+    city: 'Santorini',
+    country: 'Greece',
+    description: 'Iconic white-washed buildings perched on cliffs overlooking the deep blue Aegean Sea.',
+    imageUrl: 'https://images.unsplash.com/photo-1613395877344-13d4a8e0d49e?w=800&q=80',
+  },
+  {
+    id: '5',
+    city: 'Barcelona',
+    country: 'Spain',
+    description: "Gaudí's architectural masterpieces meet Mediterranean beaches and vibrant nightlife.",
+    imageUrl: 'https://images.unsplash.com/photo-1583422409516-2895a77efded?w=800&q=80',
   },
 ];
 
@@ -73,6 +81,7 @@ export default function HomeScreen() {
   const fadeAnim = useRef(new Animated.Value(0)).current;
   const slideAnim = useRef(new Animated.Value(20)).current;
   const [featuredIndex, setFeaturedIndex] = useState<number>(0);
+  const flatListRef = useRef<FlatList>(null);
 
   useEffect(() => {
     Animated.parallel([
@@ -81,7 +90,13 @@ export default function HomeScreen() {
     ]).start();
   }, [fadeAnim, slideAnim]);
 
-  const featured = FEATURED_DESTINATIONS[featuredIndex];
+  const onCarouselScroll = useCallback((event: NativeSyntheticEvent<NativeScrollEvent>) => {
+    const offsetX = event.nativeEvent.contentOffset.x;
+    const index = Math.round(offsetX / (CARD_WIDTH + CARD_SPACING));
+    if (index >= 0 && index < FEATURED_DESTINATIONS.length) {
+      setFeaturedIndex(index);
+    }
+  }, []);
 
   const futureTrips = useMemo(() => {
     return trips
@@ -148,53 +163,66 @@ export default function HomeScreen() {
           ))}
         </View>
 
-        {/* Featured Destination */}
+        {/* Featured Destination Carousel */}
         <View style={styles.featuredSection}>
           <View style={styles.sectionHeader}>
             <Text style={styles.sectionTitle}>Featured</Text>
             <View style={styles.featuredDots}>
               {FEATURED_DESTINATIONS.map((_, i) => (
-                <TouchableOpacity
+                <View
                   key={i}
-                  onPress={() => setFeaturedIndex(i)}
-                  hitSlop={{ top: 8, bottom: 8, left: 4, right: 4 }}
-                >
-                  <View style={[styles.dot, i === featuredIndex && styles.dotActive]} />
-                </TouchableOpacity>
+                  style={[styles.dot, i === featuredIndex && styles.dotActive]}
+                />
               ))}
             </View>
           </View>
 
-          <TouchableOpacity
-            style={styles.featuredCard}
-            activeOpacity={0.9}
-            onPress={() => router.push({ pathname: '/destination/[id]', params: { id: featured.id } } as any)}
-            testID="featured-destination-card"
-          >
-            <ImageBackground
-              source={{ uri: featured.imageUrl }}
-              style={styles.featuredImage}
-              imageStyle={styles.featuredImageRadius}
-            >
-              <View style={styles.featuredOverlay}>
-                <View style={styles.featuredContent}>
-                  <View>
-                    <Text style={styles.featuredCity}>{featured.city}</Text>
-                    <Text style={styles.featuredCountry}>{featured.country}</Text>
-                    <Text style={styles.featuredTagline}>{featured.tagline}</Text>
+          <FlatList
+            ref={flatListRef}
+            data={FEATURED_DESTINATIONS}
+            horizontal
+            pagingEnabled={false}
+            snapToInterval={CARD_WIDTH + CARD_SPACING}
+            snapToAlignment="start"
+            decelerationRate="fast"
+            showsHorizontalScrollIndicator={false}
+            onScroll={onCarouselScroll}
+            scrollEventThrottle={16}
+            contentContainerStyle={styles.carouselContent}
+            keyExtractor={(item) => item.id}
+            renderItem={({ item }) => (
+              <TouchableOpacity
+                style={styles.featuredCard}
+                activeOpacity={0.9}
+                onPress={() => router.push({ pathname: '/destination/[id]', params: { id: item.id } } as any)}
+                testID={`featured-card-${item.id}`}
+              >
+                <ImageBackground
+                  source={{ uri: item.imageUrl }}
+                  style={styles.featuredImage}
+                  imageStyle={styles.featuredImageRadius}
+                >
+                  <View style={styles.featuredOverlay}>
+                    <View style={styles.featuredContent}>
+                      <View style={styles.featuredTextBlock}>
+                        <Text style={styles.featuredCity}>{item.city}</Text>
+                        <Text style={styles.featuredCountry}>{item.country}</Text>
+                        <Text style={styles.featuredDescription} numberOfLines={2}>{item.description}</Text>
+                      </View>
+                      <TouchableOpacity
+                        style={styles.planButton}
+                        activeOpacity={0.85}
+                        onPress={() => router.push('/create-trip' as any)}
+                      >
+                        <Text style={styles.planButtonText}>Plan this trip</Text>
+                        <ArrowRight size={16} color="#1A1A1A" />
+                      </TouchableOpacity>
+                    </View>
                   </View>
-                  <TouchableOpacity
-                    style={styles.planButton}
-                    activeOpacity={0.85}
-                    onPress={() => router.push('/create-trip' as any)}
-                  >
-                    <Text style={styles.planButtonText}>Plan this trip</Text>
-                    <ArrowRight size={16} color="#1A1A1A" />
-                  </TouchableOpacity>
-                </View>
-              </View>
-            </ImageBackground>
-          </TouchableOpacity>
+                </ImageBackground>
+              </TouchableOpacity>
+            )}
+          />
         </View>
 
         {/* Upcoming Trip or Empty */}
@@ -393,13 +421,17 @@ const styles = StyleSheet.create({
     backgroundColor: Colors.text,
     width: 18,
   },
+  carouselContent: {
+    paddingHorizontal: 20,
+  },
   featuredCard: {
-    marginHorizontal: 20,
+    width: CARD_WIDTH,
+    marginRight: CARD_SPACING,
     borderRadius: 22,
     overflow: 'hidden',
   },
   featuredImage: {
-    height: 210,
+    height: 230,
     justifyContent: 'flex-end',
   },
   featuredImageRadius: {
@@ -409,30 +441,32 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'flex-end',
     borderRadius: 22,
-    backgroundColor: 'rgba(0,0,0,0.35)',
+    backgroundColor: 'rgba(0,0,0,0.4)',
   },
   featuredContent: {
     padding: 20,
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'flex-end',
+    gap: 14,
+  },
+  featuredTextBlock: {
+    gap: 2,
   },
   featuredCity: {
-    fontSize: 24,
+    fontSize: 26,
     fontWeight: '800' as const,
     color: '#FFFFFF',
-    lineHeight: 28,
+    lineHeight: 30,
   },
   featuredCountry: {
     fontSize: 14,
     color: 'rgba(255,255,255,0.8)',
-    fontWeight: '500' as const,
-    marginBottom: 2,
+    fontWeight: '600' as const,
+    marginBottom: 4,
   },
-  featuredTagline: {
-    fontSize: 12,
-    color: 'rgba(255,255,255,0.65)',
+  featuredDescription: {
+    fontSize: 13,
+    color: 'rgba(255,255,255,0.7)',
     fontWeight: '400' as const,
+    lineHeight: 18,
   },
   planButton: {
     flexDirection: 'row',
