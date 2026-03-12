@@ -5,7 +5,7 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { 
-  Send, Sparkles, MapPin, Calendar, ChevronDown, 
+  Sparkles, MapPin, Calendar, ChevronDown, 
   Check, Wand2, Utensils, Landmark, Waves, Mountain
 } from 'lucide-react-native';
 import { z } from 'zod';
@@ -14,12 +14,19 @@ import { useTripsStore } from '@/store/useTripsStore';
 import { generateObject } from '@rork-ai/toolkit-sdk';
 import { Trip } from '@/types/trip';
 
+interface GeneratedDay {
+  date: string;
+  items: { title: string; time: string; notes: string }[];
+}
+
 interface ChatEntry {
   id: string;
   role: 'user' | 'assistant' | 'system';
   text: string;
   generatedCount?: number;
   tripName?: string;
+  generatedDays?: GeneratedDay[];
+  saved?: boolean;
 }
 
 const INTEREST_OPTIONS = [
@@ -78,6 +85,33 @@ export default function ConciergeScreen() {
     return dates;
   }, []);
 
+  const handleSaveItinerary = useCallback((entryId: string) => {
+    const entry = chatLog.find((e) => e.id === entryId);
+    if (!entry?.generatedDays || !selectedTrip || entry.saved) return;
+
+    let itemCount = 0;
+    for (const day of entry.generatedDays) {
+      for (const item of day.items) {
+        addItineraryItem(selectedTrip.id, {
+          title: item.title,
+          date: day.date,
+          time: item.time,
+          notes: item.notes,
+        });
+        itemCount++;
+      }
+    }
+
+    setChatLog((prev) =>
+      prev.map((e) =>
+        e.id === entryId ? { ...e, saved: true } : e
+      )
+    );
+
+    Alert.alert('Saved', `${itemCount} activities added to "${selectedTrip.name}". Open the trip to view them.`);
+    console.log('[Concierge] Saved', itemCount, 'items to trip', selectedTrip.id);
+  }, [chatLog, selectedTrip, addItineraryItem]);
+
   const handleGenerate = useCallback(async () => {
     if (!selectedTrip) {
       Alert.alert('Select a trip', 'Please select a trip to generate an itinerary for.');
@@ -129,26 +163,20 @@ Available dates: ${tripDates.join(', ')}`;
 
       let itemCount = 0;
       for (const day of result.days) {
-        for (const item of day.items) {
-          addItineraryItem(selectedTrip.id, {
-            title: item.title,
-            date: day.date,
-            time: item.time,
-            notes: item.notes,
-          });
-          itemCount++;
-        }
+        itemCount += day.items.length;
       }
 
       const successEntry: ChatEntry = {
         id: (Date.now() + 1).toString(),
         role: 'assistant',
-        text: `Itinerary generated! I added ${itemCount} activities across ${result.days.length} days to "${selectedTrip.name}". Open the trip's Itinerary tab to view and edit them.`,
+        text: `Here's your ${result.days.length}-day itinerary for "${selectedTrip.name}" with ${itemCount} activities. Review it below and tap Save to add it to your trip.`,
         generatedCount: itemCount,
         tripName: selectedTrip.name,
+        generatedDays: result.days,
+        saved: false,
       };
       setChatLog((prev) => [...prev, successEntry]);
-      console.log('[Concierge] Added', itemCount, 'items to trip', selectedTrip.id);
+      console.log('[Concierge] Generated', itemCount, 'items for trip', selectedTrip.id);
     } catch (e) {
       console.error('[Concierge] Generation failed:', e);
       const errorEntry: ChatEntry = {
@@ -160,7 +188,7 @@ Available dates: ${tripDates.join(', ')}`;
     } finally {
       setIsGenerating(false);
     }
-  }, [selectedTrip, selectedInterests, freeformInput, addItineraryItem, getDatesForTrip]);
+  }, [selectedTrip, selectedInterests, freeformInput, getDatesForTrip]);
 
   const renderTripPicker = () => (
     <View style={styles.tripPickerOverlay}>
@@ -326,12 +354,45 @@ Available dates: ${tripDates.join(', ')}`;
                     >
                       {entry.text}
                     </Text>
-                    {entry.generatedCount != null && (
-                      <View style={styles.successBadge}>
-                        <Check size={14} color="#10B981" />
-                        <Text style={styles.successBadgeText}>
-                          {entry.generatedCount} activities added
-                        </Text>
+                    {entry.generatedDays && entry.generatedDays.length > 0 && (
+                      <View style={styles.itineraryPreview}>
+                        {entry.generatedDays.map((day, dayIdx) => (
+                          <View key={day.date} style={styles.dayCard}>
+                            <View style={styles.dayHeader}>
+                              <Calendar size={14} color={Colors.primary} />
+                              <Text style={styles.dayHeaderText}>Day {dayIdx + 1}</Text>
+                              <Text style={styles.dayDateText}>{day.date}</Text>
+                            </View>
+                            {day.items.map((item, itemIdx) => (
+                              <View key={`${day.date}-${itemIdx}`} style={styles.activityRow}>
+                                <Text style={styles.activityTime}>{item.time}</Text>
+                                <View style={styles.activityInfo}>
+                                  <Text style={styles.activityTitle}>{item.title}</Text>
+                                  {item.notes ? (
+                                    <Text style={styles.activityNotes} numberOfLines={2}>{item.notes}</Text>
+                                  ) : null}
+                                </View>
+                              </View>
+                            ))}
+                          </View>
+                        ))}
+                        <TouchableOpacity
+                          style={[
+                            styles.saveButton,
+                            entry.saved && styles.saveButtonDone,
+                          ]}
+                          onPress={() => handleSaveItinerary(entry.id)}
+                          disabled={entry.saved}
+                          activeOpacity={0.7}
+                        >
+                          <Check size={18} color={entry.saved ? '#10B981' : Colors.textLight} />
+                          <Text style={[
+                            styles.saveButtonText,
+                            entry.saved && styles.saveButtonTextDone,
+                          ]}>
+                            {entry.saved ? 'Saved to trip' : 'Save to trip'}
+                          </Text>
+                        </TouchableOpacity>
                       </View>
                     )}
                   </View>
@@ -561,6 +622,79 @@ const styles = StyleSheet.create({
   successBadgeText: {
     fontSize: 12,
     fontWeight: '600' as const,
+    color: '#065F46',
+  },
+  itineraryPreview: {
+    marginTop: 12,
+    gap: 10,
+  },
+  dayCard: {
+    backgroundColor: Colors.background,
+    borderRadius: 14,
+    padding: 14,
+    gap: 8,
+  },
+  dayHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    marginBottom: 4,
+  },
+  dayHeaderText: {
+    fontSize: 14,
+    fontWeight: '700' as const,
+    color: Colors.text,
+  },
+  dayDateText: {
+    fontSize: 12,
+    color: Colors.textMuted,
+    marginLeft: 'auto' as const,
+  },
+  activityRow: {
+    flexDirection: 'row',
+    gap: 10,
+    paddingVertical: 4,
+  },
+  activityTime: {
+    fontSize: 12,
+    fontWeight: '600' as const,
+    color: Colors.textSecondary,
+    width: 46,
+    paddingTop: 2,
+  },
+  activityInfo: {
+    flex: 1,
+    gap: 2,
+  },
+  activityTitle: {
+    fontSize: 14,
+    fontWeight: '600' as const,
+    color: Colors.text,
+  },
+  activityNotes: {
+    fontSize: 12,
+    color: Colors.textMuted,
+    lineHeight: 16,
+  },
+  saveButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
+    backgroundColor: Colors.primary,
+    paddingVertical: 14,
+    borderRadius: 12,
+    marginTop: 4,
+  },
+  saveButtonDone: {
+    backgroundColor: '#D1FAE5',
+  },
+  saveButtonText: {
+    fontSize: 15,
+    fontWeight: '600' as const,
+    color: Colors.textLight,
+  },
+  saveButtonTextDone: {
     color: '#065F46',
   },
   emptyHint: {
