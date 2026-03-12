@@ -1,7 +1,7 @@
 import React, { useState, useRef, useMemo } from 'react';
 import { 
   View, Text, StyleSheet, ScrollView, TouchableOpacity, Image, 
-  Dimensions, Modal, TextInput, Alert, Platform
+  Dimensions, Modal, TextInput, Alert, Platform, Share
 } from 'react-native';
 import { TripIcon, StoredItineraryItem } from '@/types/trip';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -11,15 +11,15 @@ import {
   Users, Plus, Clock, DollarSign,
   Hotel, Camera,
   Flower2, Church, Palmtree, Mountain, Sun, Landmark, Trees, Snowflake, Tent,
-  X, Trash2, ExternalLink, Plane
+  X, Trash2, ExternalLink, Plane, Link2, Copy, Check
 } from 'lucide-react-native';
 import * as ImagePicker from 'expo-image-picker';
+import * as Clipboard from 'expo-clipboard';
 import Colors from '@/constants/colors';
 
 import CalendarPicker from '@/components/CalendarPicker';
 import { useTripsStore } from '@/store/useTripsStore';
 import { openHotelSearch, openFlightSearch } from '@/utils/bookingLinks';
-import { openComingSoon } from '@/utils/comingSoon';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
@@ -76,6 +76,9 @@ export default function TripDetailScreen() {
   const [showBudgetEdit, setShowBudgetEdit] = useState(false);
   const [budgetTotalInput, setBudgetTotalInput] = useState('');
   const [budgetSpentInput, setBudgetSpentInput] = useState('');
+
+  const [showShareModal, setShowShareModal] = useState(false);
+  const [linkCopied, setLinkCopied] = useState(false);
 
   const getIconComponent = (iconName: TripIcon) => {
     const iconMap: Record<TripIcon, React.ComponentType<{ size: number; color: string }>> = {
@@ -647,7 +650,7 @@ export default function TripDetailScreen() {
                   <TouchableOpacity style={styles.actionButton} onPress={() => router.push({ pathname: '/edit-trip', params: { id: trip.id } } as any)}>
                     <Edit3 size={18} color={Colors.text} />
                   </TouchableOpacity>
-                  <TouchableOpacity style={styles.actionButton} onPress={() => openComingSoon('Trip sharing')}>
+                  <TouchableOpacity style={styles.actionButton} onPress={() => { setLinkCopied(false); setShowShareModal(true); }}>
                     <Share2 size={18} color={Colors.text} />
                   </TouchableOpacity>
                   <TouchableOpacity style={styles.actionButton} onPress={handleDeleteTrip} testID="trip-detail-delete">
@@ -844,6 +847,81 @@ export default function TripDetailScreen() {
             <TouchableOpacity style={styles.formSaveBtn} onPress={handleSaveBudget}>
               <Text style={styles.formSaveBtnText}>Save Budget</Text>
             </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
+
+      <Modal visible={showShareModal} transparent animationType="slide" onRequestClose={() => setShowShareModal(false)}>
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalContent}>
+            <View style={styles.modalHeader}>
+              <Text style={styles.modalTitle}>Share Trip</Text>
+              <TouchableOpacity onPress={() => setShowShareModal(false)} style={styles.modalCloseBtn}>
+                <X size={20} color={Colors.textSecondary} />
+              </TouchableOpacity>
+            </View>
+
+            <View style={styles.shareLinkContainer}>
+              <Link2 size={18} color={Colors.primary} />
+              <Text style={styles.shareLinkText} numberOfLines={1}>
+                {trip.shareLink || `tripla.app/trip/${trip.id}`}
+              </Text>
+            </View>
+
+            <Text style={styles.shareNote}>
+              Anyone with this link can view the trip in read-only mode.
+            </Text>
+
+            <View style={styles.shareActionsRow}>
+              <TouchableOpacity
+                style={[styles.shareActionButton, linkCopied && styles.shareActionButtonSuccess]}
+                onPress={async () => {
+                  const link = trip.shareLink || `https://tripla.app/trip/${trip.id}`;
+                  if (!trip.shareLink) {
+                    updateTrip(trip.id, { shareLink: link });
+                    console.log('[TripDetail] Generated share link:', link);
+                  }
+                  try {
+                    await Clipboard.setStringAsync(link);
+                    setLinkCopied(true);
+                    console.log('[TripDetail] Link copied to clipboard');
+                    setTimeout(() => setLinkCopied(false), 2500);
+                  } catch (e) {
+                    console.error('[TripDetail] Failed to copy:', e);
+                    Alert.alert('Error', 'Failed to copy link');
+                  }
+                }}
+              >
+                {linkCopied ? <Check size={20} color="#fff" /> : <Copy size={20} color="#fff" />}
+                <Text style={styles.shareActionText}>{linkCopied ? 'Link copied!' : 'Copy Link'}</Text>
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                style={styles.shareActionButtonOutline}
+                onPress={async () => {
+                  const link = trip.shareLink || `https://tripla.app/trip/${trip.id}`;
+                  if (!trip.shareLink) {
+                    updateTrip(trip.id, { shareLink: link });
+                    console.log('[TripDetail] Generated share link:', link);
+                  }
+                  try {
+                    await Share.share({
+                      message: Platform.OS === 'ios'
+                        ? `Join me on ${trip.name}!`
+                        : `Join me on ${trip.name}! ${link}`,
+                      url: Platform.OS === 'ios' ? link : undefined,
+                      title: `Share Trip: ${trip.name}`,
+                    });
+                    console.log('[TripDetail] Share sheet opened');
+                  } catch (e) {
+                    console.error('[TripDetail] Share failed:', e);
+                  }
+                }}
+              >
+                <Share2 size={20} color={Colors.primary} />
+                <Text style={styles.shareActionTextOutline}>Share</Text>
+              </TouchableOpacity>
+            </View>
           </View>
         </View>
       </Modal>
@@ -1524,5 +1602,66 @@ const styles = StyleSheet.create({
     color: Colors.textMuted,
     textAlign: 'center',
     marginTop: 8,
+  },
+  shareLinkContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+    backgroundColor: Colors.background,
+    paddingHorizontal: 16,
+    paddingVertical: 14,
+    borderRadius: 14,
+    marginBottom: 12,
+  },
+  shareLinkText: {
+    flex: 1,
+    fontSize: 15,
+    color: Colors.text,
+    fontWeight: '500' as const,
+  },
+  shareNote: {
+    fontSize: 13,
+    color: Colors.textMuted,
+    marginBottom: 24,
+    lineHeight: 18,
+  },
+  shareActionsRow: {
+    flexDirection: 'row',
+    gap: 12,
+  },
+  shareActionButton: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
+    paddingVertical: 14,
+    backgroundColor: Colors.primary,
+    borderRadius: 14,
+  },
+  shareActionButtonSuccess: {
+    backgroundColor: '#2D9C5A',
+  },
+  shareActionText: {
+    fontSize: 15,
+    fontWeight: '600' as const,
+    color: '#fff',
+  },
+  shareActionButtonOutline: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
+    paddingVertical: 14,
+    backgroundColor: Colors.background,
+    borderRadius: 14,
+    borderWidth: 1,
+    borderColor: Colors.primary + '30',
+  },
+  shareActionTextOutline: {
+    fontSize: 15,
+    fontWeight: '600' as const,
+    color: Colors.primary,
   },
 });
