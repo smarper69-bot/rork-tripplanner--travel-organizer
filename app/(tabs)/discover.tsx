@@ -1,5 +1,6 @@
 import React, { useState, useMemo } from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, TextInput, Image } from 'react-native';
+import { LinearGradient } from 'expo-linear-gradient';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { Search, SlidersHorizontal, TrendingUp, MapPin, Sun, Mountain, Utensils, Compass, ChevronRight, DollarSign, Calendar, Heart, Plane, Star } from 'lucide-react-native';
@@ -50,7 +51,11 @@ function DestinationCardCompact({ destination, onPress }: DestinationCardCompact
   return (
     <TouchableOpacity style={styles.compactCard} onPress={onPress} activeOpacity={0.9}>
       <Image source={{ uri: destination.imageUrl }} style={styles.compactImage} />
-      <View style={styles.compactOverlay} />
+      <LinearGradient
+        colors={['transparent', 'rgba(0,0,0,0.15)', 'rgba(0,0,0,0.7)']}
+        locations={[0, 0.4, 1]}
+        style={StyleSheet.absoluteFillObject}
+      />
       <View style={styles.compactContent}>
         <View style={styles.compactBadge}>
           <Star size={10} color="#FFD700" fill="#FFD700" />
@@ -75,7 +80,11 @@ function DestinationCardLarge({ destination, onPress }: DestinationCardLargeProp
   return (
     <TouchableOpacity style={styles.largeCard} onPress={onPress} activeOpacity={0.9}>
       <Image source={{ uri: destination.imageUrl }} style={styles.largeImage} />
-      <View style={styles.largeOverlay} />
+      <LinearGradient
+        colors={['rgba(0,0,0,0.05)', 'rgba(0,0,0,0.15)', 'rgba(0,0,0,0.75)']}
+        locations={[0, 0.35, 1]}
+        style={StyleSheet.absoluteFillObject}
+      />
       <View style={styles.largeContent}>
         <View style={styles.largeBadgeRow}>
           <View style={styles.largeBadge}>
@@ -450,7 +459,11 @@ export default function DiscoverScreen() {
                   activeOpacity={0.9}
                 >
                   <Image source={{ uri: dest.imageUrl }} style={styles.filteredImage} />
-                  <View style={styles.filteredOverlay} />
+                  <LinearGradient
+                    colors={['transparent', 'rgba(0,0,0,0.15)', 'rgba(0,0,0,0.7)']}
+                    locations={[0, 0.4, 1]}
+                    style={StyleSheet.absoluteFillObject}
+                  />
                   <View style={styles.filteredContent}>
                     <View style={styles.filteredBadge}>
                       <Star size={10} color="#FFD700" fill="#FFD700" />
@@ -631,18 +644,20 @@ const styles = StyleSheet.create({
   largeCard: {
     width: 280,
     height: 200,
-    borderRadius: 16,
+    borderRadius: 18,
     overflow: 'hidden',
     marginRight: 12,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.15,
+    shadowRadius: 14,
+    elevation: 6,
   },
   largeImage: {
     width: '100%',
     height: '100%',
   },
-  largeOverlay: {
-    ...StyleSheet.absoluteFillObject,
-    backgroundColor: 'rgba(0,0,0,0.35)',
-  },
+
   largeContent: {
     ...StyleSheet.absoluteFillObject,
     padding: 16,
@@ -668,9 +683,12 @@ const styles = StyleSheet.create({
   largeInfo: {},
   largeCity: {
     fontSize: 24,
-    fontWeight: '700' as const,
+    fontWeight: '800' as const,
     color: '#fff',
     marginBottom: 2,
+    textShadowColor: 'rgba(0,0,0,0.3)',
+    textShadowOffset: { width: 0, height: 1 },
+    textShadowRadius: 4,
   },
   largeCountry: {
     fontSize: 14,
@@ -701,18 +719,20 @@ const styles = StyleSheet.create({
   compactCard: {
     width: 160,
     height: 200,
-    borderRadius: 14,
+    borderRadius: 16,
     overflow: 'hidden',
     marginRight: 12,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.12,
+    shadowRadius: 10,
+    elevation: 5,
   },
   compactImage: {
     width: '100%',
     height: '100%',
   },
-  compactOverlay: {
-    ...StyleSheet.absoluteFillObject,
-    backgroundColor: 'rgba(0,0,0,0.3)',
-  },
+
   compactContent: {
     ...StyleSheet.absoluteFillObject,
     padding: 12,
@@ -739,6 +759,9 @@ const styles = StyleSheet.create({
     fontWeight: '700' as const,
     color: '#fff',
     marginBottom: 2,
+    textShadowColor: 'rgba(0,0,0,0.3)',
+    textShadowOffset: { width: 0, height: 1 },
+    textShadowRadius: 3,
   },
   compactCountry: {
     fontSize: 12,
@@ -764,7 +787,7 @@ const styles = StyleSheet.create({
   rowImage: {
     width: 64,
     height: 64,
-    borderRadius: 10,
+    borderRadius: 12,
   },
   rowContent: {
     flex: 1,
@@ -808,18 +831,20 @@ const styles = StyleSheet.create({
   },
   filteredCard: {
     width: '47%',
-    height: 180,
-    borderRadius: 14,
+    height: 200,
+    borderRadius: 16,
     overflow: 'hidden',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.12,
+    shadowRadius: 10,
+    elevation: 5,
   },
   filteredImage: {
     width: '100%',
     height: '100%',
   },
-  filteredOverlay: {
-    ...StyleSheet.absoluteFillObject,
-    backgroundColor: 'rgba(0,0,0,0.3)',
-  },
+
   filteredContent: {
     ...StyleSheet.absoluteFillObject,
     padding: 12,
@@ -846,6 +871,9 @@ const styles = StyleSheet.create({
     fontWeight: '700' as const,
     color: '#fff',
     marginBottom: 2,
+    textShadowColor: 'rgba(0,0,0,0.3)',
+    textShadowOffset: { width: 0, height: 1 },
+    textShadowRadius: 3,
   },
   filteredCountry: {
     fontSize: 12,

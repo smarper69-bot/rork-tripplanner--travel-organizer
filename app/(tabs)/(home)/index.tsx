@@ -1,5 +1,6 @@
 import React, { useMemo, useRef, useEffect, useState, useCallback } from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Alert, ImageBackground, Animated, Dimensions, FlatList, NativeSyntheticEvent, NativeScrollEvent } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Alert, Animated, Dimensions, FlatList, NativeSyntheticEvent, NativeScrollEvent, Image } from 'react-native';
+import { LinearGradient } from 'expo-linear-gradient';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { Plus, Compass, Globe, MapPin, Calendar, Trash2, ChevronRight, ArrowRight, Plane } from 'lucide-react-native';
@@ -18,28 +19,28 @@ const FEATURED_DESTINATIONS = [
     city: 'Bali',
     country: 'Indonesia',
     description: 'Tropical paradise with stunning rice terraces, ancient temples, and world-class surfing.',
-    imageUrl: 'https://images.unsplash.com/photo-1537996194471-e657df975ab4?w=800&q=80',
+    imageUrl: 'https://images.unsplash.com/photo-1537996194471-e657df975ab4?w=1600&h=900&fit=crop&q=80',
   },
   {
     id: '1',
     city: 'Tokyo',
     country: 'Japan',
     description: 'A dazzling blend of ultramodern and traditional, from neon-lit skyscrapers to historic temples.',
-    imageUrl: 'https://images.unsplash.com/photo-1540959733332-eab4deabeeaf?w=800&q=80',
+    imageUrl: 'https://images.unsplash.com/photo-1540959733332-eab4deabeeaf?w=1600&h=900&fit=crop&q=80',
   },
   {
     id: '7',
     city: 'Santorini',
     country: 'Greece',
     description: 'Iconic white-washed buildings perched on cliffs overlooking the deep blue Aegean Sea.',
-    imageUrl: 'https://images.unsplash.com/photo-1613395877344-13d4a8e0d49e?w=800&q=80',
+    imageUrl: 'https://images.unsplash.com/photo-1613395877344-13d4a8e0d49e?w=1600&h=900&fit=crop&q=80',
   },
   {
     id: '5',
     city: 'Barcelona',
     country: 'Spain',
     description: "Gaudí's architectural masterpieces meet Mediterranean beaches and vibrant nightlife.",
-    imageUrl: 'https://images.unsplash.com/photo-1583422409516-2895a77efded?w=800&q=80',
+    imageUrl: 'https://images.unsplash.com/photo-1583422409516-2895a77efded?w=1600&h=900&fit=crop&q=80',
   },
 ];
 
@@ -197,29 +198,30 @@ export default function HomeScreen() {
                 onPress={() => router.push({ pathname: '/destination/[id]', params: { id: item.id } } as any)}
                 testID={`featured-card-${item.id}`}
               >
-                <ImageBackground
+                <Image
                   source={{ uri: item.imageUrl }}
-                  style={styles.featuredImage}
-                  imageStyle={styles.featuredImageRadius}
-                >
-                  <View style={styles.featuredOverlay}>
-                    <View style={styles.featuredContent}>
-                      <View style={styles.featuredTextBlock}>
-                        <Text style={styles.featuredCity}>{item.city}</Text>
-                        <Text style={styles.featuredCountry}>{item.country}</Text>
-                        <Text style={styles.featuredDescription} numberOfLines={2}>{item.description}</Text>
-                      </View>
-                      <TouchableOpacity
-                        style={styles.planButton}
-                        activeOpacity={0.85}
-                        onPress={() => router.push('/create-trip' as any)}
-                      >
-                        <Text style={styles.planButtonText}>Plan this trip</Text>
-                        <ArrowRight size={16} color="#1A1A1A" />
-                      </TouchableOpacity>
-                    </View>
+                  style={styles.featuredBgImage}
+                />
+                <LinearGradient
+                  colors={['transparent', 'rgba(0,0,0,0.1)', 'rgba(0,0,0,0.78)']}
+                  locations={[0, 0.35, 1]}
+                  style={styles.featuredGradient}
+                />
+                <View style={styles.featuredContent}>
+                  <View style={styles.featuredTextBlock}>
+                    <Text style={styles.featuredCity}>{item.city}</Text>
+                    <Text style={styles.featuredCountry}>{item.country}</Text>
+                    <Text style={styles.featuredDescription} numberOfLines={2}>{item.description}</Text>
                   </View>
-                </ImageBackground>
+                  <TouchableOpacity
+                    style={styles.planButton}
+                    activeOpacity={0.85}
+                    onPress={() => router.push('/create-trip' as any)}
+                  >
+                    <Text style={styles.planButtonText}>Plan this trip</Text>
+                    <ArrowRight size={16} color="#1A1A1A" />
+                  </TouchableOpacity>
+                </View>
               </TouchableOpacity>
             )}
           />
@@ -426,24 +428,31 @@ const styles = StyleSheet.create({
   },
   featuredCard: {
     width: CARD_WIDTH,
+    height: 240,
     marginRight: CARD_SPACING,
     borderRadius: 22,
     overflow: 'hidden',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.18,
+    shadowRadius: 16,
+    elevation: 8,
   },
-  featuredImage: {
-    height: 230,
-    justifyContent: 'flex-end',
-  },
-  featuredImageRadius: {
+  featuredBgImage: {
+    ...StyleSheet.absoluteFillObject,
+    width: '100%',
+    height: '100%',
     borderRadius: 22,
   },
-  featuredOverlay: {
-    flex: 1,
-    justifyContent: 'flex-end',
+  featuredGradient: {
+    ...StyleSheet.absoluteFillObject,
     borderRadius: 22,
-    backgroundColor: 'rgba(0,0,0,0.4)',
   },
   featuredContent: {
+    position: 'absolute' as const,
+    bottom: 0,
+    left: 0,
+    right: 0,
     padding: 20,
     gap: 14,
   },
@@ -455,6 +464,9 @@ const styles = StyleSheet.create({
     fontWeight: '800' as const,
     color: '#FFFFFF',
     lineHeight: 30,
+    textShadowColor: 'rgba(0,0,0,0.3)',
+    textShadowOffset: { width: 0, height: 1 },
+    textShadowRadius: 4,
   },
   featuredCountry: {
     fontSize: 14,
