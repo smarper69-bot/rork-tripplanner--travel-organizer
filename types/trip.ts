@@ -17,6 +17,7 @@ export interface Trip {
   itinerary: ItineraryDay[];
   packingList: PackingItem[];
   isOfflineAvailable: boolean;
+  shareLink?: string;
 }
 
 export interface Collaborator {

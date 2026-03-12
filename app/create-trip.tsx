@@ -1,10 +1,9 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, TextInput, Image } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, TextInput, Image, Alert } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter, useLocalSearchParams, Stack } from 'expo-router';
 import { MapPin, Calendar, Users, DollarSign, Camera, X } from 'lucide-react-native';
 import Colors from '@/constants/colors';
-import { openComingSoon } from '@/utils/comingSoon';
 import { useTripsStore } from '@/store/useTripsStore';
 import CalendarPicker from '@/components/CalendarPicker';
 
@@ -230,7 +229,7 @@ export default function CreateTripScreen() {
 
           <View style={styles.inputGroup}>
             <Text style={styles.label}>Invite Travelers</Text>
-            <TouchableOpacity style={styles.inputContainer} onPress={() => openComingSoon('Invite collaborators')}>
+            <TouchableOpacity style={styles.inputContainer} onPress={() => Alert.alert('Share After Creating', 'Create your trip first, then invite travelers from the trip details page.')}>
               <Users size={20} color={Colors.textMuted} />
               <Text style={[styles.inputText, styles.placeholder]}>
                 Add collaborators

@@ -1,17 +1,20 @@
-import React, { useState } from 'react';
+import React, { useState, useCallback } from 'react';
 import { 
   View, Text, StyleSheet, ScrollView, TouchableOpacity, 
-  TextInput, Image, KeyboardAvoidingView, Platform 
+  TextInput, Image, KeyboardAvoidingView, Platform,
+  Modal, Share, Alert
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useLocalSearchParams, useRouter, Stack } from 'expo-router';
 import { 
   ArrowLeft, Send, UserPlus, ThumbsUp, ThumbsDown, 
-  MessageCircle, Crown, Edit3, Eye, MoreVertical
+  MessageCircle, Crown, Edit3, Eye, MoreVertical,
+  Link2, Copy, Share2, X, Check
 } from 'lucide-react-native';
+import * as Clipboard from 'expo-clipboard';
 import Colors from '@/constants/colors';
-import { openComingSoon } from '@/utils/comingSoon';
 import { mockTrips, mockComments } from '@/mocks/trips';
+import { useTripsStore } from '@/store/useTripsStore';
 import { Collaborator, GroupComment } from '@/types/trip';
 
 export default function CollaborationScreen() {
@@ -20,8 +23,14 @@ export default function CollaborationScreen() {
   const [activeTab, setActiveTab] = useState<'members' | 'chat' | 'votes'>('chat');
   const [newComment, setNewComment] = useState('');
   const [comments, setComments] = useState<GroupComment[]>(mockComments);
+  const [shareModalVisible, setShareModalVisible] = useState(false);
+  const [linkCopied, setLinkCopied] = useState(false);
 
-  const trip = mockTrips.find(t => t.id === id);
+  const storeTrips = useTripsStore((s) => s.trips);
+  const updateTrip = useTripsStore((s) => s.updateTrip);
+
+  const storedTrip = storeTrips.find(t => t.id === id);
+  const trip = storedTrip || mockTrips.find(t => t.id === id);
 
   if (!trip) {
     return (
@@ -30,6 +39,53 @@ export default function CollaborationScreen() {
       </View>
     );
   }
+
+  const getShareLink = useCallback(() => {
+    if (storedTrip?.shareLink) {
+      return storedTrip.shareLink;
+    }
+    const link = `https://tripla.app/trip/${id}`;
+    if (storedTrip) {
+      updateTrip(id!, { shareLink: link });
+      console.log('[Collaboration] Generated share link:', link);
+    }
+    return link;
+  }, [storedTrip, id, updateTrip]);
+
+  const handleOpenShareModal = useCallback(() => {
+    setLinkCopied(false);
+    setShareModalVisible(true);
+  }, []);
+
+  const handleCopyLink = useCallback(async () => {
+    const link = getShareLink();
+    try {
+      await Clipboard.setStringAsync(link);
+      setLinkCopied(true);
+      console.log('[Collaboration] Link copied to clipboard');
+      setTimeout(() => setLinkCopied(false), 2500);
+    } catch (e) {
+      console.error('[Collaboration] Failed to copy:', e);
+      Alert.alert('Error', 'Failed to copy link');
+    }
+  }, [getShareLink]);
+
+  const handleShare = useCallback(async () => {
+    const link = getShareLink();
+    const tripName = trip?.name ?? 'a trip';
+    try {
+      await Share.share({
+        message: Platform.OS === 'ios'
+          ? `Join me on ${tripName}!`
+          : `Join me on ${tripName}! ${link}`,
+        url: Platform.OS === 'ios' ? link : undefined,
+        title: `Share Trip: ${tripName}`,
+      });
+      console.log('[Collaboration] Share sheet opened');
+    } catch (e) {
+      console.error('[Collaboration] Share failed:', e);
+    }
+  }, [getShareLink, trip?.name]);
 
   const handleSendComment = () => {
     if (!newComment.trim()) return;
@@ -73,7 +129,7 @@ export default function CollaborationScreen() {
     <View style={styles.tabContent}>
       <View style={styles.membersHeader}>
         <Text style={styles.membersCount}>{trip.collaborators.length} members</Text>
-        <TouchableOpacity style={styles.inviteButton} onPress={() => openComingSoon('Invite collaborators')}>
+        <TouchableOpacity style={styles.inviteButton} onPress={handleOpenShareModal}>
           <UserPlus size={18} color={Colors.textLight} />
           <Text style={styles.inviteButtonText}>Invite</Text>
         </TouchableOpacity>
@@ -90,7 +146,7 @@ export default function CollaborationScreen() {
             </View>
           </View>
           {member.role !== 'owner' && (
-            <TouchableOpacity style={styles.memberOptions} onPress={() => openComingSoon('Member settings')}>
+            <TouchableOpacity style={styles.memberOptions} onPress={() => Alert.alert('Coming Soon', 'Member settings is being built.')}>
               <MoreVertical size={20} color={Colors.textMuted} />
             </TouchableOpacity>
           )}
@@ -246,6 +302,62 @@ export default function CollaborationScreen() {
         {activeTab === 'members' && renderMembersTab()}
         {activeTab === 'chat' && renderChatTab()}
         {activeTab === 'votes' && renderVotesTab()}
+
+        <Modal
+          visible={shareModalVisible}
+          transparent
+          animationType="slide"
+          onRequestClose={() => setShareModalVisible(false)}
+        >
+          <View style={styles.modalOverlay}>
+            <View style={styles.modalContent}>
+              <View style={styles.modalHeader}>
+                <Text style={styles.modalTitle}>Share Trip</Text>
+                <TouchableOpacity
+                  style={styles.modalCloseButton}
+                  onPress={() => setShareModalVisible(false)}
+                >
+                  <X size={20} color={Colors.text} />
+                </TouchableOpacity>
+              </View>
+
+              <View style={styles.shareLinkContainer}>
+                <Link2 size={18} color={Colors.primary} />
+                <Text style={styles.shareLinkText} numberOfLines={1}>
+                  {getShareLink()}
+                </Text>
+              </View>
+
+              <Text style={styles.shareNote}>
+                Anyone with this link can view the trip in read-only mode.
+              </Text>
+
+              <View style={styles.shareActions}>
+                <TouchableOpacity
+                  style={[styles.shareActionButton, linkCopied && styles.shareActionButtonSuccess]}
+                  onPress={handleCopyLink}
+                >
+                  {linkCopied ? (
+                    <Check size={20} color="#fff" />
+                  ) : (
+                    <Copy size={20} color="#fff" />
+                  )}
+                  <Text style={styles.shareActionText}>
+                    {linkCopied ? 'Copied!' : 'Copy Link'}
+                  </Text>
+                </TouchableOpacity>
+
+                <TouchableOpacity
+                  style={styles.shareActionButtonOutline}
+                  onPress={handleShare}
+                >
+                  <Share2 size={20} color={Colors.primary} />
+                  <Text style={styles.shareActionTextOutline}>Share</Text>
+                </TouchableOpacity>
+              </View>
+            </View>
+          </View>
+        </Modal>
       </SafeAreaView>
     </>
   );
@@ -552,5 +664,97 @@ const styles = StyleSheet.create({
   emptyVotesSubtext: {
     fontSize: 14,
     color: Colors.textSecondary,
+  },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.5)',
+    justifyContent: 'flex-end',
+  },
+  modalContent: {
+    backgroundColor: Colors.background,
+    borderTopLeftRadius: 24,
+    borderTopRightRadius: 24,
+    padding: 24,
+    paddingBottom: 40,
+  },
+  modalHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 24,
+  },
+  modalTitle: {
+    fontSize: 20,
+    fontWeight: '700' as const,
+    color: Colors.text,
+  },
+  modalCloseButton: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: Colors.surface,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  shareLinkContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+    backgroundColor: Colors.surface,
+    paddingHorizontal: 16,
+    paddingVertical: 14,
+    borderRadius: 14,
+    marginBottom: 12,
+  },
+  shareLinkText: {
+    flex: 1,
+    fontSize: 15,
+    color: Colors.text,
+    fontWeight: '500' as const,
+  },
+  shareNote: {
+    fontSize: 13,
+    color: Colors.textMuted,
+    marginBottom: 24,
+    lineHeight: 18,
+  },
+  shareActions: {
+    flexDirection: 'row',
+    gap: 12,
+  },
+  shareActionButton: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
+    paddingVertical: 14,
+    backgroundColor: Colors.primary,
+    borderRadius: 14,
+  },
+  shareActionButtonSuccess: {
+    backgroundColor: '#2D9C5A',
+  },
+  shareActionText: {
+    fontSize: 15,
+    fontWeight: '600' as const,
+    color: '#fff',
+  },
+  shareActionButtonOutline: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
+    paddingVertical: 14,
+    backgroundColor: Colors.surface,
+    borderRadius: 14,
+    borderWidth: 1,
+    borderColor: Colors.primary + '30',
+  },
+  shareActionTextOutline: {
+    fontSize: 15,
+    fontWeight: '600' as const,
+    color: Colors.primary,
   },
 });
