@@ -657,6 +657,7 @@ export default function TripDetailScreen() {
                   <TouchableOpacity style={styles.actionButton} onPress={() => {
                     setLinkCopied(false);
                     const link = generateInviteLink(trip.id);
+                    console.log('[TripDetail] Share button pressed. Generated URL:', link, 'tripId:', trip.id);
                     setInviteLink(link);
                     setShowInviteModal(true);
                   }}>
@@ -701,6 +702,7 @@ export default function TripDetailScreen() {
                   onPress={() => {
                     setLinkCopied(false);
                     const link = generateInviteLink(trip.id);
+                    console.log('[TripDetail] Invite button pressed. Generated URL:', link, 'tripId:', trip.id);
                     setInviteLink(link);
                     setShowInviteModal(true);
                   }}
@@ -917,7 +919,7 @@ export default function TripDetailScreen() {
             <View style={styles.shareLinkContainer}>
               <Link2 size={18} color={Colors.primary} />
               <Text style={styles.shareLinkText} numberOfLines={1}>
-                {inviteLink || trip.inviteLink || `tripla.app/join/${trip.id}`}
+                {(inviteLink || trip.inviteLink || `https://tripla.app/join/${trip.id}`).replace('https://', '')}
               </Text>
             </View>
 
@@ -925,11 +927,13 @@ export default function TripDetailScreen() {
               <TouchableOpacity
                 style={[styles.shareActionButton, linkCopied && styles.shareActionButtonSuccess]}
                 onPress={async () => {
-                  const link = inviteLink || generateInviteLink(trip.id);
+                  const rawLink = inviteLink || generateInviteLink(trip.id);
+                  const link = rawLink.startsWith('http') ? rawLink : `https://${rawLink}`;
+                  console.log('[TripDetail] Copy link pressed. Full URL:', link);
                   try {
                     await Clipboard.setStringAsync(link);
                     setLinkCopied(true);
-                    console.log('[TripDetail] Invite link copied');
+                    console.log('[TripDetail] Invite link copied to clipboard:', link);
                     setTimeout(() => setLinkCopied(false), 2500);
                   } catch (e) {
                     console.error('[TripDetail] Failed to copy:', e);
@@ -944,7 +948,9 @@ export default function TripDetailScreen() {
               <TouchableOpacity
                 style={styles.shareActionButtonOutline}
                 onPress={async () => {
-                  const link = inviteLink || generateInviteLink(trip.id);
+                  const rawLink = inviteLink || generateInviteLink(trip.id);
+                  const link = rawLink.startsWith('http') ? rawLink : `https://${rawLink}`;
+                  console.log('[TripDetail] Share button pressed. Full URL:', link);
                   try {
                     await Share.share({
                       message: Platform.OS === 'ios'
@@ -953,7 +959,7 @@ export default function TripDetailScreen() {
                       url: Platform.OS === 'ios' ? link : undefined,
                       title: `Join Trip: ${trip.name}`,
                     });
-                    console.log('[TripDetail] Share sheet opened');
+                    console.log('[TripDetail] Share sheet opened with URL:', link);
                   } catch (e) {
                     console.error('[TripDetail] Share failed:', e);
                   }
