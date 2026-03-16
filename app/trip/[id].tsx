@@ -11,7 +11,8 @@ import {
   Users, Plus, Clock, DollarSign,
   Hotel, Camera,
   Flower2, Church, Palmtree, Mountain, Sun, Landmark, Trees, Snowflake, Tent,
-  X, Trash2, ExternalLink, Plane, Link2, Copy, Check
+  X, Trash2, ExternalLink, Plane, Link2, Copy, Check,
+  Crown, UserPlus, UserMinus
 } from 'lucide-react-native';
 import * as ImagePicker from 'expo-image-picker';
 import * as Clipboard from 'expo-clipboard';
@@ -46,6 +47,8 @@ export default function TripDetailScreen() {
   const allMemories = useTripsStore((s) => s.memories);
   const updateTrip = useTripsStore((s) => s.updateTrip);
   const deleteTripAction = useTripsStore((s) => s.deleteTrip);
+  const generateInviteLink = useTripsStore((s) => s.generateInviteLink);
+  const removeCollaborator = useTripsStore((s) => s.removeCollaborator);
   const addItineraryItem = useTripsStore((s) => s.addItineraryItem);
   const deleteItineraryItem = useTripsStore((s) => s.deleteItineraryItem);
   const addStay = useTripsStore((s) => s.addStay);
@@ -77,8 +80,9 @@ export default function TripDetailScreen() {
   const [budgetTotalInput, setBudgetTotalInput] = useState('');
   const [budgetSpentInput, setBudgetSpentInput] = useState('');
 
-  const [showShareModal, setShowShareModal] = useState(false);
+  const [showInviteModal, setShowInviteModal] = useState(false);
   const [linkCopied, setLinkCopied] = useState(false);
+  const [inviteLink, setInviteLink] = useState('');
 
   const getIconComponent = (iconName: TripIcon) => {
     const iconMap: Record<TripIcon, React.ComponentType<{ size: number; color: string }>> = {
@@ -650,7 +654,12 @@ export default function TripDetailScreen() {
                   <TouchableOpacity style={styles.actionButton} onPress={() => router.push({ pathname: '/edit-trip', params: { id: trip.id } } as any)}>
                     <Edit3 size={18} color={Colors.text} />
                   </TouchableOpacity>
-                  <TouchableOpacity style={styles.actionButton} onPress={() => { setLinkCopied(false); setShowShareModal(true); }}>
+                  <TouchableOpacity style={styles.actionButton} onPress={() => {
+                    setLinkCopied(false);
+                    const link = generateInviteLink(trip.id);
+                    setInviteLink(link);
+                    setShowInviteModal(true);
+                  }}>
                     <Share2 size={18} color={Colors.text} />
                   </TouchableOpacity>
                   <TouchableOpacity style={styles.actionButton} onPress={handleDeleteTrip} testID="trip-detail-delete">
@@ -684,23 +693,63 @@ export default function TripDetailScreen() {
           </View>
 
           <View style={styles.content}>
-            <View style={styles.collaboratorsSection}>
-              <Text style={styles.sectionLabel}>Travelers</Text>
-              <View style={styles.collaboratorsRow}>
-                {trip.collaborators.map((collab, index) => (
-                  <Image
-                    key={collab.id}
-                    source={{ uri: collab.avatar }}
-                    style={[styles.collaboratorAvatar, { marginLeft: index > 0 ? -12 : 0 }]}
-                  />
-                ))}
-                <TouchableOpacity 
-                  style={styles.addCollaborator}
-                  onPress={() => router.push(`/collaboration/${trip.id}` as any)}
+            <View style={styles.collaboratorsFullSection}>
+              <View style={styles.collabHeader}>
+                <Text style={styles.collabHeaderTitle}>Travelers</Text>
+                <TouchableOpacity
+                  style={styles.inviteSmallBtn}
+                  onPress={() => {
+                    setLinkCopied(false);
+                    const link = generateInviteLink(trip.id);
+                    setInviteLink(link);
+                    setShowInviteModal(true);
+                  }}
                 >
-                  <Users size={16} color={Colors.primary} />
+                  <UserPlus size={14} color="#fff" />
+                  <Text style={styles.inviteSmallBtnText}>Invite</Text>
                 </TouchableOpacity>
               </View>
+              {trip.collaborators.map((collab) => (
+                <View key={collab.id} style={styles.collabMemberRow}>
+                  <Image source={{ uri: collab.avatar }} style={styles.collabMemberAvatar} />
+                  <View style={styles.collabMemberInfo}>
+                    <Text style={styles.collabMemberName}>{collab.name}</Text>
+                    <View style={styles.collabRoleBadge}>
+                      {collab.role === 'owner' && <Crown size={11} color="#D97706" />}
+                      <Text style={[
+                        styles.collabRoleText,
+                        collab.role === 'owner' && { color: '#D97706' },
+                      ]}>
+                        {collab.role === 'owner' ? 'Owner' : collab.role === 'editor' ? 'Can edit' : 'View only'}
+                      </Text>
+                    </View>
+                  </View>
+                  {collab.role !== 'owner' && (
+                    <TouchableOpacity
+                      style={styles.collabRemoveBtn}
+                      onPress={() => {
+                        Alert.alert(
+                          'Remove Traveler',
+                          `Remove ${collab.name} from this trip?`,
+                          [
+                            { text: 'Cancel', style: 'cancel' },
+                            { text: 'Remove', style: 'destructive', onPress: () => removeCollaborator(trip.id, collab.id) },
+                          ]
+                        );
+                      }}
+                    >
+                      <UserMinus size={16} color="#EF4444" />
+                    </TouchableOpacity>
+                  )}
+                </View>
+              ))}
+              <TouchableOpacity
+                style={styles.collabGroupBtn}
+                onPress={() => router.push(`/collaboration/${trip.id}` as any)}
+              >
+                <Users size={16} color={Colors.primary} />
+                <Text style={styles.collabGroupBtnText}>Group Planning</Text>
+              </TouchableOpacity>
             </View>
 
             <View style={styles.tabsContainer}>
@@ -851,40 +900,36 @@ export default function TripDetailScreen() {
         </View>
       </Modal>
 
-      <Modal visible={showShareModal} transparent animationType="slide" onRequestClose={() => setShowShareModal(false)}>
+      <Modal visible={showInviteModal} transparent animationType="slide" onRequestClose={() => setShowInviteModal(false)}>
         <View style={styles.modalOverlay}>
           <View style={styles.modalContent}>
             <View style={styles.modalHeader}>
-              <Text style={styles.modalTitle}>Share Trip</Text>
-              <TouchableOpacity onPress={() => setShowShareModal(false)} style={styles.modalCloseBtn}>
+              <Text style={styles.modalTitle}>Invite Travelers</Text>
+              <TouchableOpacity onPress={() => setShowInviteModal(false)} style={styles.modalCloseBtn}>
                 <X size={20} color={Colors.textSecondary} />
               </TouchableOpacity>
             </View>
 
+            <Text style={styles.inviteDesc}>
+              Share this invite link. Anyone who opens it can join your trip as a collaborator.
+            </Text>
+
             <View style={styles.shareLinkContainer}>
               <Link2 size={18} color={Colors.primary} />
               <Text style={styles.shareLinkText} numberOfLines={1}>
-                {trip.shareLink || `tripla.app/trip/${trip.id}`}
+                {inviteLink || trip.inviteLink || `tripla.app/invite/...`}
               </Text>
             </View>
-
-            <Text style={styles.shareNote}>
-              Anyone with this link can view the trip in read-only mode.
-            </Text>
 
             <View style={styles.shareActionsRow}>
               <TouchableOpacity
                 style={[styles.shareActionButton, linkCopied && styles.shareActionButtonSuccess]}
                 onPress={async () => {
-                  const link = trip.shareLink || `https://tripla.app/trip/${trip.id}`;
-                  if (!trip.shareLink) {
-                    updateTrip(trip.id, { shareLink: link });
-                    console.log('[TripDetail] Generated share link:', link);
-                  }
+                  const link = inviteLink || generateInviteLink(trip.id);
                   try {
                     await Clipboard.setStringAsync(link);
                     setLinkCopied(true);
-                    console.log('[TripDetail] Link copied to clipboard');
+                    console.log('[TripDetail] Invite link copied');
                     setTimeout(() => setLinkCopied(false), 2500);
                   } catch (e) {
                     console.error('[TripDetail] Failed to copy:', e);
@@ -893,24 +938,20 @@ export default function TripDetailScreen() {
                 }}
               >
                 {linkCopied ? <Check size={20} color="#fff" /> : <Copy size={20} color="#fff" />}
-                <Text style={styles.shareActionText}>{linkCopied ? 'Link copied!' : 'Copy Link'}</Text>
+                <Text style={styles.shareActionText}>{linkCopied ? 'Copied!' : 'Copy Link'}</Text>
               </TouchableOpacity>
 
               <TouchableOpacity
                 style={styles.shareActionButtonOutline}
                 onPress={async () => {
-                  const link = trip.shareLink || `https://tripla.app/trip/${trip.id}`;
-                  if (!trip.shareLink) {
-                    updateTrip(trip.id, { shareLink: link });
-                    console.log('[TripDetail] Generated share link:', link);
-                  }
+                  const link = inviteLink || generateInviteLink(trip.id);
                   try {
                     await Share.share({
                       message: Platform.OS === 'ios'
-                        ? `Join me on ${trip.name}!`
-                        : `Join me on ${trip.name}! ${link}`,
+                        ? `Join my trip "${trip.name}" on Tripla!`
+                        : `Join my trip "${trip.name}" on Tripla! ${link}`,
                       url: Platform.OS === 'ios' ? link : undefined,
-                      title: `Share Trip: ${trip.name}`,
+                      title: `Join Trip: ${trip.name}`,
                     });
                     console.log('[TripDetail] Share sheet opened');
                   } catch (e) {
@@ -922,6 +963,10 @@ export default function TripDetailScreen() {
                 <Text style={styles.shareActionTextOutline}>Share</Text>
               </TouchableOpacity>
             </View>
+
+            <Text style={styles.shareNote}>
+              Collaborators can view and edit the itinerary, stays, budget, and more.
+            </Text>
           </View>
         </View>
       </Modal>
@@ -1076,38 +1121,91 @@ const styles = StyleSheet.create({
     padding: 20,
     paddingBottom: 40,
   },
-  collaboratorsSection: {
+  collaboratorsFullSection: {
+    backgroundColor: Colors.surface,
+    borderRadius: 16,
+    padding: 16,
+    marginBottom: 20,
+  },
+  collabHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 20,
+    marginBottom: 14,
   },
-  sectionLabel: {
-    fontSize: 14,
-    fontWeight: '500' as const,
-    color: Colors.textSecondary,
+  collabHeaderTitle: {
+    fontSize: 15,
+    fontWeight: '600' as const,
+    color: Colors.text,
   },
-  collaboratorsRow: {
+  inviteSmallBtn: {
     flexDirection: 'row',
     alignItems: 'center',
+    gap: 5,
+    paddingHorizontal: 12,
+    paddingVertical: 7,
+    backgroundColor: Colors.primary,
+    borderRadius: 8,
   },
-  collaboratorAvatar: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
-    borderWidth: 2,
-    borderColor: Colors.background,
+  inviteSmallBtnText: {
+    fontSize: 12,
+    fontWeight: '600' as const,
+    color: '#fff',
   },
-  addCollaborator: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
-    backgroundColor: Colors.primary + '15',
+  collabMemberRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: 8,
+    borderBottomWidth: 1,
+    borderBottomColor: Colors.borderLight,
+  },
+  collabMemberAvatar: {
+    width: 38,
+    height: 38,
+    borderRadius: 19,
+    marginRight: 12,
+    backgroundColor: Colors.borderLight,
+  },
+  collabMemberInfo: {
+    flex: 1,
+  },
+  collabMemberName: {
+    fontSize: 15,
+    fontWeight: '500' as const,
+    color: Colors.text,
+  },
+  collabRoleBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    marginTop: 2,
+  },
+  collabRoleText: {
+    fontSize: 12,
+    color: Colors.textMuted,
+  },
+  collabRemoveBtn: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    backgroundColor: '#FEE2E2',
     justifyContent: 'center',
     alignItems: 'center',
-    marginLeft: -12,
-    borderWidth: 2,
-    borderColor: Colors.background,
+  },
+  collabGroupBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
+    paddingVertical: 12,
+    marginTop: 12,
+    backgroundColor: Colors.background,
+    borderRadius: 10,
+  },
+  collabGroupBtnText: {
+    fontSize: 14,
+    fontWeight: '500' as const,
+    color: Colors.primary,
   },
   tabsContainer: {
     marginBottom: 20,
@@ -1622,8 +1720,15 @@ const styles = StyleSheet.create({
   shareNote: {
     fontSize: 13,
     color: Colors.textMuted,
-    marginBottom: 24,
+    marginTop: 16,
     lineHeight: 18,
+    textAlign: 'center',
+  },
+  inviteDesc: {
+    fontSize: 14,
+    color: Colors.textSecondary,
+    marginBottom: 16,
+    lineHeight: 20,
   },
   shareActionsRow: {
     flexDirection: 'row',

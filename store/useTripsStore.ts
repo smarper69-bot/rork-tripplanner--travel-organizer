@@ -1,4 +1,5 @@
 import { create } from 'zustand';
+import { combine } from 'zustand/middleware';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Trip, StoredItineraryItem, StoredStay, StoredMemory } from '@/types/trip';
 
@@ -19,29 +20,6 @@ interface PersistedData {
   itineraryItems: StoredItineraryItem[];
   stays: StoredStay[];
   memories: StoredMemory[];
-}
-
-interface TripsState {
-  trips: Trip[];
-  itineraryItems: StoredItineraryItem[];
-  stays: StoredStay[];
-  memories: StoredMemory[];
-  isHydrated: boolean;
-
-  hydrate: () => Promise<void>;
-  createTrip: (draft: TripDraft) => string;
-  updateTrip: (tripId: string, patch: Partial<Trip>) => void;
-  deleteTrip: (tripId: string) => void;
-
-  addItineraryItem: (tripId: string, draft: Omit<StoredItineraryItem, 'id' | 'tripId'>) => void;
-  updateItineraryItem: (itemId: string, patch: Partial<StoredItineraryItem>) => void;
-  deleteItineraryItem: (itemId: string) => void;
-
-  addStay: (tripId: string, draft: Omit<StoredStay, 'id' | 'tripId'>) => void;
-  deleteStay: (stayId: string) => void;
-
-  addMemory: (tripId: string, draft: Omit<StoredMemory, 'id' | 'tripId' | 'createdAt'>) => void;
-  deleteMemory: (memoryId: string) => void;
 }
 
 const generateId = () => {
@@ -74,182 +52,241 @@ const computeStatus = (startDate?: string, endDate?: string): Trip['status'] => 
   return 'upcoming';
 };
 
-const persist = async (state: PersistedData) => {
+const persistData = async (data: PersistedData) => {
   try {
-    await AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(state));
-    console.log('[TripsStore] Persisted', state.trips.length, 'trips,', state.itineraryItems.length, 'itinerary items,', state.stays.length, 'stays,', state.memories.length, 'memories');
+    await AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+    console.log('[TripsStore] Persisted', data.trips.length, 'trips');
   } catch (e) {
     console.error('[TripsStore] Failed to persist:', e);
   }
 };
 
-const getPersistedData = (state: TripsState): PersistedData => ({
-  trips: state.trips,
-  itineraryItems: state.itineraryItems,
-  stays: state.stays,
-  memories: state.memories,
-});
+export const useTripsStore = create(
+  combine(
+    {
+      trips: [] as Trip[],
+      itineraryItems: [] as StoredItineraryItem[],
+      stays: [] as StoredStay[],
+      memories: [] as StoredMemory[],
+      isHydrated: false,
+    },
+    (set, get) => {
+      const toData = (): PersistedData => ({
+        trips: get().trips,
+        itineraryItems: get().itineraryItems,
+        stays: get().stays,
+        memories: get().memories,
+      });
 
-export const useTripsStore = create<TripsState>((set, get) => ({
-  trips: [],
-  itineraryItems: [],
-  stays: [],
-  memories: [],
-  isHydrated: false,
-
-  hydrate: async () => {
-    try {
-      const raw = await AsyncStorage.getItem(STORAGE_KEY);
-      if (raw) {
-        const parsed = JSON.parse(raw);
-        if (Array.isArray(parsed)) {
-          console.log('[TripsStore] Hydrated legacy format:', parsed.length, 'trips');
-          set({ trips: parsed as Trip[], itineraryItems: [], stays: [], memories: [], isHydrated: true });
-        } else {
-          const data = parsed as PersistedData;
-          console.log('[TripsStore] Hydrated', data.trips?.length ?? 0, 'trips,', data.itineraryItems?.length ?? 0, 'itinerary items,', data.stays?.length ?? 0, 'stays,', data.memories?.length ?? 0, 'memories');
-          set({
-            trips: data.trips ?? [],
-            itineraryItems: data.itineraryItems ?? [],
-            stays: data.stays ?? [],
-            memories: data.memories ?? [],
-            isHydrated: true,
-          });
-        }
-      } else {
-        console.log('[TripsStore] No stored data found');
-        set({ isHydrated: true });
-      }
-    } catch (e) {
-      console.error('[TripsStore] Failed to hydrate:', e);
-      set({ isHydrated: true });
-    }
-  },
-
-  createTrip: (draft: TripDraft) => {
-    const id = generateId();
-    const iconPick = pickIcon(get().trips.length);
-    const now = new Date().toISOString();
-
-    const status = computeStatus(draft.startDate, draft.endDate);
-
-    const newTrip: Trip = {
-      id,
-      name: draft.title,
-      destination: draft.destinationCity,
-      country: draft.destinationCountry || '',
-      icon: iconPick.icon,
-      iconColor: iconPick.color,
-      startDate: draft.startDate || now,
-      endDate: draft.endDate || now,
-      status,
-      collaborators: [
-        {
-          id: 'self',
-          name: 'You',
-          avatar: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=100',
-          role: 'owner',
+      return {
+        hydrate: async () => {
+          try {
+            const raw = await AsyncStorage.getItem(STORAGE_KEY);
+            if (raw) {
+              const parsed = JSON.parse(raw);
+              if (Array.isArray(parsed)) {
+                set({ trips: parsed as Trip[], itineraryItems: [], stays: [], memories: [], isHydrated: true });
+              } else {
+                const data = parsed as PersistedData;
+                set({
+                  trips: data.trips ?? [],
+                  itineraryItems: data.itineraryItems ?? [],
+                  stays: data.stays ?? [],
+                  memories: data.memories ?? [],
+                  isHydrated: true,
+                });
+              }
+            } else {
+              set({ isHydrated: true });
+            }
+          } catch (e) {
+            console.error('[TripsStore] Failed to hydrate:', e);
+            set({ isHydrated: true });
+          }
         },
-      ],
-      totalBudget: draft.totalBudget || 0,
-      spentBudget: 0,
-      currency: 'USD',
-      itinerary: [],
-      packingList: [],
-      isOfflineAvailable: false,
-    };
 
-    const updated = [newTrip, ...get().trips];
-    set({ trips: updated });
-    persist(getPersistedData({ ...get(), trips: updated }));
-    console.log('[TripsStore] Created trip:', id, draft.title);
-    return id;
-  },
+        createTrip: (draft: TripDraft) => {
+          const id = generateId();
+          const iconPick = pickIcon(get().trips.length);
+          const now = new Date().toISOString();
+          const status = computeStatus(draft.startDate, draft.endDate);
 
-  updateTrip: (tripId: string, patch: Partial<Trip>) => {
-    const updated = get().trips.map((t) =>
-      t.id === tripId ? { ...t, ...patch } : t
-    );
-    set({ trips: updated });
-    persist(getPersistedData({ ...get(), trips: updated }));
-    console.log('[TripsStore] Updated trip:', tripId);
-  },
+          const newTrip: Trip = {
+            id,
+            name: draft.title,
+            destination: draft.destinationCity,
+            country: draft.destinationCountry || '',
+            icon: iconPick.icon,
+            iconColor: iconPick.color,
+            startDate: draft.startDate || now,
+            endDate: draft.endDate || now,
+            status,
+            collaborators: [
+              {
+                id: 'self',
+                name: 'You',
+                avatar: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=100',
+                role: 'owner',
+              },
+            ],
+            totalBudget: draft.totalBudget || 0,
+            spentBudget: 0,
+            currency: 'USD',
+            itinerary: [],
+            packingList: [],
+            isOfflineAvailable: false,
+            ownerId: 'self',
+            ownerName: 'You',
+          };
 
-  deleteTrip: (tripId: string) => {
-    const state = get();
-    const trips = state.trips.filter((t) => t.id !== tripId);
-    const itineraryItems = state.itineraryItems.filter((i) => i.tripId !== tripId);
-    const stays = state.stays.filter((s) => s.tripId !== tripId);
-    const memories = state.memories.filter((m) => m.tripId !== tripId);
-    set({ trips, itineraryItems, stays, memories });
-    persist({ trips, itineraryItems, stays, memories });
-    console.log('[TripsStore] Deleted trip:', tripId);
-  },
+          const trips = [newTrip, ...get().trips];
+          set({ trips });
+          void persistData({ ...toData(), trips });
+          console.log('[TripsStore] Created trip:', id, draft.title);
+          return id;
+        },
 
-  addItineraryItem: (tripId, draft) => {
-    const item: StoredItineraryItem = {
-      id: generateId(),
-      tripId,
-      ...draft,
-    };
-    const updated = [...get().itineraryItems, item];
-    set({ itineraryItems: updated });
-    persist(getPersistedData({ ...get(), itineraryItems: updated }));
-    console.log('[TripsStore] Added itinerary item:', item.id, 'to trip:', tripId);
-  },
+        updateTrip: (tripId: string, patch: Partial<Trip>) => {
+          const trips = get().trips.map((t) => (t.id === tripId ? { ...t, ...patch } : t));
+          set({ trips });
+          void persistData({ ...toData(), trips });
+          console.log('[TripsStore] Updated trip:', tripId);
+        },
 
-  updateItineraryItem: (itemId, patch) => {
-    const updated = get().itineraryItems.map((i) =>
-      i.id === itemId ? { ...i, ...patch } : i
-    );
-    set({ itineraryItems: updated });
-    persist(getPersistedData({ ...get(), itineraryItems: updated }));
-    console.log('[TripsStore] Updated itinerary item:', itemId);
-  },
+        deleteTrip: (tripId: string) => {
+          const s = get();
+          const trips = s.trips.filter((t) => t.id !== tripId);
+          const itineraryItems = s.itineraryItems.filter((i) => i.tripId !== tripId);
+          const stays = s.stays.filter((st) => st.tripId !== tripId);
+          const memories = s.memories.filter((m) => m.tripId !== tripId);
+          set({ trips, itineraryItems, stays, memories });
+          void persistData({ trips, itineraryItems, stays, memories });
+          console.log('[TripsStore] Deleted trip:', tripId);
+        },
 
-  deleteItineraryItem: (itemId) => {
-    const updated = get().itineraryItems.filter((i) => i.id !== itemId);
-    set({ itineraryItems: updated });
-    persist(getPersistedData({ ...get(), itineraryItems: updated }));
-    console.log('[TripsStore] Deleted itinerary item:', itemId);
-  },
+        addItineraryItem: (tripId: string, draft: Omit<StoredItineraryItem, 'id' | 'tripId'>) => {
+          const item: StoredItineraryItem = { id: generateId(), tripId, ...draft };
+          const itineraryItems = [...get().itineraryItems, item];
+          set({ itineraryItems });
+          void persistData({ ...toData(), itineraryItems });
+          console.log('[TripsStore] Added itinerary item:', item.id);
+        },
 
-  addStay: (tripId, draft) => {
-    const stay: StoredStay = {
-      id: generateId(),
-      tripId,
-      ...draft,
-    };
-    const updated = [...get().stays, stay];
-    set({ stays: updated });
-    persist(getPersistedData({ ...get(), stays: updated }));
-    console.log('[TripsStore] Added stay:', stay.id, 'to trip:', tripId);
-  },
+        updateItineraryItem: (itemId: string, patch: Partial<StoredItineraryItem>) => {
+          const itineraryItems = get().itineraryItems.map((i) => (i.id === itemId ? { ...i, ...patch } : i));
+          set({ itineraryItems });
+          void persistData({ ...toData(), itineraryItems });
+        },
 
-  deleteStay: (stayId) => {
-    const updated = get().stays.filter((s) => s.id !== stayId);
-    set({ stays: updated });
-    persist(getPersistedData({ ...get(), stays: updated }));
-    console.log('[TripsStore] Deleted stay:', stayId);
-  },
+        deleteItineraryItem: (itemId: string) => {
+          const itineraryItems = get().itineraryItems.filter((i) => i.id !== itemId);
+          set({ itineraryItems });
+          void persistData({ ...toData(), itineraryItems });
+        },
 
-  addMemory: (tripId, draft) => {
-    const memory: StoredMemory = {
-      id: generateId(),
-      tripId,
-      ...draft,
-      createdAt: new Date().toISOString(),
-    };
-    const updated = [...get().memories, memory];
-    set({ memories: updated });
-    persist(getPersistedData({ ...get(), memories: updated }));
-    console.log('[TripsStore] Added memory:', memory.id, 'to trip:', tripId);
-  },
+        addStay: (tripId: string, draft: Omit<StoredStay, 'id' | 'tripId'>) => {
+          const stay: StoredStay = { id: generateId(), tripId, ...draft };
+          const stays = [...get().stays, stay];
+          set({ stays });
+          void persistData({ ...toData(), stays });
+          console.log('[TripsStore] Added stay:', stay.id);
+        },
 
-  deleteMemory: (memoryId) => {
-    const updated = get().memories.filter((m) => m.id !== memoryId);
-    set({ memories: updated });
-    persist(getPersistedData({ ...get(), memories: updated }));
-    console.log('[TripsStore] Deleted memory:', memoryId);
-  },
-}));
+        deleteStay: (stayId: string) => {
+          const stays = get().stays.filter((s) => s.id !== stayId);
+          set({ stays });
+          void persistData({ ...toData(), stays });
+        },
+
+        addMemory: (tripId: string, draft: Omit<StoredMemory, 'id' | 'tripId' | 'createdAt'>) => {
+          const memory: StoredMemory = { id: generateId(), tripId, ...draft, createdAt: new Date().toISOString() };
+          const memories = [...get().memories, memory];
+          set({ memories });
+          void persistData({ ...toData(), memories });
+        },
+
+        deleteMemory: (memoryId: string) => {
+          const memories = get().memories.filter((m) => m.id !== memoryId);
+          set({ memories });
+          void persistData({ ...toData(), memories });
+        },
+
+        generateInviteLink: (tripId: string) => {
+          const trip = get().trips.find((t) => t.id === tripId);
+          if (!trip) return '';
+          if (trip.inviteId && trip.inviteLink) {
+            console.log('[TripsStore] Reusing existing invite link:', trip.inviteLink);
+            return trip.inviteLink;
+          }
+          const inviteId = generateId();
+          const inviteLink = `https://tripla.app/invite/${inviteId}`;
+          const trips = get().trips.map((t) =>
+            t.id === tripId ? { ...t, inviteId, inviteLink, ownerId: t.ownerId || 'self', ownerName: t.ownerName || 'You' } : t
+          );
+          set({ trips });
+          void persistData({ ...toData(), trips });
+          console.log('[TripsStore] Generated invite link:', inviteLink, 'for trip:', tripId);
+          return inviteLink;
+        },
+
+        getTripByInviteId: (inviteId: string) => {
+          return get().trips.find((t) => t.inviteId === inviteId);
+        },
+
+        joinTrip: (inviteId: string, userName: string, userAvatar?: string) => {
+          const trip = get().trips.find((t) => t.inviteId === inviteId);
+          if (!trip) {
+            console.log('[TripsStore] No trip found for inviteId:', inviteId);
+            return null;
+          }
+          const alreadyMember = trip.collaborators.some((c) => c.name === userName && c.name !== 'You');
+          if (alreadyMember) {
+            console.log('[TripsStore] User already a collaborator:', userName);
+            return trip.id;
+          }
+          const newCollab = {
+            id: generateId(),
+            name: userName,
+            avatar: userAvatar || 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=100',
+            role: 'editor' as const,
+          };
+          const trips = get().trips.map((t) =>
+            t.id === trip.id ? { ...t, collaborators: [...t.collaborators, newCollab] } : t
+          );
+          set({ trips });
+          void persistData({ ...toData(), trips });
+          console.log('[TripsStore] User joined trip:', trip.id, 'as:', userName);
+          return trip.id;
+        },
+
+        addCollaborator: (tripId: string, name: string, role: 'editor' | 'viewer', avatar?: string) => {
+          const trip = get().trips.find((t) => t.id === tripId);
+          if (!trip) return;
+          const newCollab = {
+            id: generateId(),
+            name,
+            avatar: avatar || 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=100',
+            role,
+          };
+          const trips = get().trips.map((t) =>
+            t.id === tripId ? { ...t, collaborators: [...t.collaborators, newCollab] } : t
+          );
+          set({ trips });
+          void persistData({ ...toData(), trips });
+          console.log('[TripsStore] Added collaborator:', name, 'to trip:', tripId);
+        },
+
+        removeCollaborator: (tripId: string, collaboratorId: string) => {
+          const trip = get().trips.find((t) => t.id === tripId);
+          if (!trip) return;
+          const trips = get().trips.map((t) =>
+            t.id === tripId ? { ...t, collaborators: t.collaborators.filter((c) => c.id !== collaboratorId) } : t
+          );
+          set({ trips });
+          void persistData({ ...toData(), trips });
+          console.log('[TripsStore] Removed collaborator:', collaboratorId, 'from trip:', tripId);
+        },
+      };
+    }
+  )
+);

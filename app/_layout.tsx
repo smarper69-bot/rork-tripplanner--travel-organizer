@@ -8,7 +8,7 @@ import { useTripsStore } from "@/store/useTripsStore";
 import { useOnboardingStore } from "@/store/useOnboardingStore";
 import { usePreferencesStore } from "@/store/usePreferencesStore";
 
-SplashScreen.preventAutoHideAsync();
+void SplashScreen.preventAutoHideAsync();
 
 const queryClient = new QueryClient();
 
@@ -30,7 +30,7 @@ function useOnboardingRedirect() {
       console.log('[Layout] Onboarding done, redirecting to home');
       router.replace('/');
     }
-  }, [hasOnboarded, isLoading, segments]);
+  }, [hasOnboarded, isLoading, segments, router]);
 }
 
 function RootLayoutNav() {
@@ -146,6 +146,12 @@ function RootLayoutNav() {
           headerShown: false,
         }} 
       />
+      <Stack.Screen 
+        name="invite/[id]" 
+        options={{ 
+          headerShown: false,
+        }} 
+      />
     </Stack>
   );
 }
@@ -156,10 +162,10 @@ export default function RootLayout() {
   const hydratePreferences = usePreferencesStore((s) => s.hydrate);
 
   useEffect(() => {
-    Promise.all([hydrateTrips(), hydrateOnboarding(), hydratePreferences()]).then(() => {
-      SplashScreen.hideAsync();
+    void Promise.all([hydrateTrips(), hydrateOnboarding(), hydratePreferences()]).then(() => {
+      void SplashScreen.hideAsync();
     });
-  }, []);
+  }, [hydrateTrips, hydrateOnboarding, hydratePreferences]);
 
   return (
     <QueryClientProvider client={queryClient}>

@@ -27,7 +27,8 @@ export default function CollaborationScreen() {
   const [linkCopied, setLinkCopied] = useState(false);
 
   const storeTrips = useTripsStore((s) => s.trips);
-  const updateTrip = useTripsStore((s) => s.updateTrip);
+  const generateInviteLink = useTripsStore((s) => s.generateInviteLink);
+  const removeCollaborator = useTripsStore((s) => s.removeCollaborator);
 
   const storedTrip = storeTrips.find(t => t.id === id);
   const trip = storedTrip || mockTrips.find(t => t.id === id);
@@ -40,17 +41,10 @@ export default function CollaborationScreen() {
     );
   }
 
-  const getShareLink = useCallback(() => {
-    if (storedTrip?.shareLink) {
-      return storedTrip.shareLink;
-    }
-    const link = `https://tripla.app/trip/${id}`;
-    if (storedTrip) {
-      updateTrip(id!, { shareLink: link });
-      console.log('[Collaboration] Generated share link:', link);
-    }
-    return link;
-  }, [storedTrip, id, updateTrip]);
+  const getInviteLink = useCallback(() => {
+    if (!id) return '';
+    return generateInviteLink(id);
+  }, [id, generateInviteLink]);
 
   const handleOpenShareModal = useCallback(() => {
     setLinkCopied(false);
@@ -58,34 +52,34 @@ export default function CollaborationScreen() {
   }, []);
 
   const handleCopyLink = useCallback(async () => {
-    const link = getShareLink();
+    const link = getInviteLink();
     try {
       await Clipboard.setStringAsync(link);
       setLinkCopied(true);
-      console.log('[Collaboration] Link copied to clipboard');
+      console.log('[Collaboration] Invite link copied to clipboard');
       setTimeout(() => setLinkCopied(false), 2500);
     } catch (e) {
       console.error('[Collaboration] Failed to copy:', e);
       Alert.alert('Error', 'Failed to copy link');
     }
-  }, [getShareLink]);
+  }, [getInviteLink]);
 
   const handleShare = useCallback(async () => {
-    const link = getShareLink();
+    const link = getInviteLink();
     const tripName = trip?.name ?? 'a trip';
     try {
       await Share.share({
         message: Platform.OS === 'ios'
-          ? `Join me on ${tripName}!`
-          : `Join me on ${tripName}! ${link}`,
+          ? `Join my trip "${tripName}" on Tripla!`
+          : `Join my trip "${tripName}" on Tripla! ${link}`,
         url: Platform.OS === 'ios' ? link : undefined,
-        title: `Share Trip: ${tripName}`,
+        title: `Join Trip: ${tripName}`,
       });
       console.log('[Collaboration] Share sheet opened');
     } catch (e) {
       console.error('[Collaboration] Share failed:', e);
     }
-  }, [getShareLink, trip?.name]);
+  }, [getInviteLink, trip?.name]);
 
   const handleSendComment = () => {
     if (!newComment.trim()) return;
@@ -145,8 +139,17 @@ export default function CollaborationScreen() {
               <Text style={styles.memberRoleText}>{getRoleLabel(member.role)}</Text>
             </View>
           </View>
-          {member.role !== 'owner' && (
-            <TouchableOpacity style={styles.memberOptions} onPress={() => Alert.alert('Coming Soon', 'Member settings is being built.')}>
+          {member.role !== 'owner' && storedTrip && (
+            <TouchableOpacity style={styles.memberOptions} onPress={() => {
+              Alert.alert(
+                'Remove Member',
+                `Remove ${member.name} from this trip?`,
+                [
+                  { text: 'Cancel', style: 'cancel' },
+                  { text: 'Remove', style: 'destructive', onPress: () => removeCollaborator(storedTrip.id, member.id) },
+                ]
+              );
+            }}>
               <MoreVertical size={20} color={Colors.textMuted} />
             </TouchableOpacity>
           )}
@@ -312,7 +315,7 @@ export default function CollaborationScreen() {
           <View style={styles.modalOverlay}>
             <View style={styles.modalContent}>
               <View style={styles.modalHeader}>
-                <Text style={styles.modalTitle}>Share Trip</Text>
+                <Text style={styles.modalTitle}>Invite Travelers</Text>
                 <TouchableOpacity
                   style={styles.modalCloseButton}
                   onPress={() => setShareModalVisible(false)}
@@ -321,16 +324,16 @@ export default function CollaborationScreen() {
                 </TouchableOpacity>
               </View>
 
+              <Text style={styles.inviteDesc}>
+                Share this invite link. Anyone who opens it can join your trip as a collaborator.
+              </Text>
+
               <View style={styles.shareLinkContainer}>
                 <Link2 size={18} color={Colors.primary} />
                 <Text style={styles.shareLinkText} numberOfLines={1}>
-                  {getShareLink()}
+                  {getInviteLink()}
                 </Text>
               </View>
-
-              <Text style={styles.shareNote}>
-                Anyone with this link can view the trip in read-only mode.
-              </Text>
 
               <View style={styles.shareActions}>
                 <TouchableOpacity
@@ -756,5 +759,11 @@ const styles = StyleSheet.create({
     fontSize: 15,
     fontWeight: '600' as const,
     color: Colors.primary,
+  },
+  inviteDesc: {
+    fontSize: 14,
+    color: Colors.textSecondary,
+    marginBottom: 16,
+    lineHeight: 20,
   },
 });

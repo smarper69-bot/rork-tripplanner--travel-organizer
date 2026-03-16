@@ -18,6 +18,10 @@ export interface Trip {
   packingList: PackingItem[];
   isOfflineAvailable: boolean;
   shareLink?: string;
+  inviteId?: string;
+  inviteLink?: string;
+  ownerId?: string;
+  ownerName?: string;
 }
 
 export interface Collaborator {
