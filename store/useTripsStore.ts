@@ -214,12 +214,13 @@ export const useTripsStore = create(
         generateInviteLink: (tripId: string) => {
           const trip = get().trips.find((t) => t.id === tripId);
           if (!trip) return '';
-          if (trip.inviteId && trip.inviteLink) {
+          const correctLink = `https://tripla.app/join/${tripId}`;
+          if (trip.inviteId && trip.inviteLink && trip.inviteLink === correctLink) {
             console.log('[TripsStore] Reusing existing invite link:', trip.inviteLink);
             return trip.inviteLink;
           }
-          const inviteId = generateId();
-          const inviteLink = `https://tripla.app/join/${tripId}`;
+          const inviteId = trip.inviteId || generateId();
+          const inviteLink = correctLink;
           const trips = get().trips.map((t) =>
             t.id === tripId ? { ...t, inviteId, inviteLink, ownerId: t.ownerId || 'self', ownerName: t.ownerName || 'You' } : t
           );
