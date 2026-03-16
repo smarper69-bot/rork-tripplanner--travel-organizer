@@ -22,6 +22,9 @@ function useOnboardingRedirect() {
     if (isLoading) return;
 
     const inOnboarding = segments[0] === 'onboarding';
+    const isPublicRoute = segments[0] === 'join' || segments[0] === 'shared' || segments[0] === 'invite';
+
+    if (isPublicRoute) return;
 
     if (!hasOnboarded && !inOnboarding) {
       console.log('[Layout] Redirecting to onboarding');

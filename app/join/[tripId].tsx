@@ -1,15 +1,55 @@
 import React, { useState, useMemo } from 'react';
 import {
   View, Text, StyleSheet, TouchableOpacity, TextInput,
-  Alert, Image, ScrollView,
+  Alert, Image, ScrollView, Platform,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useLocalSearchParams, useRouter, Stack } from 'expo-router';
 import {
-  ArrowLeft, MapPin, Calendar, Users, Plane, UserPlus, Check, Home,
+  MapPin, Calendar, Users, Plane, UserPlus, Check, Home,
+  Clock, DollarSign, Download,
 } from 'lucide-react-native';
-import Colors from '@/constants/colors';
 import { useTripsStore } from '@/store/useTripsStore';
+import { mockTrips } from '@/mocks/trips';
+import { Trip } from '@/types/trip';
+
+const DESTINATION_IMAGES: Record<string, string> = {
+  'Tokyo': 'https://images.unsplash.com/photo-1540959733332-eab4deabeeaf?w=1200&q=80',
+  'Barcelona': 'https://images.unsplash.com/photo-1583422409516-2895a77efded?w=1200&q=80',
+  'Bali': 'https://images.unsplash.com/photo-1537996194471-e657df975ab4?w=1200&q=80',
+  'Paris': 'https://images.unsplash.com/photo-1502602898657-3e91760cbb34?w=1200&q=80',
+  'New York': 'https://images.unsplash.com/photo-1496442226666-8d4d0e62e6e9?w=1200&q=80',
+  'London': 'https://images.unsplash.com/photo-1513635269975-59663e0ac1ad?w=1200&q=80',
+  'Rome': 'https://images.unsplash.com/photo-1552832230-c0197dd311b5?w=1200&q=80',
+  'Sydney': 'https://images.unsplash.com/photo-1506973035872-a4ec16b8e8d9?w=1200&q=80',
+};
+
+function getDestinationImage(destination: string): string {
+  if (DESTINATION_IMAGES[destination]) return DESTINATION_IMAGES[destination];
+  return 'https://images.unsplash.com/photo-1488646953014-85cb44e25828?w=1200&q=80';
+}
+
+function formatDate(date: string) {
+  return new Date(date).toLocaleDateString('en-US', {
+    month: 'short',
+    day: 'numeric',
+    year: 'numeric',
+  });
+}
+
+function formatShortDate(date: string) {
+  return new Date(date).toLocaleDateString('en-US', {
+    weekday: 'short',
+    month: 'short',
+    day: 'numeric',
+  });
+}
+
+function calculateDays(startDate: string, endDate: string) {
+  const start = new Date(startDate);
+  const end = new Date(endDate);
+  return Math.max(Math.ceil((end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24)), 1);
+}
 
 export default function JoinTripByIdScreen() {
   const { tripId } = useLocalSearchParams<{ tripId: string }>();
@@ -17,21 +57,15 @@ export default function JoinTripByIdScreen() {
   const [userName, setUserName] = useState('');
   const [joined, setJoined] = useState(false);
 
-  const trips = useTripsStore((s) => s.trips);
+  const storeTrips = useTripsStore((s) => s.trips);
   const joinTripById = useTripsStore((s) => s.joinTripById);
 
-  const trip = useMemo(() => {
+  const trip: Trip | undefined = useMemo(() => {
     if (!tripId) return undefined;
-    return trips.find((t) => t.id === tripId);
-  }, [tripId, trips]);
-
-  const formatDate = (date: string) => {
-    return new Date(date).toLocaleDateString('en-US', {
-      month: 'short',
-      day: 'numeric',
-      year: 'numeric',
-    });
-  };
+    const stored = storeTrips.find((t) => t.id === tripId);
+    if (stored) return stored;
+    return mockTrips.find((t) => t.id === tripId);
+  }, [tripId, storeTrips]);
 
   const handleJoin = () => {
     if (!userName.trim()) {
@@ -62,21 +96,21 @@ export default function JoinTripByIdScreen() {
     return (
       <>
         <Stack.Screen options={{ headerShown: false }} />
-        <SafeAreaView style={styles.container}>
-          <View style={styles.centerContent}>
+        <SafeAreaView style={styles.notFoundContainer}>
+          <View style={styles.notFoundContent}>
             <View style={styles.logoRow}>
               <View style={styles.logoMark}>
                 <Plane size={18} color="#fff" />
               </View>
               <Text style={styles.logoText}>Tripla</Text>
             </View>
-            <Text style={styles.errorTitle}>Trip not found</Text>
-            <Text style={styles.errorSub}>
-              This trip may have been deleted or the link is invalid.
+            <Text style={styles.notFoundTitle}>Trip not found</Text>
+            <Text style={styles.notFoundSub}>
+              This trip may have been removed or the link is invalid.
             </Text>
-            <TouchableOpacity style={styles.backBtn} onPress={handleGoHome}>
-              <Home size={16} color="#fff" style={{ marginRight: 8 }} />
-              <Text style={styles.backBtnText}>Back to Home</Text>
+            <TouchableOpacity style={styles.darkBtn} onPress={handleGoHome}>
+              <Home size={16} color="#fff" />
+              <Text style={styles.darkBtnText}>Back to Home</Text>
             </TouchableOpacity>
           </View>
         </SafeAreaView>
@@ -88,8 +122,8 @@ export default function JoinTripByIdScreen() {
     return (
       <>
         <Stack.Screen options={{ headerShown: false }} />
-        <SafeAreaView style={styles.container}>
-          <View style={styles.centerContent}>
+        <SafeAreaView style={styles.notFoundContainer}>
+          <View style={styles.notFoundContent}>
             <View style={styles.successIcon}>
               <Check size={32} color="#fff" />
             </View>
@@ -97,12 +131,12 @@ export default function JoinTripByIdScreen() {
             <Text style={styles.successSub}>
               You've joined "{trip.name}". You can now view and edit this trip.
             </Text>
-            <TouchableOpacity style={styles.primaryBtn} onPress={handleOpenTrip}>
+            <TouchableOpacity style={styles.darkBtn} onPress={handleOpenTrip}>
               <Plane size={18} color="#fff" />
-              <Text style={styles.primaryBtnText}>Open Trip</Text>
+              <Text style={styles.darkBtnText}>Open Trip</Text>
             </TouchableOpacity>
-            <TouchableOpacity style={styles.secondaryBtn} onPress={handleGoHome}>
-              <Text style={styles.secondaryBtnText}>Back to Home</Text>
+            <TouchableOpacity style={styles.ghostBtn} onPress={handleGoHome}>
+              <Text style={styles.ghostBtnText}>Back to Home</Text>
             </TouchableOpacity>
           </View>
         </SafeAreaView>
@@ -112,93 +146,235 @@ export default function JoinTripByIdScreen() {
 
   const owner = trip.collaborators.find((c) => c.role === 'owner');
   const travelerCount = trip.collaborators.length;
+  const coverImage = getDestinationImage(trip.destination);
+  const tripDays = calculateDays(trip.startDate, trip.endDate);
 
   return (
     <>
       <Stack.Screen options={{ headerShown: false }} />
-      <SafeAreaView style={styles.container} edges={['top', 'bottom']}>
-        <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
-          <TouchableOpacity style={styles.navBack} onPress={handleGoHome}>
-            <ArrowLeft size={22} color={Colors.text} />
-          </TouchableOpacity>
+      <View style={styles.container}>
+        <ScrollView showsVerticalScrollIndicator={false} bounces={false}>
+          <View style={styles.heroSection}>
+            <Image source={{ uri: coverImage }} style={styles.heroImage} />
+            <View style={styles.heroOverlay} />
 
-          <View style={styles.headerSection}>
-            <View style={styles.logoRow}>
-              <View style={styles.logoMark}>
-                <Plane size={16} color="#fff" />
+            <SafeAreaView style={styles.heroTopWrap} edges={['top']}>
+              <View style={styles.topBar}>
+                <View style={{ width: 40 }} />
+                <View style={styles.logoRow}>
+                  <View style={styles.logoMarkLight}>
+                    <Plane size={14} color="#fff" />
+                  </View>
+                  <Text style={styles.logoTextLight}>Tripla</Text>
+                </View>
+                <View style={{ width: 40 }} />
               </View>
-              <Text style={styles.logoText}>Tripla</Text>
+            </SafeAreaView>
+
+            <View style={styles.heroBottom}>
+              <View style={styles.inviteBadge}>
+                <UserPlus size={11} color="#fff" />
+                <Text style={styles.inviteBadgeText}>Trip Invitation</Text>
+              </View>
+              <Text style={styles.heroTitle}>{trip.name}</Text>
+              <View style={styles.heroLocationRow}>
+                <MapPin size={15} color="rgba(255,255,255,0.85)" />
+                <Text style={styles.heroLocation}>
+                  {trip.destination}, {trip.country}
+                </Text>
+              </View>
             </View>
-            <Text style={styles.inviteLabel}>You've been invited to join a trip</Text>
           </View>
 
-          <View style={styles.tripCard}>
-            <Text style={styles.tripName}>{trip.name}</Text>
-            <View style={styles.tripMetaRow}>
-              <MapPin size={15} color={Colors.textSecondary} />
-              <Text style={styles.tripMetaText}>
-                {trip.destination}, {trip.country}
-              </Text>
+          <View style={styles.body}>
+            <View style={styles.summaryCard}>
+              <View style={styles.summaryRow}>
+                <View style={styles.summaryItem}>
+                  <View style={styles.summaryIconWrap}>
+                    <Calendar size={18} color="#1A1A1A" />
+                  </View>
+                  <View>
+                    <Text style={styles.summaryValue}>
+                      {formatDate(trip.startDate)}
+                    </Text>
+                    <Text style={styles.summaryLabel}>
+                      {tripDays} day{tripDays !== 1 ? 's' : ''} trip
+                    </Text>
+                  </View>
+                </View>
+              </View>
+
+              <View style={styles.summaryDivider} />
+
+              <View style={styles.summaryRow}>
+                <View style={styles.summaryItem}>
+                  <View style={styles.summaryIconWrap}>
+                    <Clock size={18} color="#1A1A1A" />
+                  </View>
+                  <View>
+                    <Text style={styles.summaryValue}>
+                      {formatShortDate(trip.startDate)}
+                    </Text>
+                    <Text style={styles.summaryLabel}>
+                      to {formatShortDate(trip.endDate)}
+                    </Text>
+                  </View>
+                </View>
+              </View>
+
+              {trip.totalBudget > 0 && (
+                <>
+                  <View style={styles.summaryDivider} />
+                  <View style={styles.summaryRow}>
+                    <View style={styles.summaryItem}>
+                      <View style={styles.summaryIconWrap}>
+                        <DollarSign size={18} color="#1A1A1A" />
+                      </View>
+                      <View>
+                        <Text style={styles.summaryValue}>
+                          ${trip.totalBudget.toLocaleString()}
+                        </Text>
+                        <Text style={styles.summaryLabel}>Total budget</Text>
+                      </View>
+                    </View>
+                  </View>
+                </>
+              )}
             </View>
-            <View style={styles.tripMetaRow}>
-              <Calendar size={15} color={Colors.textSecondary} />
-              <Text style={styles.tripMetaText}>
-                {formatDate(trip.startDate)} — {formatDate(trip.endDate)}
-              </Text>
-            </View>
+
             {owner && (
-              <View style={styles.ownerRow}>
-                <Image source={{ uri: owner.avatar }} style={styles.ownerAvatar} />
-                <View>
-                  <Text style={styles.ownerLabel}>Organized by</Text>
-                  <Text style={styles.ownerName}>{trip.ownerName || owner.name}</Text>
+              <View style={styles.organizerCard}>
+                <Image source={{ uri: owner.avatar }} style={styles.organizerAvatar} />
+                <View style={styles.organizerInfo}>
+                  <Text style={styles.organizerLabel}>Organized by</Text>
+                  <Text style={styles.organizerName}>
+                    {trip.ownerName || owner.name}
+                  </Text>
                 </View>
               </View>
             )}
 
-            {travelerCount > 0 && (
-              <View style={styles.travelersRow}>
-                <Users size={15} color={Colors.textSecondary} />
-                <Text style={styles.travelersText}>
-                  {travelerCount} traveler{travelerCount !== 1 ? 's' : ''}{travelerCount > 1 ? ' already joined' : ''}
-                </Text>
+            {travelerCount > 1 && (
+              <View style={styles.travelersCard}>
+                <View style={styles.travelersHeader}>
+                  <Users size={15} color="#1A1A1A" />
+                  <Text style={styles.travelersTitle}>
+                    {travelerCount} traveler{travelerCount !== 1 ? 's' : ''}
+                  </Text>
+                </View>
+                <View style={styles.avatarRow}>
+                  {trip.collaborators.slice(0, 5).map((collab) => (
+                    <Image
+                      key={collab.id}
+                      source={{ uri: collab.avatar }}
+                      style={styles.smallAvatar}
+                    />
+                  ))}
+                  {travelerCount > 5 && (
+                    <View style={styles.moreAvatars}>
+                      <Text style={styles.moreAvatarsText}>+{travelerCount - 5}</Text>
+                    </View>
+                  )}
+                </View>
               </View>
             )}
-          </View>
 
-          <View style={styles.joinSection}>
-            <Text style={styles.joinLabel}>Enter your name to join</Text>
-            <TextInput
-              style={styles.nameInput}
-              placeholder="Your name"
-              placeholderTextColor={Colors.textMuted}
-              value={userName}
-              onChangeText={setUserName}
-              autoCapitalize="words"
-              returnKeyType="done"
-              onSubmitEditing={handleJoin}
-              testID="join-trip-name-input"
-            />
-            <TouchableOpacity
-              style={[styles.joinBtn, !userName.trim() && styles.joinBtnDisabled]}
-              onPress={handleJoin}
-              activeOpacity={0.8}
-              disabled={!userName.trim()}
-              testID="join-trip-button"
-            >
-              <UserPlus size={18} color="#fff" />
-              <Text style={styles.joinBtnText}>Join Trip</Text>
-            </TouchableOpacity>
-            <Text style={styles.joinDisclaimer}>
-              You'll be added as a collaborator and can edit the trip.
-            </Text>
+            {trip.itinerary.length > 0 && (
+              <View style={styles.previewSection}>
+                <Text style={styles.previewTitle}>Itinerary Preview</Text>
+                {trip.itinerary.slice(0, 2).map((day, dayIndex) => (
+                  <View key={day.id} style={styles.dayCard}>
+                    <View style={styles.dayBadge}>
+                      <Text style={styles.dayBadgeText}>Day {dayIndex + 1}</Text>
+                    </View>
+                    {day.activities.slice(0, 3).map((activity) => (
+                      <View key={activity.id} style={styles.activityRow}>
+                        <View style={styles.activityDot} />
+                        <View style={styles.activityContent}>
+                          <Text style={styles.activityTitle}>{activity.title}</Text>
+                          {activity.location && (
+                            <Text style={styles.activityLocation}>{activity.location}</Text>
+                          )}
+                        </View>
+                        {activity.startTime && (
+                          <Text style={styles.activityTime}>{activity.startTime}</Text>
+                        )}
+                      </View>
+                    ))}
+                    {day.activities.length > 3 && (
+                      <Text style={styles.moreActivities}>
+                        +{day.activities.length - 3} more
+                      </Text>
+                    )}
+                  </View>
+                ))}
+                {trip.itinerary.length > 2 && (
+                  <Text style={styles.fadeHint}>
+                    Join to see the full itinerary
+                  </Text>
+                )}
+              </View>
+            )}
 
-            <TouchableOpacity style={styles.homeLink} onPress={handleGoHome}>
-              <Text style={styles.homeLinkText}>Back to Home</Text>
-            </TouchableOpacity>
+            <View style={styles.joinCard}>
+              <Text style={styles.joinCardTitle}>Join this trip</Text>
+              <Text style={styles.joinCardSub}>
+                Enter your name to join as a collaborator. You'll be able to view and edit the trip.
+              </Text>
+              <TextInput
+                style={styles.nameInput}
+                placeholder="Your name"
+                placeholderTextColor="#AAA"
+                value={userName}
+                onChangeText={setUserName}
+                autoCapitalize="words"
+                returnKeyType="done"
+                onSubmitEditing={handleJoin}
+                testID="join-trip-name-input"
+              />
+              <TouchableOpacity
+                style={[styles.joinBtn, !userName.trim() && styles.joinBtnDisabled]}
+                onPress={handleJoin}
+                activeOpacity={0.8}
+                disabled={!userName.trim()}
+                testID="join-trip-button"
+              >
+                <UserPlus size={18} color="#fff" />
+                <Text style={styles.joinBtnText}>Join Trip</Text>
+              </TouchableOpacity>
+            </View>
+
+            <View style={styles.ctaSection}>
+              <TouchableOpacity
+                style={styles.ctaSecondaryBtn}
+                activeOpacity={0.7}
+                onPress={() => {
+                  if (Platform.OS === 'web') {
+                    console.log('[JoinTrip] Download tapped (web)');
+                  } else {
+                    handleOpenTrip();
+                  }
+                }}
+              >
+                <Download size={18} color="#1A1A1A" />
+                <Text style={styles.ctaSecondaryText}>Download Tripla App</Text>
+              </TouchableOpacity>
+            </View>
+
+            <View style={styles.footer}>
+              <View style={styles.footerLogoRow}>
+                <View style={styles.footerLogoMark}>
+                  <Plane size={12} color="#fff" />
+                </View>
+                <Text style={styles.footerLogoText}>Tripla</Text>
+              </View>
+              <Text style={styles.footerText}>
+                Plan trips together. Travel smarter.
+              </Text>
+            </View>
           </View>
         </ScrollView>
-      </SafeAreaView>
+      </View>
     </>
   );
 }
@@ -206,205 +382,90 @@ export default function JoinTripByIdScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: Colors.background,
+    backgroundColor: '#FAFAFA',
   },
-  scrollContent: {
-    padding: 24,
-    paddingBottom: 40,
-  },
-  centerContent: {
+  notFoundContainer: {
     flex: 1,
+    backgroundColor: '#FAFAFA',
     justifyContent: 'center',
     alignItems: 'center',
-    paddingHorizontal: 32,
   },
-  navBack: {
-    width: 44,
-    height: 44,
-    borderRadius: 22,
-    backgroundColor: Colors.surface,
-    justifyContent: 'center',
+  notFoundContent: {
     alignItems: 'center',
-    marginBottom: 24,
-  },
-  headerSection: {
-    alignItems: 'center',
-    marginBottom: 28,
+    paddingHorizontal: 40,
   },
   logoRow: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 8,
-    marginBottom: 16,
   },
   logoMark: {
-    width: 34,
-    height: 34,
+    width: 36,
+    height: 36,
     borderRadius: 10,
     backgroundColor: '#1A1A1A',
     justifyContent: 'center',
     alignItems: 'center',
   },
   logoText: {
-    fontSize: 20,
+    fontSize: 22,
     fontWeight: '800' as const,
     color: '#1A1A1A',
     letterSpacing: -0.5,
   },
-  inviteLabel: {
-    fontSize: 16,
-    color: Colors.textSecondary,
-    textAlign: 'center',
-  },
-  coverImage: {
-    width: '100%',
-    height: 180,
-    borderRadius: 20,
-    marginBottom: 20,
-    backgroundColor: Colors.borderLight,
-  },
-  tripCard: {
-    backgroundColor: Colors.surface,
-    borderRadius: 20,
-    padding: 24,
-    marginBottom: 28,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.06,
-    shadowRadius: 12,
-    elevation: 3,
-  },
-  tripName: {
-    fontSize: 24,
-    fontWeight: '700' as const,
-    color: Colors.text,
-    marginBottom: 14,
-  },
-  tripMetaRow: {
-    flexDirection: 'row',
+  logoMarkLight: {
+    width: 28,
+    height: 28,
+    borderRadius: 8,
+    backgroundColor: 'rgba(255,255,255,0.2)',
+    justifyContent: 'center',
     alignItems: 'center',
-    gap: 8,
+  },
+  logoTextLight: {
+    fontSize: 17,
+    fontWeight: '800' as const,
+    color: '#fff',
+    letterSpacing: -0.3,
+  },
+  notFoundTitle: {
+    fontSize: 20,
+    fontWeight: '700' as const,
+    color: '#1A1A1A',
+    marginTop: 32,
     marginBottom: 8,
   },
-  tripMetaText: {
+  notFoundSub: {
     fontSize: 15,
-    color: Colors.textSecondary,
+    color: '#888',
+    textAlign: 'center',
+    lineHeight: 22,
+    marginBottom: 28,
   },
-  ownerRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 12,
-    marginTop: 16,
-    paddingTop: 16,
-    borderTopWidth: 1,
-    borderTopColor: Colors.borderLight,
-  },
-  ownerAvatar: {
-    width: 42,
-    height: 42,
-    borderRadius: 21,
-    backgroundColor: Colors.borderLight,
-  },
-  ownerLabel: {
-    fontSize: 12,
-    color: Colors.textMuted,
-  },
-  ownerName: {
-    fontSize: 15,
-    fontWeight: '600' as const,
-    color: Colors.text,
-  },
-  travelersRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-    marginTop: 14,
-  },
-  travelersText: {
-    fontSize: 14,
-    color: Colors.textSecondary,
-  },
-  joinSection: {
-    alignItems: 'center',
-  },
-  joinLabel: {
-    fontSize: 15,
-    fontWeight: '600' as const,
-    color: Colors.text,
-    marginBottom: 12,
-  },
-  nameInput: {
-    width: '100%',
-    backgroundColor: Colors.surface,
-    borderRadius: 14,
-    paddingHorizontal: 18,
-    paddingVertical: 16,
-    fontSize: 16,
-    color: Colors.text,
-    marginBottom: 16,
-    borderWidth: 1,
-    borderColor: Colors.borderLight,
-  },
-  joinBtn: {
+  darkBtn: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
     gap: 10,
-    width: '100%',
+    paddingHorizontal: 28,
     paddingVertical: 16,
     backgroundColor: '#1A1A1A',
     borderRadius: 14,
+    width: '100%',
+    maxWidth: 320,
     marginBottom: 12,
   },
-  joinBtnDisabled: {
-    opacity: 0.4,
-  },
-  joinBtnText: {
+  darkBtnText: {
     fontSize: 16,
     fontWeight: '700' as const,
     color: '#fff',
   },
-  joinDisclaimer: {
-    fontSize: 13,
-    color: Colors.textMuted,
-    textAlign: 'center',
-    lineHeight: 18,
-    marginBottom: 24,
-  },
-  homeLink: {
+  ghostBtn: {
     paddingVertical: 12,
   },
-  homeLinkText: {
+  ghostBtnText: {
     fontSize: 15,
-    color: Colors.textSecondary,
+    color: '#888',
     fontWeight: '500' as const,
-  },
-  errorTitle: {
-    fontSize: 20,
-    fontWeight: '700' as const,
-    color: Colors.text,
-    marginTop: 28,
-    marginBottom: 8,
-  },
-  errorSub: {
-    fontSize: 15,
-    color: Colors.textSecondary,
-    textAlign: 'center',
-    lineHeight: 22,
-    marginBottom: 24,
-  },
-  backBtn: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingHorizontal: 28,
-    paddingVertical: 14,
-    backgroundColor: '#1A1A1A',
-    borderRadius: 12,
-  },
-  backBtnText: {
-    fontSize: 15,
-    fontWeight: '600' as const,
-    color: '#fff',
   },
   successIcon: {
     width: 64,
@@ -418,40 +479,388 @@ const styles = StyleSheet.create({
   successTitle: {
     fontSize: 24,
     fontWeight: '700' as const,
-    color: Colors.text,
+    color: '#1A1A1A',
     marginBottom: 8,
   },
   successSub: {
     fontSize: 15,
-    color: Colors.textSecondary,
+    color: '#888',
     textAlign: 'center',
     lineHeight: 22,
     marginBottom: 28,
     paddingHorizontal: 20,
   },
-  primaryBtn: {
+  heroSection: {
+    height: 320,
+    position: 'relative',
+  },
+  heroImage: {
+    width: '100%',
+    height: '100%',
+    resizeMode: 'cover',
+  },
+  heroOverlay: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: 'rgba(0,0,0,0.4)',
+  },
+  heroTopWrap: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+  },
+  topBar: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingHorizontal: 20,
+    paddingTop: 8,
+  },
+  heroBottom: {
+    position: 'absolute',
+    bottom: 0,
+    left: 0,
+    right: 0,
+    paddingHorizontal: 24,
+    paddingBottom: 28,
+  },
+  inviteBadge: {
+    alignSelf: 'flex-start',
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    paddingHorizontal: 12,
+    paddingVertical: 5,
+    backgroundColor: 'rgba(255,255,255,0.2)',
+    borderRadius: 8,
+    marginBottom: 12,
+  },
+  inviteBadgeText: {
+    fontSize: 11,
+    fontWeight: '700' as const,
+    color: '#fff',
+    letterSpacing: 0.5,
+    textTransform: 'uppercase' as const,
+  },
+  heroTitle: {
+    fontSize: 30,
+    fontWeight: '800' as const,
+    color: '#fff',
+    marginBottom: 8,
+    letterSpacing: -0.5,
+  },
+  heroLocationRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+  },
+  heroLocation: {
+    fontSize: 15,
+    fontWeight: '500' as const,
+    color: 'rgba(255,255,255,0.85)',
+  },
+  body: {
+    paddingHorizontal: 20,
+    paddingTop: 20,
+    paddingBottom: 40,
+  },
+  summaryCard: {
+    backgroundColor: '#fff',
+    borderRadius: 16,
+    padding: 18,
+    marginBottom: 14,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.05,
+    shadowRadius: 8,
+    elevation: 2,
+  },
+  summaryRow: {
+    paddingVertical: 4,
+  },
+  summaryItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 14,
+  },
+  summaryIconWrap: {
+    width: 40,
+    height: 40,
+    borderRadius: 10,
+    backgroundColor: '#F0F0F0',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  summaryValue: {
+    fontSize: 15,
+    fontWeight: '600' as const,
+    color: '#1A1A1A',
+  },
+  summaryLabel: {
+    fontSize: 13,
+    color: '#888',
+    marginTop: 1,
+  },
+  summaryDivider: {
+    height: 1,
+    backgroundColor: '#F0F0F0',
+    marginVertical: 12,
+  },
+  organizerCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 14,
+    backgroundColor: '#fff',
+    borderRadius: 16,
+    padding: 16,
+    marginBottom: 14,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.05,
+    shadowRadius: 8,
+    elevation: 2,
+  },
+  organizerAvatar: {
+    width: 48,
+    height: 48,
+    borderRadius: 24,
+    backgroundColor: '#F0F0F0',
+  },
+  organizerInfo: {
+    flex: 1,
+  },
+  organizerLabel: {
+    fontSize: 12,
+    color: '#AAA',
+    marginBottom: 2,
+  },
+  organizerName: {
+    fontSize: 16,
+    fontWeight: '600' as const,
+    color: '#1A1A1A',
+  },
+  travelersCard: {
+    backgroundColor: '#fff',
+    borderRadius: 16,
+    padding: 16,
+    marginBottom: 14,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.05,
+    shadowRadius: 8,
+    elevation: 2,
+  },
+  travelersHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    marginBottom: 12,
+  },
+  travelersTitle: {
+    fontSize: 14,
+    fontWeight: '600' as const,
+    color: '#1A1A1A',
+  },
+  avatarRow: {
+    flexDirection: 'row',
+    gap: 8,
+  },
+  smallAvatar: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: '#F0F0F0',
+  },
+  moreAvatars: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: '#E8E8E8',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  moreAvatarsText: {
+    fontSize: 12,
+    fontWeight: '700' as const,
+    color: '#888',
+  },
+  previewSection: {
+    marginBottom: 14,
+  },
+  previewTitle: {
+    fontSize: 16,
+    fontWeight: '700' as const,
+    color: '#1A1A1A',
+    marginBottom: 12,
+  },
+  dayCard: {
+    backgroundColor: '#fff',
+    borderRadius: 14,
+    padding: 16,
+    marginBottom: 10,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.04,
+    shadowRadius: 6,
+    elevation: 1,
+  },
+  dayBadge: {
+    alignSelf: 'flex-start',
+    backgroundColor: '#1A1A1A',
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: 6,
+    marginBottom: 14,
+  },
+  dayBadgeText: {
+    fontSize: 12,
+    fontWeight: '700' as const,
+    color: '#fff',
+  },
+  activityRow: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    marginBottom: 12,
+    gap: 12,
+  },
+  activityDot: {
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+    backgroundColor: '#D0D0D0',
+    marginTop: 6,
+  },
+  activityContent: {
+    flex: 1,
+  },
+  activityTitle: {
+    fontSize: 14,
+    fontWeight: '500' as const,
+    color: '#1A1A1A',
+  },
+  activityLocation: {
+    fontSize: 12,
+    color: '#999',
+    marginTop: 2,
+  },
+  activityTime: {
+    fontSize: 12,
+    fontWeight: '600' as const,
+    color: '#888',
+  },
+  moreActivities: {
+    fontSize: 12,
+    color: '#999',
+    marginTop: 4,
+    marginLeft: 20,
+  },
+  fadeHint: {
+    fontSize: 13,
+    color: '#999',
+    fontStyle: 'italic' as const,
+    textAlign: 'center',
+    marginTop: 8,
+  },
+  joinCard: {
+    backgroundColor: '#fff',
+    borderRadius: 20,
+    padding: 24,
+    marginBottom: 16,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.08,
+    shadowRadius: 16,
+    elevation: 4,
+  },
+  joinCardTitle: {
+    fontSize: 20,
+    fontWeight: '700' as const,
+    color: '#1A1A1A',
+    marginBottom: 6,
+  },
+  joinCardSub: {
+    fontSize: 14,
+    color: '#888',
+    lineHeight: 21,
+    marginBottom: 20,
+  },
+  nameInput: {
+    width: '100%',
+    backgroundColor: '#F5F5F5',
+    borderRadius: 14,
+    paddingHorizontal: 18,
+    paddingVertical: 16,
+    fontSize: 16,
+    color: '#1A1A1A',
+    marginBottom: 16,
+    borderWidth: 1,
+    borderColor: '#EBEBEB',
+  },
+  joinBtn: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
     gap: 10,
+    width: '100%',
     paddingVertical: 16,
-    paddingHorizontal: 32,
     backgroundColor: '#1A1A1A',
     borderRadius: 14,
-    width: '100%',
-    marginBottom: 12,
   },
-  primaryBtnText: {
+  joinBtnDisabled: {
+    opacity: 0.4,
+  },
+  joinBtnText: {
     fontSize: 16,
     fontWeight: '700' as const,
     color: '#fff',
   },
-  secondaryBtn: {
-    paddingVertical: 12,
+  ctaSection: {
+    marginBottom: 24,
   },
-  secondaryBtnText: {
+  ctaSecondaryBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 10,
+    backgroundColor: '#F0F0F0',
+    paddingVertical: 14,
+    paddingHorizontal: 28,
+    borderRadius: 14,
+    width: '100%',
+  },
+  ctaSecondaryText: {
     fontSize: 15,
-    color: Colors.textSecondary,
-    fontWeight: '500' as const,
+    fontWeight: '600' as const,
+    color: '#1A1A1A',
+  },
+  footer: {
+    alignItems: 'center',
+    paddingVertical: 24,
+    borderTopWidth: 1,
+    borderTopColor: '#EDEDED',
+  },
+  footerLogoRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    marginBottom: 8,
+  },
+  footerLogoMark: {
+    width: 24,
+    height: 24,
+    borderRadius: 6,
+    backgroundColor: '#1A1A1A',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  footerLogoText: {
+    fontSize: 15,
+    fontWeight: '800' as const,
+    color: '#1A1A1A',
+    letterSpacing: -0.3,
+  },
+  footerText: {
+    fontSize: 13,
+    color: '#888',
   },
 });
