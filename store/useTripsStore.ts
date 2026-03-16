@@ -219,7 +219,7 @@ export const useTripsStore = create(
             return trip.inviteLink;
           }
           const inviteId = generateId();
-          const inviteLink = `https://tripla.app/invite/${inviteId}`;
+          const inviteLink = `https://tripla.app/join/${tripId}`;
           const trips = get().trips.map((t) =>
             t.id === tripId ? { ...t, inviteId, inviteLink, ownerId: t.ownerId || 'self', ownerName: t.ownerName || 'You' } : t
           );
@@ -274,6 +274,32 @@ export const useTripsStore = create(
           set({ trips });
           void persistData({ ...toData(), trips });
           console.log('[TripsStore] Added collaborator:', name, 'to trip:', tripId);
+        },
+
+        joinTripById: (tripId: string, userName: string, userAvatar?: string) => {
+          const trip = get().trips.find((t) => t.id === tripId);
+          if (!trip) {
+            console.log('[TripsStore] No trip found for tripId:', tripId);
+            return null;
+          }
+          const alreadyMember = trip.collaborators.some((c) => c.name === userName && c.name !== 'You');
+          if (alreadyMember) {
+            console.log('[TripsStore] User already a collaborator:', userName);
+            return trip.id;
+          }
+          const newCollab = {
+            id: generateId(),
+            name: userName,
+            avatar: userAvatar || 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=100',
+            role: 'editor' as const,
+          };
+          const trips = get().trips.map((t) =>
+            t.id === trip.id ? { ...t, collaborators: [...t.collaborators, newCollab] } : t
+          );
+          set({ trips });
+          void persistData({ ...toData(), trips });
+          console.log('[TripsStore] User joined trip by ID:', trip.id, 'as:', userName);
+          return trip.id;
         },
 
         removeCollaborator: (tripId: string, collaboratorId: string) => {

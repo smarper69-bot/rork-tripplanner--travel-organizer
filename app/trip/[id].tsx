@@ -917,7 +917,7 @@ export default function TripDetailScreen() {
             <View style={styles.shareLinkContainer}>
               <Link2 size={18} color={Colors.primary} />
               <Text style={styles.shareLinkText} numberOfLines={1}>
-                {inviteLink || trip.inviteLink || `tripla.app/invite/...`}
+                {inviteLink || trip.inviteLink || `tripla.app/join/${trip.id}`}
               </Text>
             </View>
 
