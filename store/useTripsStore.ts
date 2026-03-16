@@ -1,7 +1,15 @@
 import { create } from 'zustand';
 import { combine } from 'zustand/middleware';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { Platform } from 'react-native';
 import { Trip, StoredItineraryItem, StoredStay, StoredMemory } from '@/types/trip';
+
+function getBaseUrl(): string {
+  if (Platform.OS === 'web' && typeof window !== 'undefined') {
+    return window.location.origin;
+  }
+  return 'https://tripla.app';
+}
 
 const STORAGE_KEY = 'tripla_data_v1';
 
@@ -214,7 +222,8 @@ export const useTripsStore = create(
         generateInviteLink: (tripId: string) => {
           const trip = get().trips.find((t) => t.id === tripId);
           if (!trip) return '';
-          const correctLink = `https://tripla.app/join/${tripId}`;
+          const baseUrl = getBaseUrl();
+          const correctLink = `${baseUrl}/join/${tripId}`;
           if (trip.inviteId && trip.inviteLink && trip.inviteLink === correctLink) {
             console.log('[TripsStore] Reusing existing invite link:', trip.inviteLink);
             return trip.inviteLink;
