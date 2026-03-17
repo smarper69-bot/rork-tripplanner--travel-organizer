@@ -11,6 +11,7 @@ export type AppearanceOption = 'Light' | 'Dark' | 'System';
 export interface ProfileData {
   name: string;
   email: string;
+  profileImage?: string;
 }
 
 async function persistPrefs(prefs: Record<string, unknown>) {
@@ -97,6 +98,21 @@ export const usePreferencesStore = create(
           console.log('[PreferencesStore] Profile saved:', data);
         } catch (e) {
           console.error('[PreferencesStore] Failed to persist profile:', e);
+        }
+      },
+
+      setProfileImage: async (uri: string) => {
+        set((state) => ({
+          profile: { ...state.profile, profileImage: uri },
+        }));
+        try {
+          const existing = await AsyncStorage.getItem(PROFILE_KEY);
+          const current = existing ? JSON.parse(existing) : {};
+          const updated = { ...current, profileImage: uri };
+          await AsyncStorage.setItem(PROFILE_KEY, JSON.stringify(updated));
+          console.log('[PreferencesStore] Profile image saved:', uri);
+        } catch (e) {
+          console.error('[PreferencesStore] Failed to persist profile image:', e);
         }
       },
     }),

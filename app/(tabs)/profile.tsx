@@ -137,10 +137,16 @@ export default function ProfileScreen() {
         </View>
 
         <View style={styles.profileCard}>
-          <Image
-            source={{ uri: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=200' }}
-            style={styles.avatar}
-          />
+          {profile.profileImage ? (
+            <Image
+              source={{ uri: profile.profileImage }}
+              style={styles.avatar}
+            />
+          ) : (
+            <View style={[styles.avatar, styles.avatarPlaceholder]}>
+              <User size={28} color={Colors.textMuted} />
+            </View>
+          )}
           <View style={styles.profileInfo}>
             <Text style={styles.profileName}>{profile.name || 'Traveler'}</Text>
             <Text style={styles.profileEmail}>{profile.email || 'No email set'}</Text>
@@ -343,6 +349,11 @@ const styles = StyleSheet.create({
     height: 60,
     borderRadius: 30,
     marginRight: 14,
+  },
+  avatarPlaceholder: {
+    backgroundColor: Colors.borderLight,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   profileInfo: {
     flex: 1,
