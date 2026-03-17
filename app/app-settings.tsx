@@ -2,7 +2,7 @@ import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, ScrollView, Switch, Alert } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
-import { ArrowLeft, Bell, Download, Globe, Moon } from 'lucide-react-native';
+import { ArrowLeft, Bell, Download, Globe, Moon, Navigation } from 'lucide-react-native';
 import Colors from '@/constants/colors';
 import { usePreferencesStore, CurrencyOption, AppearanceOption } from '@/store/usePreferencesStore';
 
@@ -12,10 +12,12 @@ const APPEARANCE_OPTIONS: AppearanceOption[] = ['Light', 'Dark', 'System'];
 export default function AppSettingsScreen() {
   const router = useRouter();
   const notifications = usePreferencesStore((s) => s.notifications);
+  const locationEnabled = usePreferencesStore((s) => s.locationEnabled);
   const offlineMode = usePreferencesStore((s) => s.offlineMode);
   const currency = usePreferencesStore((s) => s.currency);
   const appearance = usePreferencesStore((s) => s.appearance);
   const setNotifications = usePreferencesStore((s) => s.setNotifications);
+  const setLocationEnabled = usePreferencesStore((s) => s.setLocationEnabled);
   const setOfflineMode = usePreferencesStore((s) => s.setOfflineMode);
   const setCurrency = usePreferencesStore((s) => s.setCurrency);
   const setAppearance = usePreferencesStore((s) => s.setAppearance);
@@ -67,6 +69,27 @@ export default function AppSettingsScreen() {
               <Switch
                 value={notifications}
                 onValueChange={(v) => void setNotifications(v)}
+                trackColor={{ false: Colors.border, true: Colors.primary }}
+                thumbColor={Colors.textLight}
+              />
+            </View>
+          </View>
+        </View>
+
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>Location</Text>
+          <View style={styles.card}>
+            <View style={styles.row}>
+              <View style={styles.rowLeft}>
+                <Navigation size={20} color={Colors.primary} />
+                <View>
+                  <Text style={styles.rowLabel}>Location Access</Text>
+                  <Text style={styles.rowHint}>Nearby suggestions & trip tracking</Text>
+                </View>
+              </View>
+              <Switch
+                value={locationEnabled}
+                onValueChange={(v) => void setLocationEnabled(v)}
                 trackColor={{ false: Colors.border, true: Colors.primary }}
                 thumbColor={Colors.textLight}
               />

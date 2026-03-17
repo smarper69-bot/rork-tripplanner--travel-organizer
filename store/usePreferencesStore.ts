@@ -27,11 +27,12 @@ async function persistPrefs(prefs: Record<string, unknown>) {
 export const usePreferencesStore = create(
   combine(
     {
-      notifications: true,
+      notifications: false,
+      locationEnabled: false,
       offlineMode: false,
       currency: 'USD' as CurrencyOption,
       appearance: 'Light' as AppearanceOption,
-      profile: { name: 'Alex Traveler', email: 'alex@travel.com' } as ProfileData,
+      profile: { name: '', email: '' } as ProfileData,
       isLoading: true,
     },
     (set) => ({
@@ -43,13 +44,14 @@ export const usePreferencesStore = create(
           ]);
           const prefs = prefsRaw ? JSON.parse(prefsRaw) : {};
           const profile = profileRaw ? JSON.parse(profileRaw) : null;
-          console.log('[PreferencesStore] Hydrated:', prefs);
+          console.log('[PreferencesStore] Hydrated:', prefs, 'profile:', profile);
           set({
-            notifications: prefs.notifications ?? true,
+            notifications: prefs.notifications ?? false,
+            locationEnabled: prefs.locationEnabled ?? false,
             offlineMode: prefs.offlineMode ?? false,
             currency: prefs.currency ?? 'USD',
             appearance: prefs.appearance ?? 'Light',
-            profile: profile ?? { name: 'Alex Traveler', email: 'alex@travel.com' },
+            profile: profile ?? { name: '', email: '' },
             isLoading: false,
           });
         } catch (e) {
@@ -62,6 +64,12 @@ export const usePreferencesStore = create(
         set({ notifications: value });
         await persistPrefs({ notifications: value });
         console.log('[PreferencesStore] Notifications set:', value);
+      },
+
+      setLocationEnabled: async (value: boolean) => {
+        set({ locationEnabled: value });
+        await persistPrefs({ locationEnabled: value });
+        console.log('[PreferencesStore] Location enabled set:', value);
       },
 
       setOfflineMode: async (value: boolean) => {

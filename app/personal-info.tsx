@@ -5,6 +5,7 @@ import { useRouter } from 'expo-router';
 import { ArrowLeft, User, Mail } from 'lucide-react-native';
 import Colors from '@/constants/colors';
 import { usePreferencesStore } from '@/store/usePreferencesStore';
+import { useOnboardingStore } from '@/store/useOnboardingStore';
 
 export default function PersonalInfoScreen() {
   const router = useRouter();
@@ -14,16 +15,19 @@ export default function PersonalInfoScreen() {
   const [name, setName] = useState(profile.name);
   const [email, setEmail] = useState(profile.email);
 
+  const setUserName = useOnboardingStore((s) => s.setUserName);
+  const setUserEmail = useOnboardingStore((s) => s.setUserEmail);
+
   const handleSave = () => {
     if (!name.trim()) {
       Alert.alert('Missing Name', 'Please enter your name.');
       return;
     }
-    if (!email.trim()) {
-      Alert.alert('Missing Email', 'Please enter your email.');
-      return;
-    }
     void setProfile({ name: name.trim(), email: email.trim() });
+    void setUserName(name.trim());
+    if (email.trim()) {
+      void setUserEmail(email.trim());
+    }
     console.log('[PersonalInfo] Saved profile:', name.trim(), email.trim());
     router.back();
   };

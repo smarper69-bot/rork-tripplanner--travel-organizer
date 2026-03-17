@@ -7,6 +7,7 @@ import { Plus, Compass, Globe, MapPin, Calendar, Trash2, ChevronRight, ArrowRigh
 import { Flower2, Church, Palmtree, Mountain, Sun, Landmark, Trees, Snowflake, Tent } from 'lucide-react-native';
 import Colors from '@/constants/colors';
 import { useTripsStore } from '@/store/useTripsStore';
+import { useOnboardingStore } from '@/store/useOnboardingStore';
 import { Trip, TripIcon } from '@/types/trip';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
@@ -79,6 +80,7 @@ const QUICK_ACTIONS = [
 export default function HomeScreen() {
   const router = useRouter();
   const { trips, deleteTrip } = useTripsStore();
+  const userName = useOnboardingStore((s) => s.userName);
   const fadeAnim = useRef(new Animated.Value(0)).current;
   const slideAnim = useRef(new Animated.Value(20)).current;
   const [featuredIndex, setFeaturedIndex] = useState<number>(0);
@@ -142,7 +144,7 @@ export default function HomeScreen() {
     <SafeAreaView style={styles.container} edges={['top']}>
       <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.scrollContent}>
         <Animated.View style={[styles.header, { opacity: fadeAnim, transform: [{ translateY: slideAnim }] }]}>
-          <Text style={styles.greeting}>{getGreeting()}</Text>
+          <Text style={styles.greeting}>{getGreeting()}{userName ? `, ${userName}` : ''}</Text>
           <Text style={styles.title}>Where to next?</Text>
         </Animated.View>
 

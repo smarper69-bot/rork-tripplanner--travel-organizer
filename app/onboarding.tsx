@@ -10,6 +10,7 @@ import {
   Platform,
   FlatList,
   ViewToken,
+  Alert,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
@@ -27,8 +28,11 @@ import {
   ArrowRight,
 } from 'lucide-react-native';
 import * as Haptics from 'expo-haptics';
+import * as Location from 'expo-location';
+import * as Notifications from 'expo-notifications';
 import Colors from '@/constants/colors';
 import { useOnboardingStore } from '@/store/useOnboardingStore';
+import { usePreferencesStore } from '@/store/usePreferencesStore';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
@@ -36,6 +40,7 @@ type OnboardingStep =
   | 'welcome'
   | 'carousel'
   | 'auth'
+  | 'email-input'
   | 'guest-name'
   | 'permissions'
   | 'first-action';
@@ -68,10 +73,19 @@ export default function OnboardingScreen() {
   const router = useRouter();
   const completeOnboarding = useOnboardingStore((s) => s.completeOnboarding);
   const setUserName = useOnboardingStore((s) => s.setUserName);
+  const setUserEmail = useOnboardingStore((s) => s.setUserEmail);
+  const setAuthMethod = useOnboardingStore((s) => s.setAuthMethod);
+  const setLocationEnabled = useOnboardingStore((s) => s.setLocationEnabled);
+  const setNotificationsEnabled = useOnboardingStore((s) => s.setNotificationsEnabled);
+  const setProfile = usePreferencesStore((s) => s.setProfile);
+  const setNotificationsPref = usePreferencesStore((s) => s.setNotifications);
 
   const [step, setStep] = useState<OnboardingStep>('welcome');
   const [carouselIndex, setCarouselIndex] = useState<number>(0);
   const [guestName, setGuestName] = useState<string>('');
+  const [emailInput, setEmailInput] = useState<string>('');
+  const [emailName, setEmailName] = useState<string>('');
+  const [selectedAuthMethod, setSelectedAuthMethod] = useState<string>('');
 
   const fadeAnim = useRef(new Animated.Value(1)).current;
   const slideAnim = useRef(new Animated.Value(0)).current;
@@ -108,12 +122,12 @@ export default function OnboardingScreen() {
   }, [fadeAnim, slideAnim]);
 
   const handleContinueWelcome = useCallback(() => {
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     animateTransition('carousel');
   }, [animateTransition]);
 
   const handleCarouselNext = useCallback(() => {
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     if (carouselIndex < CAROUSEL_DATA.length - 1) {
       const nextIndex = carouselIndex + 1;
       setCarouselIndex(nextIndex);
@@ -124,39 +138,122 @@ export default function OnboardingScreen() {
   }, [carouselIndex, animateTransition]);
 
   const handleSkipCarousel = useCallback(() => {
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     animateTransition('auth');
   }, [animateTransition]);
 
   const handleAuthChoice = useCallback((method: string) => {
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+    void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+    setSelectedAuthMethod(method);
+    void setAuthMethod(method as 'email' | 'apple' | 'google' | 'guest');
+    console.log('[Onboarding] Auth method selected:', method);
+
     if (method === 'guest') {
       animateTransition('guest-name');
+    } else if (method === 'email') {
+      animateTransition('email-input');
     } else {
-      animateTransition('permissions');
+      animateTransition('guest-name');
     }
-  }, [animateTransition]);
+  }, [animateTransition, setAuthMethod]);
+
+  const handleEmailContinue = useCallback(async () => {
+    void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    const trimmedEmail = emailInput.trim();
+    if (!trimmedEmail || !trimmedEmail.includes('@')) {
+      Alert.alert('Invalid Email', 'Please enter a valid email address.');
+      return;
+    }
+    await setUserEmail(trimmedEmail);
+    console.log('[Onboarding] Email saved:', trimmedEmail);
+    animateTransition('guest-name');
+  }, [emailInput, setUserEmail, animateTransition]);
 
   const handleGuestContinue = useCallback(async () => {
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-    if (guestName.trim()) {
-      await setUserName(guestName.trim());
-    }
+    void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    const nameToSave = (selectedAuthMethod === 'email' ? emailName.trim() : guestName.trim()) || 'Traveler';
+    await setUserName(nameToSave);
+    console.log('[Onboarding] Name saved:', nameToSave);
     animateTransition('permissions');
-  }, [guestName, setUserName, animateTransition]);
+  }, [guestName, emailName, selectedAuthMethod, setUserName, animateTransition]);
 
-  const handlePermissions = useCallback((action: 'enable' | 'skip') => {
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-    if (action === 'enable') {
-      if (Platform.OS !== 'web') {
-        console.log('[Onboarding] Permission request would fire here');
+  const requestLocationPermission = useCallback(async (): Promise<boolean> => {
+    if (Platform.OS === 'web') {
+      try {
+        const result = await new Promise<boolean>((resolve) => {
+          if (!navigator.geolocation) {
+            resolve(false);
+            return;
+          }
+          navigator.geolocation.getCurrentPosition(
+            () => resolve(true),
+            () => resolve(false),
+          );
+        });
+        return result;
+      } catch {
+        return false;
       }
     }
+    try {
+      const { status } = await Location.requestForegroundPermissionsAsync();
+      console.log('[Onboarding] Location permission status:', status);
+      return status === 'granted';
+    } catch (e) {
+      console.error('[Onboarding] Location permission error:', e);
+      return false;
+    }
+  }, []);
+
+  const requestNotificationPermission = useCallback(async (): Promise<boolean> => {
+    if (Platform.OS === 'web') {
+      try {
+        if (!('Notification' in window)) return false;
+        const result = await Notification.requestPermission();
+        console.log('[Onboarding] Web notification permission:', result);
+        return result === 'granted';
+      } catch {
+        return false;
+      }
+    }
+    try {
+      const { status } = await Notifications.requestPermissionsAsync();
+      console.log('[Onboarding] Notification permission status:', status);
+      return status === 'granted';
+    } catch (e) {
+      console.error('[Onboarding] Notification permission error:', e);
+      return false;
+    }
+  }, []);
+
+  const handlePermissions = useCallback(async (action: 'enable' | 'skip') => {
+    void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    if (action === 'enable') {
+      const [locationGranted, notifGranted] = await Promise.all([
+        requestLocationPermission(),
+        requestNotificationPermission(),
+      ]);
+      await setLocationEnabled(locationGranted);
+      await setNotificationsEnabled(notifGranted);
+      await setNotificationsPref(notifGranted);
+      console.log('[Onboarding] Permissions - location:', locationGranted, 'notifications:', notifGranted);
+    } else {
+      await setLocationEnabled(false);
+      await setNotificationsEnabled(false);
+      await setNotificationsPref(false);
+      console.log('[Onboarding] Permissions skipped');
+    }
     animateTransition('first-action');
-  }, [animateTransition]);
+  }, [animateTransition, requestLocationPermission, requestNotificationPermission, setLocationEnabled, setNotificationsEnabled, setNotificationsPref]);
 
   const handleFinish = useCallback(async (action: 'create' | 'explore') => {
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+    void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+
+    const userName = useOnboardingStore.getState().userName || 'Traveler';
+    const userEmail = useOnboardingStore.getState().userEmail || '';
+    await setProfile({ name: userName, email: userEmail });
+    console.log('[Onboarding] Profile synced - name:', userName, 'email:', userEmail);
+
     await completeOnboarding();
     if (action === 'create') {
       router.replace('/');
@@ -166,7 +263,7 @@ export default function OnboardingScreen() {
     } else {
       router.replace('/');
     }
-  }, [completeOnboarding, router]);
+  }, [completeOnboarding, router, setProfile]);
 
   const onViewableItemsChanged = useRef(({ viewableItems }: { viewableItems: ViewToken[] }) => {
     if (viewableItems.length > 0 && viewableItems[0].index != null) {
@@ -338,26 +435,28 @@ export default function OnboardingScreen() {
     </View>
   );
 
-  const renderGuestName = () => (
+  const renderEmailInput = () => (
     <View style={styles.stepContainer}>
       <View style={styles.guestNameTop}>
         <View style={styles.guestAvatarCircle}>
-          <User size={32} color={Colors.textMuted} />
+          <Mail size={32} color={Colors.textMuted} />
         </View>
-        <Text style={styles.guestNameTitle}>What should we call you?</Text>
-        <Text style={styles.guestNameSubtitle}>This is optional — you can skip it</Text>
+        <Text style={styles.guestNameTitle}>Enter your email</Text>
+        <Text style={styles.guestNameSubtitle}>We{"'"}ll use this to identify your account</Text>
       </View>
 
       <View style={styles.guestNameMiddle}>
         <TextInput
           style={styles.nameInput}
-          placeholder="Your name"
+          placeholder="your@email.com"
           placeholderTextColor={Colors.textMuted}
-          value={guestName}
-          onChangeText={setGuestName}
-          autoCapitalize="words"
+          value={emailInput}
+          onChangeText={setEmailInput}
+          keyboardType="email-address"
+          autoCapitalize="none"
+          autoCorrect={false}
           autoFocus
-          testID="onboarding-name-input"
+          testID="onboarding-email-input"
         />
       </View>
 
@@ -366,9 +465,10 @@ export default function OnboardingScreen() {
           style={({ pressed }) => [
             styles.primaryButton,
             pressed && styles.buttonPressed,
+            !emailInput.trim() && styles.buttonDisabled,
           ]}
-          onPress={handleGuestContinue}
-          testID="onboarding-guest-continue"
+          onPress={handleEmailContinue}
+          testID="onboarding-email-continue"
         >
           <Text style={styles.primaryButtonText}>Continue</Text>
           <ChevronRight size={20} color="#FFF" />
@@ -376,6 +476,51 @@ export default function OnboardingScreen() {
       </View>
     </View>
   );
+
+  const renderGuestName = () => {
+    const isEmailFlow = selectedAuthMethod === 'email';
+    const nameValue = isEmailFlow ? emailName : guestName;
+    const setNameValue = isEmailFlow ? setEmailName : setGuestName;
+
+    return (
+      <View style={styles.stepContainer}>
+        <View style={styles.guestNameTop}>
+          <View style={styles.guestAvatarCircle}>
+            <User size={32} color={Colors.textMuted} />
+          </View>
+          <Text style={styles.guestNameTitle}>What should we call you?</Text>
+          <Text style={styles.guestNameSubtitle}>This is optional — you can skip it</Text>
+        </View>
+
+        <View style={styles.guestNameMiddle}>
+          <TextInput
+            style={styles.nameInput}
+            placeholder="Your name"
+            placeholderTextColor={Colors.textMuted}
+            value={nameValue}
+            onChangeText={setNameValue}
+            autoCapitalize="words"
+            autoFocus
+            testID="onboarding-name-input"
+          />
+        </View>
+
+        <View style={styles.guestNameBottom}>
+          <Pressable
+            style={({ pressed }) => [
+              styles.primaryButton,
+              pressed && styles.buttonPressed,
+            ]}
+            onPress={handleGuestContinue}
+            testID="onboarding-guest-continue"
+          >
+            <Text style={styles.primaryButtonText}>Continue</Text>
+            <ChevronRight size={20} color="#FFF" />
+          </Pressable>
+        </View>
+      </View>
+    );
+  };
 
   const renderPermissions = () => (
     <View style={styles.stepContainer}>
@@ -478,6 +623,8 @@ export default function OnboardingScreen() {
         return renderCarousel();
       case 'auth':
         return renderAuth();
+      case 'email-input':
+        return renderEmailInput();
       case 'guest-name':
         return renderGuestName();
       case 'permissions':
@@ -567,6 +714,9 @@ const styles = StyleSheet.create({
   buttonPressed: {
     opacity: 0.85,
     transform: [{ scale: 0.98 }],
+  },
+  buttonDisabled: {
+    opacity: 0.5,
   },
   primaryButtonText: {
     color: '#FFF',

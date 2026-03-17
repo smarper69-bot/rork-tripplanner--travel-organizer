@@ -5,12 +5,13 @@ import { useRouter } from 'expo-router';
 import { 
   User, Settings, Bell, Download, Shield, HelpCircle, 
   LogOut, ChevronRight, Moon, Globe, CreditCard, Crown,
-  Sparkles, Briefcase, Users, BarChart3, Check
+  Sparkles, Briefcase, Users, BarChart3, Check, Navigation
 } from 'lucide-react-native';
 import Colors from '@/constants/colors';
 import { openComingSoon } from '@/utils/comingSoon';
 import { useTripsStore } from '@/store/useTripsStore';
 import { usePreferencesStore, CurrencyOption, AppearanceOption } from '@/store/usePreferencesStore';
+
 
 interface SettingsItemProps {
   icon: React.ReactNode;
@@ -74,7 +75,9 @@ export default function ProfileScreen() {
   const currency = usePreferencesStore((s) => s.currency);
   const appearance = usePreferencesStore((s) => s.appearance);
   const profile = usePreferencesStore((s) => s.profile);
+  const locationEnabled = usePreferencesStore((s) => s.locationEnabled);
   const setNotifications = usePreferencesStore((s) => s.setNotifications);
+  const setLocationEnabled = usePreferencesStore((s) => s.setLocationEnabled);
   const setOfflineMode = usePreferencesStore((s) => s.setOfflineMode);
   const setCurrency = usePreferencesStore((s) => s.setCurrency);
   const setAppearance = usePreferencesStore((s) => s.setAppearance);
@@ -139,8 +142,8 @@ export default function ProfileScreen() {
             style={styles.avatar}
           />
           <View style={styles.profileInfo}>
-            <Text style={styles.profileName}>{profile.name}</Text>
-            <Text style={styles.profileEmail}>{profile.email}</Text>
+            <Text style={styles.profileName}>{profile.name || 'Traveler'}</Text>
+            <Text style={styles.profileEmail}>{profile.email || 'No email set'}</Text>
           </View>
           <TouchableOpacity style={styles.editButton} onPress={() => router.push('/personal-info')}>
             <Text style={styles.editButtonText}>Edit</Text>
@@ -225,6 +228,14 @@ export default function ProfileScreen() {
               toggle
               toggleValue={notifications}
               onToggle={(v) => void setNotifications(v)}
+              showChevron={false}
+            />
+            <SettingsItem
+              icon={<Navigation size={20} color={Colors.primary} />}
+              label="Location"
+              toggle
+              toggleValue={locationEnabled}
+              onToggle={(v) => void setLocationEnabled(v)}
               showChevron={false}
             />
             <SettingsItem
