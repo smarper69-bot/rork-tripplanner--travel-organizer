@@ -36,7 +36,7 @@ export default function LegacyInviteRedirectScreen() {
               <View style={styles.logoMark}>
                 <Plane size={18} color="#fff" />
               </View>
-              <Text style={styles.logoText}>Tripla</Text>
+              <Text style={styles.logoText}>TripNest</Text>
             </View>
             <Text style={styles.errorTitle}>Invite not found</Text>
             <Text style={styles.errorSub}>

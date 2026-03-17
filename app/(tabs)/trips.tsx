@@ -236,7 +236,7 @@ const styles = StyleSheet.create({
   tripDeleteBtn: {
     position: 'absolute' as const,
     top: 12,
-    left: 12,
+    right: 12,
     width: 32,
     height: 32,
     borderRadius: 16,

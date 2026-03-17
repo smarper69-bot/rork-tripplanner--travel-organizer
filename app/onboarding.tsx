@@ -184,7 +184,7 @@ export default function OnboardingScreen() {
             <Compass size={40} color="#FFF" strokeWidth={1.5} />
           </View>
         </View>
-        <Text style={styles.logoTitle}>Tripla</Text>
+        <Text style={styles.logoTitle}>TripNest</Text>
         <Text style={styles.logoTagline}>Your world, planned beautifully</Text>
       </View>
       <View style={styles.welcomeBottom}>

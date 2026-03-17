@@ -172,7 +172,7 @@ export default function ProfileScreen() {
                   <Crown size={20} color={Colors.textLight} />
                 </View>
                 <View style={styles.proTitleContainer}>
-                  <Text style={styles.proTitle}>Tripla Pro</Text>
+                  <Text style={styles.proTitle}>TripNest Pro</Text>
                   <Text style={styles.proSubtitle}>Unlock the full experience</Text>
                 </View>
               </View>
@@ -189,12 +189,12 @@ export default function ProfileScreen() {
               </View>
 
               <View style={styles.pricingOptions}>
-                <TouchableOpacity style={styles.pricingCard} onPress={() => openComingSoon('Tripla Pro subscription')}>
+                <TouchableOpacity style={styles.pricingCard} onPress={() => openComingSoon('TripNest Pro subscription')}>
                   <Text style={styles.pricingLabel}>Monthly</Text>
                   <Text style={styles.pricingPrice}>$4.99</Text>
                   <Text style={styles.pricingPeriod}>/month</Text>
                 </TouchableOpacity>
-                <TouchableOpacity style={[styles.pricingCard, styles.pricingCardHighlight]} onPress={() => openComingSoon('Tripla Pro subscription')}>
+                <TouchableOpacity style={[styles.pricingCard, styles.pricingCardHighlight]} onPress={() => openComingSoon('TripNest Pro subscription')}>
                   <View style={styles.bestValueBadge}>
                     <Text style={styles.bestValueText}>Best Value</Text>
                   </View>
@@ -205,7 +205,7 @@ export default function ProfileScreen() {
                 </TouchableOpacity>
               </View>
 
-              <TouchableOpacity style={styles.upgradeButton} onPress={() => openComingSoon('Tripla Pro subscription')}>
+              <TouchableOpacity style={styles.upgradeButton} onPress={() => openComingSoon('TripNest Pro subscription')}>
                 <Text style={styles.upgradeButtonText}>Upgrade to Pro</Text>
               </TouchableOpacity>
 

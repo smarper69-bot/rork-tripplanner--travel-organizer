@@ -81,7 +81,7 @@ export default function SharedTripScreen() {
               <View style={styles.logoMark}>
                 <Plane size={18} color="#fff" />
               </View>
-              <Text style={styles.logoText}>Tripla</Text>
+              <Text style={styles.logoText}>TripNest</Text>
             </View>
             <Text style={styles.notFoundTitle}>Trip not found</Text>
             <Text style={styles.notFoundSub}>
@@ -160,7 +160,7 @@ export default function SharedTripScreen() {
                   <View style={styles.logoMarkSmall}>
                     <Plane size={14} color="#fff" />
                   </View>
-                  <Text style={styles.logoTextSmall}>Tripla</Text>
+                  <Text style={styles.logoTextSmall}>TripNest</Text>
                 </View>
                 <View style={{ width: 40 }} />
               </View>
@@ -322,7 +322,7 @@ export default function SharedTripScreen() {
                 {(trip.itinerary.length > 3 || groupedStoredItinerary.length > 3) && (
                   <View style={styles.fadeHint}>
                     <Text style={styles.fadeHintText}>
-                      Open in Tripla to see the full itinerary
+                      Open in TripNest to see the full itinerary
                     </Text>
                   </View>
                 )}
@@ -364,7 +364,7 @@ export default function SharedTripScreen() {
                 </View>
                 <Text style={styles.ctaTitle}>Want to join this trip?</Text>
                 <Text style={styles.ctaSub}>
-                  Open in the Tripla app to view all details, collaborate, and start planning.
+                  Open in the TripNest app to view all details, collaborate, and start planning.
                 </Text>
 
                 <TouchableOpacity
@@ -376,7 +376,7 @@ export default function SharedTripScreen() {
                   }}
                 >
                   <Plane size={18} color="#fff" />
-                  <Text style={styles.ctaPrimaryText}>Open in Tripla</Text>
+                  <Text style={styles.ctaPrimaryText}>Open in TripNest</Text>
                   <ChevronRight size={18} color="#fff" />
                 </TouchableOpacity>
 
@@ -402,7 +402,7 @@ export default function SharedTripScreen() {
                 <View style={styles.footerLogoMark}>
                   <Plane size={12} color="#fff" />
                 </View>
-                <Text style={styles.footerLogoText}>Tripla</Text>
+                <Text style={styles.footerLogoText}>TripNest</Text>
               </View>
               <Text style={styles.footerText}>
                 Plan trips together. Travel smarter.

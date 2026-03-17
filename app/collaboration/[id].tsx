@@ -70,8 +70,8 @@ export default function CollaborationScreen() {
     try {
       await Share.share({
         message: Platform.OS === 'ios'
-          ? `Join my trip "${tripName}" on Tripla!`
-          : `Join my trip "${tripName}" on Tripla! ${link}`,
+          ? `Join my trip "${tripName}" on TripNest!`
+          : `Join my trip "${tripName}" on TripNest! ${link}`,
         url: Platform.OS === 'ios' ? link : undefined,
         title: `Join Trip: ${tripName}`,
       });

@@ -53,7 +53,7 @@ export default function PrivacySecurityScreen() {
 
             <TouchableOpacity
               style={styles.row}
-              onPress={() => Alert.alert('Terms of Service', 'By using Tripla, you agree to our terms of service. The app is provided as-is for personal travel planning purposes.\n\nFor the full terms of service, visit our website.')}
+              onPress={() => Alert.alert('Terms of Service', 'By using TripNest, you agree to our terms of service. The app is provided as-is for personal travel planning purposes.\n\nFor the full terms of service, visit our website.')}
               testID="terms-of-service"
             >
               <View style={styles.rowLeft}>

@@ -954,8 +954,8 @@ export default function TripDetailScreen() {
                   try {
                     await Share.share({
                       message: Platform.OS === 'ios'
-                        ? `Join my trip "${trip.name}" on Tripla!`
-                        : `Join my trip "${trip.name}" on Tripla! ${link}`,
+                        ? `Join my trip "${trip.name}" on TripNest!`
+                        : `Join my trip "${trip.name}" on TripNest! ${link}`,
                       url: Platform.OS === 'ios' ? link : undefined,
                       title: `Join Trip: ${trip.name}`,
                     });

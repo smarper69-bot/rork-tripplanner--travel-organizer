@@ -102,7 +102,7 @@ export default function JoinTripByIdScreen() {
               <View style={styles.logoMark}>
                 <Plane size={18} color="#fff" />
               </View>
-              <Text style={styles.logoText}>Tripla</Text>
+              <Text style={styles.logoText}>TripNest</Text>
             </View>
             <Text style={styles.notFoundTitle}>Trip not found</Text>
             <Text style={styles.notFoundSub}>
@@ -165,7 +165,7 @@ export default function JoinTripByIdScreen() {
                   <View style={styles.logoMarkLight}>
                     <Plane size={14} color="#fff" />
                   </View>
-                  <Text style={styles.logoTextLight}>Tripla</Text>
+                  <Text style={styles.logoTextLight}>TripNest</Text>
                 </View>
                 <View style={{ width: 40 }} />
               </View>
@@ -357,7 +357,7 @@ export default function JoinTripByIdScreen() {
                 }}
               >
                 <Download size={18} color="#1A1A1A" />
-                <Text style={styles.ctaSecondaryText}>Download Tripla App</Text>
+                <Text style={styles.ctaSecondaryText}>Download TripNest App</Text>
               </TouchableOpacity>
             </View>
 
@@ -366,7 +366,7 @@ export default function JoinTripByIdScreen() {
                 <View style={styles.footerLogoMark}>
                   <Plane size={12} color="#fff" />
                 </View>
-                <Text style={styles.footerLogoText}>Tripla</Text>
+                <Text style={styles.footerLogoText}>TripNest</Text>
               </View>
               <Text style={styles.footerText}>
                 Plan trips together. Travel smarter.
