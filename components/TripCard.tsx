@@ -45,12 +45,13 @@ export default function TripCard({ trip, onPress, variant = 'large' }: TripCardP
   const imageOpacity = useRef(new Animated.Value(0)).current;
 
   const onImageLoad = useCallback(() => {
+    console.log('[TripCard] Image loaded for:', trip.destination, imageUrl);
     Animated.timing(imageOpacity, {
       toValue: 1,
       duration: 350,
       useNativeDriver: true,
     }).start();
-  }, [imageOpacity]);
+  }, [imageOpacity, trip.destination, imageUrl]);
 
   const getBadgeText = () => {
     if (trip.status === 'ongoing') return 'In progress';
@@ -73,10 +74,11 @@ export default function TripCard({ trip, onPress, variant = 'large' }: TripCardP
           onPressIn={onPressIn}
           onPressOut={onPressOut}
         >
-          <Animated.Image
+          <Image
             source={{ uri: imageUrl }}
-            style={[styles.compactImage, { opacity: imageOpacity }]}
+            style={styles.compactImage}
             onLoad={onImageLoad}
+            onError={() => console.log('[TripCard] Compact image error for:', trip.destination)}
           />
           <LinearGradient
             colors={['transparent', 'rgba(0,0,0,0.6)']}
@@ -99,10 +101,11 @@ export default function TripCard({ trip, onPress, variant = 'large' }: TripCardP
         onPressIn={onPressIn}
         onPressOut={onPressOut}
       >
-        <Animated.Image
+        <Image
           source={{ uri: imageUrl }}
-          style={[styles.cardImage, { opacity: imageOpacity }]}
+          style={styles.cardImage}
           onLoad={onImageLoad}
+          onError={() => console.log('[TripCard] Image error for:', trip.destination)}
         />
         <LinearGradient
           colors={['transparent', 'rgba(0,0,0,0.15)', 'rgba(0,0,0,0.75)']}
