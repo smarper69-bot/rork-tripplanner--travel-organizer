@@ -2,10 +2,11 @@ import React, { useState, useRef, useCallback, useEffect } from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Animated, Pressable } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
-import { Plus, Plane, Clock, CheckCircle } from 'lucide-react-native';
+import { Plus, Plane, Clock, CheckCircle, MapPin, Compass } from 'lucide-react-native';
 import Colors from '@/constants/colors';
 import TripCard from '@/components/TripCard';
 import { useTripsStore } from '@/store/useTripsStore';
+import { hapticLight, hapticMedium, hapticSelection } from '@/utils/haptics';
 
 const tabs = [
   { id: 'upcoming', label: 'Upcoming', icon: Plane },
@@ -60,7 +61,10 @@ export default function TripsScreen() {
           <Text style={styles.subtitle}>{trips.length} trip{trips.length !== 1 ? 's' : ''}</Text>
         </View>
         <Pressable
-          onPress={() => router.push('/create-trip' as any)}
+          onPress={() => {
+            hapticMedium();
+            router.push('/create-trip' as any);
+          }}
           onPressIn={onAddPressIn}
           onPressOut={onAddPressOut}
         >
@@ -75,7 +79,10 @@ export default function TripsScreen() {
           <TouchableOpacity
             key={tab.id}
             style={[styles.tab, activeTab === tab.id && styles.tabActive]}
-            onPress={() => setActiveTab(tab.id)}
+            onPress={() => {
+              hapticSelection();
+              setActiveTab(tab.id);
+            }}
             activeOpacity={0.7}
           >
             <tab.icon
@@ -104,19 +111,47 @@ export default function TripsScreen() {
           ))
         ) : (
           <View style={styles.emptyState}>
-            <View style={styles.emptyIcon}>
-              <Plane size={32} color={Colors.textMuted} />
+            <View style={styles.emptyIllustration}>
+              <View style={styles.emptyMapCard}>
+                <MapPin size={20} color={Colors.accent} />
+              </View>
+              <View style={styles.emptyCompassCard}>
+                <Compass size={16} color="#F59E0B" />
+              </View>
+              <View style={styles.emptyPlaneWrap}>
+                <Plane size={32} color={Colors.text} style={{ transform: [{ rotate: '-30deg' }] }} />
+              </View>
             </View>
-            <Text style={styles.emptyTitle}>No trips yet</Text>
+            <Text style={styles.emptyTitle}>
+              {activeTab === 'upcoming' ? 'No upcoming trips' : activeTab === 'planning' ? 'Nothing in the works yet' : 'No past trips'}
+            </Text>
             <Text style={styles.emptyText}>
-              Start planning your next adventure
+              {activeTab === 'upcoming'
+                ? 'Your upcoming adventures will appear here.\nTime to plan something exciting!'
+                : activeTab === 'planning'
+                ? 'Start dreaming up your next getaway.\nWe\'ll help you plan every detail.'
+                : 'Your travel memories will live here.\nEvery journey starts with a single step.'}
             </Text>
             <TouchableOpacity
               style={styles.emptyButton}
-              onPress={() => router.push('/create-trip' as any)}
+              onPress={() => {
+                hapticMedium();
+                router.push('/create-trip' as any);
+              }}
               activeOpacity={0.8}
             >
-              <Text style={styles.emptyButtonText}>Create a Trip</Text>
+              <Plus size={18} color={Colors.textLight} />
+              <Text style={styles.emptyButtonText}>Create your first trip</Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={styles.emptySecondaryButton}
+              onPress={() => {
+                hapticLight();
+                router.push('/discover' as any);
+              }}
+              activeOpacity={0.7}
+            >
+              <Text style={styles.emptySecondaryText}>Explore destinations</Text>
             </TouchableOpacity>
           </View>
         )}
@@ -195,39 +230,97 @@ const styles = StyleSheet.create({
   },
   emptyState: {
     alignItems: 'center',
-    paddingTop: 60,
-    paddingHorizontal: 40,
+    paddingTop: 48,
+    paddingHorizontal: 32,
   },
-  emptyIcon: {
+  emptyIllustration: {
+    width: 120,
+    height: 120,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: 28,
+  },
+  emptyPlaneWrap: {
     width: 72,
     height: 72,
     borderRadius: 36,
-    backgroundColor: Colors.borderLight,
+    backgroundColor: '#F3F4F6',
     justifyContent: 'center',
     alignItems: 'center',
-    marginBottom: 20,
+  },
+  emptyMapCard: {
+    position: 'absolute' as const,
+    top: 4,
+    right: 4,
+    width: 40,
+    height: 40,
+    borderRadius: 12,
+    backgroundColor: '#E0F7FA',
+    justifyContent: 'center',
+    alignItems: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.06,
+    shadowRadius: 4,
+    elevation: 1,
+  },
+  emptyCompassCard: {
+    position: 'absolute' as const,
+    bottom: 8,
+    left: 2,
+    width: 34,
+    height: 34,
+    borderRadius: 10,
+    backgroundColor: '#FEF3C7',
+    justifyContent: 'center',
+    alignItems: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.06,
+    shadowRadius: 4,
+    elevation: 1,
   },
   emptyTitle: {
-    fontSize: 18,
-    fontWeight: '600' as const,
+    fontSize: 20,
+    fontWeight: '700' as const,
     color: Colors.text,
-    marginBottom: 6,
+    marginBottom: 10,
+    textAlign: 'center' as const,
   },
   emptyText: {
     fontSize: 14,
     color: Colors.textSecondary,
-    textAlign: 'center',
-    marginBottom: 24,
+    textAlign: 'center' as const,
+    lineHeight: 21,
+    marginBottom: 28,
   },
   emptyButton: {
+    flexDirection: 'row' as const,
+    alignItems: 'center' as const,
+    gap: 8,
     backgroundColor: Colors.accent,
     paddingHorizontal: 28,
-    paddingVertical: 14,
-    borderRadius: 12,
+    paddingVertical: 15,
+    borderRadius: 14,
+    shadowColor: Colors.accent,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.25,
+    shadowRadius: 8,
+    elevation: 4,
   },
   emptyButtonText: {
     fontSize: 15,
-    fontWeight: '600' as const,
+    fontWeight: '700' as const,
     color: Colors.textLight,
+  },
+  emptySecondaryButton: {
+    marginTop: 14,
+    paddingVertical: 10,
+    paddingHorizontal: 20,
+  },
+  emptySecondaryText: {
+    fontSize: 14,
+    fontWeight: '600' as const,
+    color: Colors.accent,
   },
 });

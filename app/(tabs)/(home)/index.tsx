@@ -9,6 +9,7 @@ import { useTripsStore } from '@/store/useTripsStore';
 import { useOnboardingStore } from '@/store/useOnboardingStore';
 import { Trip } from '@/types/trip';
 import { getDestinationImage } from '@/utils/destinationImages';
+import { hapticLight, hapticMedium } from '@/utils/haptics';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 const CARD_WIDTH = SCREEN_WIDTH - 48;
@@ -59,6 +60,7 @@ const formatDate = (date: string) => {
 function AnimatedPressable({ children, onPress, style, testID }: { children: React.ReactNode; onPress: () => void; style?: any; testID?: string }) {
   const scale = useRef(new Animated.Value(1)).current;
   const handlePressIn = useCallback(() => {
+    hapticLight();
     Animated.spring(scale, { toValue: 0.97, useNativeDriver: true, speed: 50, bounciness: 4 }).start();
   }, [scale]);
   const handlePressOut = useCallback(() => {
@@ -284,14 +286,24 @@ export default function HomeScreen() {
         ) : (
           <View style={styles.emptyTripSection}>
             <View style={styles.emptyTripCard}>
-              <View style={styles.emptyIconWrap}>
-                <Plane size={24} color={Colors.textMuted} />
+              <View style={styles.emptyIllustration}>
+                <View style={styles.emptyGlobeRing}>
+                  <View style={styles.emptyGlobeInner}>
+                    <Plane size={28} color={Colors.accent} style={{ transform: [{ rotate: '-45deg' }] }} />
+                  </View>
+                </View>
+                <View style={styles.emptyDotLeft} />
+                <View style={styles.emptyDotRight} />
+                <View style={styles.emptyDotTop} />
               </View>
-              <Text style={styles.emptyTripTitle}>No trips planned yet</Text>
-              <Text style={styles.emptyTripText}>Start planning your next adventure</Text>
+              <Text style={styles.emptyTripTitle}>Your next adventure starts here</Text>
+              <Text style={styles.emptyTripText}>Plan a trip, invite friends, and explore the world together.</Text>
               <TouchableOpacity
                 style={styles.createTripBtn}
-                onPress={() => router.push('/create-trip' as any)}
+                onPress={() => {
+                  hapticMedium();
+                  router.push('/create-trip' as any);
+                }}
                 activeOpacity={0.8}
                 testID="create-first-trip-btn"
               >
@@ -568,33 +580,81 @@ const styles = StyleSheet.create({
   },
   emptyTripCard: {
     backgroundColor: Colors.surface,
-    borderRadius: 18,
-    padding: 32,
+    borderRadius: 20,
+    paddingVertical: 44,
+    paddingHorizontal: 32,
     alignItems: 'center',
-    gap: 10,
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.04,
-    shadowRadius: 6,
-    elevation: 1,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.06,
+    shadowRadius: 12,
+    elevation: 2,
   },
-  emptyIconWrap: {
-    width: 56,
-    height: 56,
-    borderRadius: 28,
-    backgroundColor: Colors.borderLight,
+  emptyIllustration: {
+    width: 100,
+    height: 100,
     justifyContent: 'center',
     alignItems: 'center',
-    marginBottom: 4,
+    marginBottom: 20,
+  },
+  emptyGlobeRing: {
+    width: 84,
+    height: 84,
+    borderRadius: 42,
+    borderWidth: 2,
+    borderColor: Colors.border,
+    borderStyle: 'dashed' as const,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  emptyGlobeInner: {
+    width: 60,
+    height: 60,
+    borderRadius: 30,
+    backgroundColor: '#E0F7FA',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  emptyDotLeft: {
+    position: 'absolute' as const,
+    left: 4,
+    top: 42,
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+    backgroundColor: '#FBBF24',
+  },
+  emptyDotRight: {
+    position: 'absolute' as const,
+    right: 8,
+    bottom: 18,
+    width: 6,
+    height: 6,
+    borderRadius: 3,
+    backgroundColor: '#F87171',
+  },
+  emptyDotTop: {
+    position: 'absolute' as const,
+    right: 14,
+    top: 8,
+    width: 10,
+    height: 10,
+    borderRadius: 5,
+    backgroundColor: '#34D399',
   },
   emptyTripTitle: {
-    fontSize: 17,
-    fontWeight: '600' as const,
+    fontSize: 19,
+    fontWeight: '700' as const,
     color: Colors.text,
+    marginBottom: 8,
+    textAlign: 'center' as const,
   },
   emptyTripText: {
     fontSize: 14,
     color: Colors.textSecondary,
+    textAlign: 'center' as const,
+    lineHeight: 20,
+    marginBottom: 8,
   },
   createTripBtn: {
     flexDirection: 'row',

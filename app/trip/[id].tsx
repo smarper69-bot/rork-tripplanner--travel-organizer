@@ -9,7 +9,7 @@ import { useLocalSearchParams, useRouter, Stack } from 'expo-router';
 import { 
   ArrowLeft, Share2, Edit3, Calendar, MapPin, 
   Users, Plus, Clock, DollarSign,
-  Hotel, Camera,
+  Hotel, Camera, Heart, BarChart3,
   Flower2, Church, Palmtree, Mountain, Sun, Landmark, Trees, Snowflake, Tent,
   X, Trash2, ExternalLink, Plane, Link2, Copy, Check,
   Crown, UserPlus, UserMinus
@@ -17,6 +17,7 @@ import {
 import * as ImagePicker from 'expo-image-picker';
 import * as Clipboard from 'expo-clipboard';
 import Colors from '@/constants/colors';
+import { hapticHeavy, hapticSuccess, hapticSelection } from '@/utils/haptics';
 
 import CalendarPicker from '@/components/CalendarPicker';
 import { useTripsStore } from '@/store/useTripsStore';
@@ -148,6 +149,7 @@ export default function TripDetailScreen() {
   };
 
   const handleTabPress = (tabId: TabType) => {
+    hapticSelection();
     setActiveTab(tabId);
   };
 
@@ -168,6 +170,7 @@ export default function TripDetailScreen() {
       Alert.alert('Missing Info', 'Please enter a title and select a date.');
       return;
     }
+    hapticSuccess();
     addItineraryItem(trip.id, {
       title: itineraryTitle.trim(),
       date: itineraryDate,
@@ -182,6 +185,7 @@ export default function TripDetailScreen() {
   };
 
   const handleDeleteItinerary = (itemId: string) => {
+    hapticHeavy();
     Alert.alert('Delete Activity', 'Remove this activity?', [
       { text: 'Cancel', style: 'cancel' },
       { text: 'Delete', style: 'destructive', onPress: () => deleteItineraryItem(itemId) },
@@ -193,6 +197,7 @@ export default function TripDetailScreen() {
       Alert.alert('Missing Info', 'Please enter a name and select check-in/check-out dates.');
       return;
     }
+    hapticSuccess();
     addStay(trip.id, {
       name: stayName.trim(),
       address: stayAddress.trim() || undefined,
@@ -207,6 +212,7 @@ export default function TripDetailScreen() {
   };
 
   const handleDeleteStay = (stayId: string) => {
+    hapticHeavy();
     Alert.alert('Delete Stay', 'Remove this stay?', [
       { text: 'Cancel', style: 'cancel' },
       { text: 'Delete', style: 'destructive', onPress: () => deleteStay(stayId) },
@@ -243,6 +249,7 @@ export default function TripDetailScreen() {
   };
 
   const handleDeleteMemory = (memoryId: string) => {
+    hapticHeavy();
     Alert.alert('Delete Memory', 'Remove this photo?', [
       { text: 'Cancel', style: 'cancel' },
       { text: 'Delete', style: 'destructive', onPress: () => deleteMemory(memoryId) },
@@ -251,6 +258,7 @@ export default function TripDetailScreen() {
 
   const handleDeleteTrip = () => {
     if (!trip) return;
+    hapticHeavy();
     Alert.alert(
       'Remove this trip?',
       'This will delete the trip and its related data.',
@@ -270,6 +278,7 @@ export default function TripDetailScreen() {
   };
 
   const handleSaveBudget = () => {
+    hapticSuccess();
     const total = parseFloat(budgetTotalInput) || 0;
     const spent = parseFloat(budgetSpentInput) || 0;
     updateTrip(trip.id, { totalBudget: total, spentBudget: spent });
@@ -437,12 +446,22 @@ export default function TripDetailScreen() {
         </>
       ) : (
         <View style={styles.emptyState}>
-          <Calendar size={40} color={Colors.textMuted} />
-          <Text style={styles.emptyTitle}>No plans yet</Text>
-          <Text style={styles.emptyText}>Start adding activities to your itinerary</Text>
-          <TouchableOpacity style={styles.emptyButton} onPress={() => setShowItineraryForm(true)}>
+          <View style={styles.emptyIconComposed}>
+            <View style={styles.emptyIconCircle}>
+              <Calendar size={28} color={Colors.accent} />
+            </View>
+            <View style={[styles.emptyIconAccent, { backgroundColor: '#FEF3C7', top: 2, right: -4 }]}>
+              <Clock size={12} color="#D97706" />
+            </View>
+          </View>
+          <Text style={styles.emptyTitle}>Plan your days</Text>
+          <Text style={styles.emptyText}>Add activities, reservations, and experiences to build your perfect itinerary.</Text>
+          <TouchableOpacity style={styles.emptyButton} onPress={() => {
+            hapticSelection();
+            setShowItineraryForm(true);
+          }}>
             <Plus size={18} color={Colors.textLight} />
-            <Text style={styles.emptyButtonText}>Add Activity</Text>
+            <Text style={styles.emptyButtonText}>Add first activity</Text>
           </TouchableOpacity>
         </View>
       )}
@@ -488,12 +507,20 @@ export default function TripDetailScreen() {
         </>
       ) : (
         <View style={styles.emptyState}>
-          <DollarSign size={40} color={Colors.textMuted} />
-          <Text style={styles.emptyTitle}>Set a budget to track spending</Text>
-          <Text style={styles.emptyText}>Keep track of your trip expenses</Text>
+          <View style={styles.emptyIconComposed}>
+            <View style={[styles.emptyIconCircle, { backgroundColor: '#D1FAE5' }]}>
+              <DollarSign size={28} color="#059669" />
+            </View>
+            <View style={[styles.emptyIconAccent, { backgroundColor: '#EEF2FF', top: 2, right: -4 }]}>
+              <BarChart3 size={12} color="#6366F1" />
+            </View>
+          </View>
+          <Text style={styles.emptyTitle}>Stay on budget</Text>
+          <Text style={styles.emptyText}>Set a total budget and track your spending as you go. No surprises when you get home.</Text>
           <TouchableOpacity 
             style={styles.emptyButton} 
             onPress={() => {
+              hapticSelection();
               setBudgetTotalInput('');
               setBudgetSpentInput('0');
               setShowBudgetEdit(true);
@@ -565,10 +592,20 @@ export default function TripDetailScreen() {
         </>
       ) : (
         <View style={styles.emptyState}>
-          <Hotel size={40} color={Colors.textMuted} />
-          <Text style={styles.emptyTitle}>No stays added yet</Text>
-          <Text style={styles.emptyText}>Add accommodations for your trip</Text>
-          <TouchableOpacity style={styles.emptyButton} onPress={() => setShowStayForm(true)}>
+          <View style={styles.emptyIconComposed}>
+            <View style={[styles.emptyIconCircle, { backgroundColor: '#FEF3C7' }]}>
+              <Hotel size={28} color="#D97706" />
+            </View>
+            <View style={[styles.emptyIconAccent, { backgroundColor: '#FCE7F3', top: 2, right: -4 }]}>
+              <MapPin size={12} color="#DB2777" />
+            </View>
+          </View>
+          <Text style={styles.emptyTitle}>Where are you staying?</Text>
+          <Text style={styles.emptyText}>Keep all your accommodation details in one place for easy access during your trip.</Text>
+          <TouchableOpacity style={styles.emptyButton} onPress={() => {
+            hapticSelection();
+            setShowStayForm(true);
+          }}>
             <Plus size={18} color={Colors.textLight} />
             <Text style={styles.emptyButtonText}>Add Stay</Text>
           </TouchableOpacity>
@@ -607,12 +644,20 @@ export default function TripDetailScreen() {
         </>
       ) : (
         <View style={styles.emptyState}>
-          <Camera size={40} color={Colors.textMuted} />
-          <Text style={styles.emptyTitle}>No memories yet</Text>
-          <Text style={styles.emptyText}>
-            Add photos and videos from your trip
-          </Text>
-          <TouchableOpacity style={styles.emptyButton} onPress={handleAddMemory}>
+          <View style={styles.emptyIconComposed}>
+            <View style={[styles.emptyIconCircle, { backgroundColor: '#FCE7F3' }]}>
+              <Camera size={28} color="#DB2777" />
+            </View>
+            <View style={[styles.emptyIconAccent, { backgroundColor: '#DBEAFE', top: 2, right: -4 }]}>
+              <Heart size={12} color="#2563EB" />
+            </View>
+          </View>
+          <Text style={styles.emptyTitle}>Capture the moments</Text>
+          <Text style={styles.emptyText}>Save your favourite photos and videos from this trip to relive the memories later.</Text>
+          <TouchableOpacity style={styles.emptyButton} onPress={() => {
+            hapticSelection();
+            void handleAddMemory();
+          }}>
             <Camera size={18} color={Colors.textLight} />
             <Text style={styles.emptyButtonText}>Add Photos</Text>
           </TouchableOpacity>
@@ -1414,37 +1459,49 @@ const styles = StyleSheet.create({
 
   emptyState: {
     alignItems: 'center',
-    paddingVertical: 50,
+    paddingVertical: 48,
+    paddingHorizontal: 24,
     backgroundColor: Colors.surface,
-    borderRadius: 16,
+    borderRadius: 20,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.04,
+    shadowRadius: 8,
+    elevation: 1,
   },
   emptyTitle: {
-    fontSize: 16,
-    fontWeight: '600' as const,
+    fontSize: 18,
+    fontWeight: '700' as const,
     color: Colors.text,
-    marginTop: 14,
-    marginBottom: 6,
-    textAlign: 'center',
+    marginTop: 6,
+    marginBottom: 8,
+    textAlign: 'center' as const,
   },
   emptyText: {
     fontSize: 14,
     color: Colors.textSecondary,
-    marginBottom: 20,
-    textAlign: 'center',
-    paddingHorizontal: 20,
+    marginBottom: 24,
+    textAlign: 'center' as const,
+    lineHeight: 20,
+    paddingHorizontal: 8,
   },
   emptyButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 6,
-    paddingHorizontal: 20,
-    paddingVertical: 12,
+    flexDirection: 'row' as const,
+    alignItems: 'center' as const,
+    gap: 8,
+    paddingHorizontal: 24,
+    paddingVertical: 14,
     backgroundColor: Colors.accent,
-    borderRadius: 12,
+    borderRadius: 14,
+    shadowColor: Colors.accent,
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.2,
+    shadowRadius: 6,
+    elevation: 3,
   },
   emptyButtonText: {
-    fontSize: 14,
-    fontWeight: '600' as const,
+    fontSize: 15,
+    fontWeight: '700' as const,
     color: Colors.textLight,
   },
   addItemButton: {
@@ -1791,5 +1848,33 @@ const styles = StyleSheet.create({
     fontSize: 15,
     fontWeight: '600' as const,
     color: Colors.accent,
+  },
+  emptyIconComposed: {
+    width: 80,
+    height: 80,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: 8,
+  },
+  emptyIconCircle: {
+    width: 64,
+    height: 64,
+    borderRadius: 32,
+    backgroundColor: '#E0F7FA',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  emptyIconAccent: {
+    position: 'absolute' as const,
+    width: 28,
+    height: 28,
+    borderRadius: 14,
+    justifyContent: 'center',
+    alignItems: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.08,
+    shadowRadius: 3,
+    elevation: 1,
   },
 });

@@ -1,6 +1,7 @@
 import { Tabs } from 'expo-router';
 import { Home, Compass, Briefcase, User, Sparkles, Globe } from 'lucide-react-native';
 import Colors from '@/constants/colors';
+import { hapticLight } from '@/utils/haptics';
 
 export default function TabLayout() {
   return (
@@ -27,6 +28,11 @@ export default function TabLayout() {
         },
         tabBarIconStyle: {
           marginTop: 2,
+        },
+      }}
+      screenListeners={{
+        tabPress: () => {
+          hapticLight();
         },
       }}
     >

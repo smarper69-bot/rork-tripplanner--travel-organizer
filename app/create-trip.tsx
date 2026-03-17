@@ -5,6 +5,7 @@ import { useRouter, useLocalSearchParams, Stack } from 'expo-router';
 import { MapPin, Calendar, Users, DollarSign, Camera, X } from 'lucide-react-native';
 import Colors from '@/constants/colors';
 import { useTripsStore } from '@/store/useTripsStore';
+import { hapticSuccess } from '@/utils/haptics';
 import CalendarPicker from '@/components/CalendarPicker';
 
 const coverImages = [
@@ -72,6 +73,7 @@ export default function CreateTripScreen() {
       coverImage: coverImage || undefined,
       totalBudget: budget ? parseFloat(budget) : undefined,
     });
+    hapticSuccess();
     console.log('[CreateTrip] Created trip:', tripId);
     router.dismiss();
     setTimeout(() => {

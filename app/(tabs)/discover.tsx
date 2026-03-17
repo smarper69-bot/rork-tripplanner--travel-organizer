@@ -6,6 +6,7 @@ import { useRouter } from 'expo-router';
 import { Search, SlidersHorizontal, TrendingUp, MapPin, Sun, Mountain, Utensils, Compass, ChevronRight, DollarSign, Calendar, Heart, Plane, Star } from 'lucide-react-native';
 import Colors from '@/constants/colors';
 import { openComingSoon } from '@/utils/comingSoon';
+import { hapticLight } from '@/utils/haptics';
 import { destinations, DiscoverDestination, TripType } from '@/mocks/destinations';
 import { mockTrips } from '@/mocks/trips';
 
@@ -50,6 +51,7 @@ interface DestinationCardCompactProps {
 function DestinationCardCompact({ destination, onPress }: DestinationCardCompactProps) {
   const scale = useRef(new Animated.Value(1)).current;
   const onPressIn = useCallback(() => {
+    hapticLight();
     Animated.spring(scale, { toValue: 0.96, useNativeDriver: true, speed: 50, bounciness: 4 }).start();
   }, [scale]);
   const onPressOut = useCallback(() => {
@@ -88,6 +90,7 @@ interface DestinationCardLargeProps {
 function DestinationCardLarge({ destination, onPress }: DestinationCardLargeProps) {
   const scale = useRef(new Animated.Value(1)).current;
   const onPressIn = useCallback(() => {
+    hapticLight();
     Animated.spring(scale, { toValue: 0.97, useNativeDriver: true, speed: 50, bounciness: 4 }).start();
   }, [scale]);
   const onPressOut = useCallback(() => {
@@ -132,6 +135,7 @@ interface DestinationCardRowProps {
 function DestinationCardRow({ destination, onPress }: DestinationCardRowProps) {
   const scale = useRef(new Animated.Value(1)).current;
   const onPressIn = useCallback(() => {
+    hapticLight();
     Animated.spring(scale, { toValue: 0.97, useNativeDriver: true, speed: 50, bounciness: 4 }).start();
   }, [scale]);
   const onPressOut = useCallback(() => {

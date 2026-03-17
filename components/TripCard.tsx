@@ -5,6 +5,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import Colors from '@/constants/colors';
 import { Trip } from '@/types/trip';
 import { getDestinationImage } from '@/utils/destinationImages';
+import { hapticLight } from '@/utils/haptics';
 
 interface TripCardProps {
   trip: Trip;
@@ -24,6 +25,7 @@ export default function TripCard({ trip, onPress, variant = 'large' }: TripCardP
   };
 
   const onPressIn = useCallback(() => {
+    hapticLight();
     Animated.spring(scaleAnim, {
       toValue: 0.97,
       useNativeDriver: true,

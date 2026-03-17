@@ -9,6 +9,7 @@ import {
 } from 'lucide-react-native';
 import Colors from '@/constants/colors';
 import { openComingSoon } from '@/utils/comingSoon';
+import { hapticLight } from '@/utils/haptics';
 import { useTripsStore } from '@/store/useTripsStore';
 import { usePreferencesStore, CurrencyOption, AppearanceOption } from '@/store/usePreferencesStore';
 
@@ -28,7 +29,10 @@ function SettingsItem({ icon, label, value, onPress, showChevron = true, toggle,
   return (
     <TouchableOpacity 
       style={styles.settingsItem} 
-      onPress={onPress}
+      onPress={() => {
+        hapticLight();
+        onPress?.();
+      }}
       disabled={toggle}
       activeOpacity={0.7}
     >
