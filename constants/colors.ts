@@ -2,41 +2,42 @@ export default {
   primary: '#1A1A1A',
   primaryLight: '#333333',
   primaryDark: '#0D0D0D',
-  accent: '#1A1A1A',
-  accentLight: '#404040',
-  secondary: '#666666',
-  secondaryLight: '#8A8A8A',
-  
-  background: '#F5F5F5',
+  accent: '#0891B2',
+  accentLight: '#22D3EE',
+  secondary: '#6B7280',
+  secondaryLight: '#9CA3AF',
+
+  background: '#F8F8F8',
   surface: '#FFFFFF',
   surfaceElevated: '#FFFFFF',
-  
-  text: '#1A1A1A',
-  textSecondary: '#666666',
-  textMuted: '#999999',
+  cardBg: '#F2F2F2',
+
+  text: '#111111',
+  textSecondary: '#6B7280',
+  textMuted: '#9CA3AF',
   textLight: '#FFFFFF',
-  
-  border: '#E0E0E0',
-  borderLight: '#EBEBEB',
-  
-  success: '#1A1A1A',
-  warning: '#666666',
-  error: '#1A1A1A',
-  info: '#666666',
-  
+
+  border: '#E5E7EB',
+  borderLight: '#F3F4F6',
+
+  success: '#059669',
+  warning: '#D97706',
+  error: '#EF4444',
+  info: '#0891B2',
+
   categoryColors: {
-    flights: '#333333',
-    accommodation: '#4A4A4A',
-    food: '#5A5A5A',
-    activities: '#3A3A3A',
-    transport: '#2A2A2A',
-    shopping: '#4A4A4A',
-    other: '#666666',
+    flights: '#0891B2',
+    accommodation: '#7C3AED',
+    food: '#EA580C',
+    activities: '#059669',
+    transport: '#2563EB',
+    shopping: '#DB2777',
+    other: '#6B7280',
   },
-  
+
   gradients: {
-    primary: ['#1A1A1A', '#333333'],
-    sunset: ['#333333', '#666666'],
-    ocean: ['#1A1A1A', '#4A4A4A'],
+    primary: ['#111111', '#333333'],
+    sunset: ['#F59E0B', '#EF4444'],
+    ocean: ['#0891B2', '#06B6D4'],
   },
 };

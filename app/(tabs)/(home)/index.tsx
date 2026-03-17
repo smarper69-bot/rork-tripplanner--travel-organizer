@@ -1,64 +1,69 @@
 import React, { useMemo, useRef, useEffect, useState, useCallback } from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Alert, Animated, Dimensions, FlatList, NativeSyntheticEvent, NativeScrollEvent, Image } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Animated, Dimensions, FlatList, NativeSyntheticEvent, NativeScrollEvent, Image, Pressable } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
-import { Plus, Compass, Globe, MapPin, Calendar, Trash2, ChevronRight, ArrowRight, Plane } from 'lucide-react-native';
-import { Flower2, Church, Palmtree, Mountain, Sun, Landmark, Trees, Snowflake, Tent } from 'lucide-react-native';
+import { Plus, Compass, Globe, MapPin, Calendar, ChevronRight, ArrowRight, Plane } from 'lucide-react-native';
 import Colors from '@/constants/colors';
 import { useTripsStore } from '@/store/useTripsStore';
 import { useOnboardingStore } from '@/store/useOnboardingStore';
-import { Trip, TripIcon } from '@/types/trip';
+import { Trip } from '@/types/trip';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
-const CARD_WIDTH = SCREEN_WIDTH - 40;
+const CARD_WIDTH = SCREEN_WIDTH - 48;
 const CARD_SPACING = 12;
+
+const DESTINATION_IMAGES: Record<string, string> = {
+  'Tokyo': 'https://images.unsplash.com/photo-1540959733332-eab4deabeeaf?w=800&h=500&fit=crop&q=80',
+  'Bali': 'https://images.unsplash.com/photo-1537996194471-e657df975ab4?w=800&h=500&fit=crop&q=80',
+  'Paris': 'https://images.unsplash.com/photo-1502602898657-3e91760cbb34?w=800&h=500&fit=crop&q=80',
+  'Santorini': 'https://images.unsplash.com/photo-1613395877344-13d4a8e0d49e?w=800&h=500&fit=crop&q=80',
+  'Barcelona': 'https://images.unsplash.com/photo-1583422409516-2895a77efded?w=800&h=500&fit=crop&q=80',
+  'Hanoi': 'https://images.unsplash.com/photo-1583417319070-4a69db38a482?w=800&h=500&fit=crop&q=80',
+};
+
+const FALLBACK_IMAGES = [
+  'https://images.unsplash.com/photo-1488646953014-85cb44e25828?w=800&h=500&fit=crop&q=80',
+  'https://images.unsplash.com/photo-1507525428034-b723cf961d3e?w=800&h=500&fit=crop&q=80',
+  'https://images.unsplash.com/photo-1476514525535-07fb3b4ae5f1?w=800&h=500&fit=crop&q=80',
+];
+
+function getTripImage(destination: string, id: string): string {
+  if (DESTINATION_IMAGES[destination]) return DESTINATION_IMAGES[destination];
+  const hash = id.split('').reduce((acc, c) => acc + c.charCodeAt(0), 0);
+  return FALLBACK_IMAGES[hash % FALLBACK_IMAGES.length];
+}
 
 const FEATURED_DESTINATIONS = [
   {
     id: '3',
     city: 'Bali',
     country: 'Indonesia',
-    description: 'Tropical paradise with stunning rice terraces, ancient temples, and world-class surfing.',
+    description: 'Tropical paradise with stunning rice terraces and ancient temples.',
     imageUrl: 'https://images.unsplash.com/photo-1537996194471-e657df975ab4?w=1600&h=900&fit=crop&q=80',
   },
   {
     id: '1',
     city: 'Tokyo',
     country: 'Japan',
-    description: 'A dazzling blend of ultramodern and traditional, from neon-lit skyscrapers to historic temples.',
+    description: 'Ultramodern meets traditional — neon skyscrapers to historic temples.',
     imageUrl: 'https://images.unsplash.com/photo-1540959733332-eab4deabeeaf?w=1600&h=900&fit=crop&q=80',
   },
   {
     id: '7',
     city: 'Santorini',
     country: 'Greece',
-    description: 'Iconic white-washed buildings perched on cliffs overlooking the deep blue Aegean Sea.',
+    description: 'White-washed cliffs overlooking the deep blue Aegean Sea.',
     imageUrl: 'https://images.unsplash.com/photo-1613395877344-13d4a8e0d49e?w=1600&h=900&fit=crop&q=80',
   },
   {
     id: '5',
     city: 'Barcelona',
     country: 'Spain',
-    description: "Gaudí's architectural masterpieces meet Mediterranean beaches and vibrant nightlife.",
+    description: "Gaudí's masterpieces meet Mediterranean beaches and vibrant culture.",
     imageUrl: 'https://images.unsplash.com/photo-1583422409516-2895a77efded?w=1600&h=900&fit=crop&q=80',
   },
 ];
-
-const getIconComponent = (iconName: TripIcon) => {
-  const iconMap: Record<TripIcon, React.ComponentType<{ size: number; color: string }>> = {
-    'cherry-blossom': Flower2,
-    'cathedral': Church,
-    'palm-tree': Palmtree,
-    'mountain': Mountain,
-    'sun': Sun,
-    'landmark': Landmark,
-    'trees': Trees,
-    'snowflake': Snowflake,
-    'tent': Tent,
-  };
-  return iconMap[iconName] || Landmark;
-};
 
 const getGreeting = () => {
   const hour = new Date().getHours();
@@ -71,15 +76,26 @@ const formatDate = (date: string) => {
   return new Date(date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
 };
 
-const QUICK_ACTIONS = [
-  { key: 'create', label: 'Create Trip', icon: Plus, route: '/create-trip', bg: '#1A1A1A' },
-  { key: 'explore', label: 'Explore', icon: Compass, route: '/discover', bg: '#2D2D2D' },
-  { key: 'globe', label: 'Globe', icon: Globe, route: '/globe', bg: '#404040' },
-] as const;
+function AnimatedPressable({ children, onPress, style, testID }: { children: React.ReactNode; onPress: () => void; style?: any; testID?: string }) {
+  const scale = useRef(new Animated.Value(1)).current;
+  const handlePressIn = useCallback(() => {
+    Animated.spring(scale, { toValue: 0.97, useNativeDriver: true, speed: 50, bounciness: 4 }).start();
+  }, [scale]);
+  const handlePressOut = useCallback(() => {
+    Animated.spring(scale, { toValue: 1, useNativeDriver: true, speed: 50, bounciness: 4 }).start();
+  }, [scale]);
+  return (
+    <Pressable onPress={onPress} onPressIn={handlePressIn} onPressOut={handlePressOut} testID={testID}>
+      <Animated.View style={[style, { transform: [{ scale }] }]}>
+        {children}
+      </Animated.View>
+    </Pressable>
+  );
+}
 
 export default function HomeScreen() {
   const router = useRouter();
-  const { trips, deleteTrip } = useTripsStore();
+  const { trips } = useTripsStore();
   const userName = useOnboardingStore((s) => s.userName);
   const fadeAnim = useRef(new Animated.Value(0)).current;
   const slideAnim = useRef(new Animated.Value(20)).current;
@@ -88,8 +104,8 @@ export default function HomeScreen() {
 
   useEffect(() => {
     Animated.parallel([
-      Animated.timing(fadeAnim, { toValue: 1, duration: 500, useNativeDriver: true }),
-      Animated.timing(slideAnim, { toValue: 0, duration: 500, useNativeDriver: true }),
+      Animated.timing(fadeAnim, { toValue: 1, duration: 600, useNativeDriver: true }),
+      Animated.timing(slideAnim, { toValue: 0, duration: 600, useNativeDriver: true }),
     ]).start();
   }, [fadeAnim, slideAnim]);
 
@@ -108,25 +124,7 @@ export default function HomeScreen() {
   }, [trips]);
 
   const mainTrip = futureTrips[0] ?? null;
-  const otherTrips = futureTrips.slice(1);
-
-  const handleDeleteTrip = (trip: Trip) => {
-    Alert.alert(
-      'Remove this trip?',
-      'This will delete the trip and its related data.',
-      [
-        { text: 'Cancel', style: 'cancel' },
-        {
-          text: 'Delete',
-          style: 'destructive',
-          onPress: () => {
-            deleteTrip(trip.id);
-            console.log('[Home] Deleted trip:', trip.id);
-          },
-        },
-      ]
-    );
-  };
+  const otherTrips = futureTrips.slice(1, 4);
 
   const getDaysLabel = (trip: Trip) => {
     const days = Math.ceil(
@@ -138,8 +136,6 @@ export default function HomeScreen() {
     return `In ${days} days`;
   };
 
-  const MainTripIcon = mainTrip ? getIconComponent(mainTrip.icon) : Landmark;
-
   return (
     <SafeAreaView style={styles.container} edges={['top']}>
       <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.scrollContent}>
@@ -148,25 +144,25 @@ export default function HomeScreen() {
           <Text style={styles.title}>Where to next?</Text>
         </Animated.View>
 
-        {/* Quick Actions */}
         <View style={styles.quickActions}>
-          {QUICK_ACTIONS.map((action) => (
-            <TouchableOpacity
+          {[
+            { key: 'create', label: 'New Trip', icon: Plus, bg: Colors.accent },
+            { key: 'explore', label: 'Explore', icon: Compass, bg: Colors.text },
+            { key: 'globe', label: 'Globe', icon: Globe, bg: '#374151' },
+          ].map((action) => (
+            <AnimatedPressable
               key={action.key}
-              style={[styles.quickActionCard, { backgroundColor: action.bg }]}
-              activeOpacity={0.8}
-              onPress={() => router.push(action.route as any)}
+              onPress={() => router.push(action.key === 'create' ? '/create-trip' : action.key === 'explore' ? '/discover' : '/globe' as any)}
               testID={`quick-action-${action.key}`}
             >
-              <View style={styles.quickActionIconWrap}>
-                <action.icon size={22} color="#FFFFFF" />
+              <View style={[styles.quickActionCard, { backgroundColor: action.bg }]}>
+                <action.icon size={20} color="#FFFFFF" />
+                <Text style={styles.quickActionLabel}>{action.label}</Text>
               </View>
-              <Text style={styles.quickActionLabel}>{action.label}</Text>
-            </TouchableOpacity>
+            </AnimatedPressable>
           ))}
         </View>
 
-        {/* Featured Destination Carousel */}
         <View style={styles.featuredSection}>
           <View style={styles.sectionHeader}>
             <Text style={styles.sectionTitle}>Featured</Text>
@@ -194,92 +190,84 @@ export default function HomeScreen() {
             contentContainerStyle={styles.carouselContent}
             keyExtractor={(item) => item.id}
             renderItem={({ item }) => (
-              <TouchableOpacity
-                style={styles.featuredCard}
-                activeOpacity={0.9}
+              <AnimatedPressable
                 onPress={() => router.push({ pathname: '/destination/[id]', params: { id: item.id } } as any)}
                 testID={`featured-card-${item.id}`}
               >
-                <Image
-                  source={{ uri: item.imageUrl }}
-                  style={styles.featuredBgImage}
-                />
-                <LinearGradient
-                  colors={['transparent', 'rgba(0,0,0,0.1)', 'rgba(0,0,0,0.78)']}
-                  locations={[0, 0.35, 1]}
-                  style={styles.featuredGradient}
-                />
-                <View style={styles.featuredContent}>
-                  <View style={styles.featuredTextBlock}>
-                    <Text style={styles.featuredCity}>{item.city}</Text>
-                    <Text style={styles.featuredCountry}>{item.country}</Text>
-                    <Text style={styles.featuredDescription} numberOfLines={2}>{item.description}</Text>
+                <View style={styles.featuredCard}>
+                  <Image
+                    source={{ uri: item.imageUrl }}
+                    style={styles.featuredBgImage}
+                  />
+                  <LinearGradient
+                    colors={['transparent', 'rgba(0,0,0,0.08)', 'rgba(0,0,0,0.78)']}
+                    locations={[0, 0.35, 1]}
+                    style={styles.featuredGradient}
+                  />
+                  <View style={styles.featuredContent}>
+                    <View style={styles.featuredTextBlock}>
+                      <Text style={styles.featuredCity}>{item.city}</Text>
+                      <Text style={styles.featuredCountry}>{item.country}</Text>
+                      <Text style={styles.featuredDescription} numberOfLines={2}>{item.description}</Text>
+                    </View>
+                    <TouchableOpacity
+                      style={styles.planButton}
+                      activeOpacity={0.85}
+                      onPress={() => router.push('/create-trip' as any)}
+                    >
+                      <Text style={styles.planButtonText}>Plan this trip</Text>
+                      <ArrowRight size={14} color="#FFF" />
+                    </TouchableOpacity>
                   </View>
-                  <TouchableOpacity
-                    style={styles.planButton}
-                    activeOpacity={0.85}
-                    onPress={() => router.push('/create-trip' as any)}
-                  >
-                    <Text style={styles.planButtonText}>Plan this trip</Text>
-                    <ArrowRight size={16} color="#1A1A1A" />
-                  </TouchableOpacity>
                 </View>
-              </TouchableOpacity>
+              </AnimatedPressable>
             )}
           />
         </View>
 
-        {/* Upcoming Trip or Empty */}
         {mainTrip ? (
           <>
             <View style={styles.sectionHeader}>
               <Text style={styles.sectionTitle}>Your next trip</Text>
             </View>
 
-            <TouchableOpacity
-              style={[styles.mainCard, { backgroundColor: mainTrip.iconColor + '10' }]}
-              activeOpacity={0.85}
+            <AnimatedPressable
               onPress={() => router.push(`/trip/${mainTrip.id}` as any)}
               testID="main-trip-card"
             >
-              <View style={styles.mainCardHeader}>
-                <View style={[styles.statusPill, { backgroundColor: mainTrip.iconColor + '20' }]}>
-                  <Text style={[styles.statusPillText, { color: mainTrip.iconColor }]}>
+              <View style={styles.mainCard}>
+                <Image
+                  source={{ uri: getTripImage(mainTrip.destination, mainTrip.id) }}
+                  style={styles.mainCardImage}
+                />
+                <LinearGradient
+                  colors={['transparent', 'rgba(0,0,0,0.15)', 'rgba(0,0,0,0.8)']}
+                  locations={[0, 0.35, 1]}
+                  style={styles.mainCardGradient}
+                />
+                <View style={styles.mainCardBadge}>
+                  <Text style={styles.mainCardBadgeText}>
                     {mainTrip.status === 'planning' ? 'Planning' : getDaysLabel(mainTrip)}
                   </Text>
                 </View>
-                <TouchableOpacity
-                  style={styles.deleteBtn}
-                  onPress={() => handleDeleteTrip(mainTrip)}
-                  hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
-                  testID="main-trip-delete"
-                >
-                  <Trash2 size={18} color={Colors.textMuted} />
-                </TouchableOpacity>
-              </View>
-
-              <View style={styles.mainCardIcon}>
-                <MainTripIcon size={56} color={mainTrip.iconColor} />
-              </View>
-
-              <View style={styles.mainCardFooter}>
-                <Text style={styles.mainCardName} numberOfLines={1}>{mainTrip.name}</Text>
-                <View style={styles.mainCardMeta}>
-                  <MapPin size={14} color={Colors.textSecondary} />
-                  <Text style={styles.mainCardLocation}>{mainTrip.destination}, {mainTrip.country}</Text>
+                <View style={styles.mainCardContent}>
+                  <Text style={styles.mainCardName} numberOfLines={1}>{mainTrip.name}</Text>
+                  <View style={styles.mainCardMeta}>
+                    <MapPin size={13} color="rgba(255,255,255,0.8)" />
+                    <Text style={styles.mainCardLocation}>{mainTrip.destination}, {mainTrip.country}</Text>
+                  </View>
+                  <View style={styles.mainCardMeta}>
+                    <Calendar size={12} color="rgba(255,255,255,0.7)" />
+                    <Text style={styles.mainCardDates}>
+                      {formatDate(mainTrip.startDate)} – {formatDate(mainTrip.endDate)}
+                    </Text>
+                  </View>
                 </View>
-                <View style={styles.mainCardMeta}>
-                  <Calendar size={14} color={Colors.textSecondary} />
-                  <Text style={styles.mainCardDates}>
-                    {formatDate(mainTrip.startDate)} – {formatDate(mainTrip.endDate)}
-                  </Text>
+                <View style={styles.mainCardArrow}>
+                  <ChevronRight size={20} color="rgba(255,255,255,0.7)" />
                 </View>
               </View>
-
-              <View style={styles.mainCardArrow}>
-                <ChevronRight size={20} color={Colors.textMuted} />
-              </View>
-            </TouchableOpacity>
+            </AnimatedPressable>
 
             {otherTrips.length > 0 && (
               <View style={styles.otherSection}>
@@ -289,43 +277,38 @@ export default function HomeScreen() {
                     <Text style={styles.seeAll}>See all</Text>
                   </TouchableOpacity>
                 </View>
-                {otherTrips.map((trip) => {
-                  const Icon = getIconComponent(trip.icon);
-                  return (
-                    <TouchableOpacity
-                      key={trip.id}
-                      style={styles.otherCard}
-                      activeOpacity={0.8}
-                      onPress={() => router.push(`/trip/${trip.id}` as any)}
-                      testID={`trip-card-${trip.id}`}
-                    >
-                      <View style={[styles.otherCardIcon, { backgroundColor: trip.iconColor + '12' }]}>
-                        <Icon size={28} color={trip.iconColor} />
-                      </View>
+                {otherTrips.map((trip) => (
+                  <AnimatedPressable
+                    key={trip.id}
+                    onPress={() => router.push(`/trip/${trip.id}` as any)}
+                    testID={`trip-card-${trip.id}`}
+                  >
+                    <View style={styles.otherCard}>
+                      <Image
+                        source={{ uri: getTripImage(trip.destination, trip.id) }}
+                        style={styles.otherCardImage}
+                      />
                       <View style={styles.otherCardContent}>
                         <Text style={styles.otherCardName} numberOfLines={1}>{trip.name}</Text>
                         <Text style={styles.otherCardSub}>
                           {trip.destination} · {formatDate(trip.startDate)}
                         </Text>
                       </View>
-                      <TouchableOpacity
-                        style={styles.otherDeleteBtn}
-                        onPress={() => handleDeleteTrip(trip)}
-                        hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
-                      >
-                        <Trash2 size={16} color={Colors.textMuted} />
-                      </TouchableOpacity>
-                    </TouchableOpacity>
-                  );
-                })}
+                      <ChevronRight size={18} color={Colors.textMuted} />
+                    </View>
+                  </AnimatedPressable>
+                ))}
               </View>
             )}
           </>
         ) : (
           <View style={styles.emptyTripSection}>
             <View style={styles.emptyTripCard}>
-              <Plane size={28} color={Colors.textMuted} />
-              <Text style={styles.emptyTripText}>No trips planned yet</Text>
+              <View style={styles.emptyIconWrap}>
+                <Plane size={24} color={Colors.textMuted} />
+              </View>
+              <Text style={styles.emptyTripTitle}>No trips planned yet</Text>
+              <Text style={styles.emptyTripText}>Start planning your next adventure</Text>
               <TouchableOpacity
                 style={styles.createTripBtn}
                 onPress={() => router.push('/create-trip' as any)}
@@ -352,103 +335,95 @@ const styles = StyleSheet.create({
     paddingBottom: 120,
   },
   header: {
-    paddingHorizontal: 20,
-    paddingTop: 12,
-    paddingBottom: 20,
+    paddingHorizontal: 24,
+    paddingTop: 16,
+    paddingBottom: 24,
   },
   greeting: {
     fontSize: 14,
     color: Colors.textSecondary,
-    marginBottom: 2,
-    letterSpacing: 0.3,
+    marginBottom: 4,
+    letterSpacing: 0.2,
   },
   title: {
-    fontSize: 26,
+    fontSize: 28,
     fontWeight: '800' as const,
     color: Colors.text,
-    lineHeight: 32,
+    lineHeight: 34,
+    letterSpacing: -0.3,
   },
   quickActions: {
     flexDirection: 'row',
-    paddingHorizontal: 20,
+    paddingHorizontal: 24,
     gap: 10,
-    marginBottom: 28,
+    marginBottom: 32,
   },
   quickActionCard: {
     flex: 1,
-    borderRadius: 18,
-    paddingVertical: 18,
+    borderRadius: 14,
+    paddingVertical: 16,
     paddingHorizontal: 12,
     alignItems: 'center',
-    gap: 10,
-  },
-  quickActionIconWrap: {
-    width: 44,
-    height: 44,
-    borderRadius: 14,
-    backgroundColor: 'rgba(255,255,255,0.12)',
-    justifyContent: 'center',
-    alignItems: 'center',
+    gap: 8,
   },
   quickActionLabel: {
     fontSize: 12,
     fontWeight: '600' as const,
     color: '#FFFFFF',
-    letterSpacing: 0.2,
+    letterSpacing: 0.1,
   },
   featuredSection: {
-    marginBottom: 28,
+    marginBottom: 32,
   },
   sectionHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    paddingHorizontal: 20,
-    marginBottom: 14,
+    paddingHorizontal: 24,
+    marginBottom: 16,
   },
   sectionTitle: {
-    fontSize: 18,
+    fontSize: 20,
     fontWeight: '700' as const,
     color: Colors.text,
+    letterSpacing: -0.2,
   },
   featuredDots: {
     flexDirection: 'row',
     gap: 6,
   },
   dot: {
-    width: 7,
-    height: 7,
-    borderRadius: 4,
+    width: 6,
+    height: 6,
+    borderRadius: 3,
     backgroundColor: Colors.border,
   },
   dotActive: {
-    backgroundColor: Colors.text,
+    backgroundColor: Colors.accent,
     width: 18,
   },
   carouselContent: {
-    paddingHorizontal: 20,
+    paddingHorizontal: 24,
   },
   featuredCard: {
     width: CARD_WIDTH,
     height: 240,
     marginRight: CARD_SPACING,
-    borderRadius: 22,
+    borderRadius: 18,
     overflow: 'hidden',
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 8 },
-    shadowOpacity: 0.18,
-    shadowRadius: 16,
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.15,
+    shadowRadius: 14,
     elevation: 8,
   },
   featuredBgImage: {
     ...StyleSheet.absoluteFillObject,
     width: '100%',
     height: '100%',
-    borderRadius: 22,
   },
   featuredGradient: {
     ...StyleSheet.absoluteFillObject,
-    borderRadius: 22,
   },
   featuredContent: {
     position: 'absolute' as const,
@@ -471,7 +446,7 @@ const styles = StyleSheet.create({
     textShadowRadius: 4,
   },
   featuredCountry: {
-    fontSize: 14,
+    fontSize: 13,
     color: 'rgba(255,255,255,0.8)',
     fontWeight: '600' as const,
     marginBottom: 4,
@@ -485,101 +460,114 @@ const styles = StyleSheet.create({
   planButton: {
     flexDirection: 'row',
     alignItems: 'center',
+    alignSelf: 'flex-start',
     gap: 6,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: Colors.accent,
     paddingHorizontal: 16,
     paddingVertical: 10,
-    borderRadius: 14,
+    borderRadius: 12,
   },
   planButtonText: {
     fontSize: 13,
     fontWeight: '700' as const,
-    color: '#1A1A1A',
+    color: '#FFFFFF',
   },
   mainCard: {
-    marginHorizontal: 20,
-    borderRadius: 22,
-    padding: 20,
-    minHeight: 220,
-    justifyContent: 'space-between',
-    position: 'relative' as const,
+    marginHorizontal: 24,
+    borderRadius: 18,
+    height: 200,
+    overflow: 'hidden',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.12,
+    shadowRadius: 12,
+    elevation: 6,
   },
-  mainCardHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
+  mainCardImage: {
+    ...StyleSheet.absoluteFillObject,
+    width: '100%',
+    height: '100%',
   },
-  statusPill: {
-    paddingHorizontal: 12,
+  mainCardGradient: {
+    ...StyleSheet.absoluteFillObject,
+  },
+  mainCardBadge: {
+    position: 'absolute' as const,
+    top: 14,
+    right: 14,
+    backgroundColor: 'rgba(255,255,255,0.92)',
+    paddingHorizontal: 10,
     paddingVertical: 5,
     borderRadius: 20,
   },
-  statusPillText: {
-    fontSize: 12,
-    fontWeight: '600' as const,
-  },
-  deleteBtn: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
-    backgroundColor: 'rgba(255,255,255,0.6)',
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  mainCardIcon: {
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingVertical: 12,
-  },
-  mainCardFooter: {
-    gap: 6,
-  },
-  mainCardName: {
-    fontSize: 20,
+  mainCardBadgeText: {
+    fontSize: 11,
     fontWeight: '700' as const,
     color: Colors.text,
+  },
+  mainCardContent: {
+    position: 'absolute' as const,
+    bottom: 0,
+    left: 0,
+    right: 0,
+    padding: 18,
+    gap: 4,
+  },
+  mainCardName: {
+    fontSize: 22,
+    fontWeight: '700' as const,
+    color: '#FFFFFF',
+    marginBottom: 2,
+    textShadowColor: 'rgba(0,0,0,0.3)',
+    textShadowOffset: { width: 0, height: 1 },
+    textShadowRadius: 3,
   },
   mainCardMeta: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 6,
+    gap: 5,
   },
   mainCardLocation: {
-    fontSize: 14,
-    color: Colors.textSecondary,
+    fontSize: 13,
+    color: 'rgba(255,255,255,0.85)',
+    fontWeight: '500' as const,
   },
   mainCardDates: {
-    fontSize: 13,
-    color: Colors.textSecondary,
+    fontSize: 12,
+    color: 'rgba(255,255,255,0.7)',
+    fontWeight: '500' as const,
   },
   mainCardArrow: {
     position: 'absolute' as const,
-    right: 20,
-    bottom: 20,
+    right: 18,
+    top: 14,
   },
   otherSection: {
-    marginTop: 24,
+    marginTop: 28,
   },
   seeAll: {
     fontSize: 14,
-    color: Colors.textSecondary,
-    fontWeight: '500' as const,
+    color: Colors.accent,
+    fontWeight: '600' as const,
   },
   otherCard: {
     flexDirection: 'row',
     alignItems: 'center',
     backgroundColor: Colors.surface,
-    borderRadius: 16,
-    padding: 14,
-    marginBottom: 10,
-    marginHorizontal: 20,
-  },
-  otherCardIcon: {
-    width: 52,
-    height: 52,
     borderRadius: 14,
-    justifyContent: 'center',
-    alignItems: 'center',
+    padding: 10,
+    marginBottom: 10,
+    marginHorizontal: 24,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.04,
+    shadowRadius: 4,
+    elevation: 1,
+  },
+  otherCardImage: {
+    width: 56,
+    height: 56,
+    borderRadius: 12,
   },
   otherCardContent: {
     flex: 1,
@@ -595,40 +583,48 @@ const styles = StyleSheet.create({
     fontSize: 13,
     color: Colors.textSecondary,
   },
-  otherDeleteBtn: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
   emptyTripSection: {
-    paddingHorizontal: 20,
+    paddingHorizontal: 24,
   },
   emptyTripCard: {
     backgroundColor: Colors.surface,
-    borderRadius: 20,
-    padding: 28,
+    borderRadius: 18,
+    padding: 32,
     alignItems: 'center',
-    gap: 12,
-    borderWidth: 1,
-    borderColor: Colors.borderLight,
-    borderStyle: 'dashed' as const,
+    gap: 10,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.04,
+    shadowRadius: 6,
+    elevation: 1,
+  },
+  emptyIconWrap: {
+    width: 56,
+    height: 56,
+    borderRadius: 28,
+    backgroundColor: Colors.borderLight,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: 4,
+  },
+  emptyTripTitle: {
+    fontSize: 17,
+    fontWeight: '600' as const,
+    color: Colors.text,
   },
   emptyTripText: {
-    fontSize: 15,
+    fontSize: 14,
     color: Colors.textSecondary,
-    fontWeight: '500' as const,
   },
   createTripBtn: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 8,
-    backgroundColor: Colors.primary,
+    backgroundColor: Colors.accent,
     paddingHorizontal: 24,
     paddingVertical: 14,
-    borderRadius: 14,
-    marginTop: 4,
+    borderRadius: 12,
+    marginTop: 8,
   },
   createTripBtnText: {
     fontSize: 15,

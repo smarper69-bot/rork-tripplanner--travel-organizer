@@ -33,7 +33,9 @@ function SettingsItem({ icon, label, value, onPress, showChevron = true, toggle,
       activeOpacity={0.7}
     >
       <View style={styles.settingsItemLeft}>
-        {icon}
+        <View style={styles.settingsIconWrap}>
+          {icon}
+        </View>
         <Text style={styles.settingsItemLabel}>{label}</Text>
       </View>
       <View style={styles.settingsItemRight}>
@@ -42,12 +44,12 @@ function SettingsItem({ icon, label, value, onPress, showChevron = true, toggle,
           <Switch
             value={toggleValue}
             onValueChange={onToggle}
-            trackColor={{ false: Colors.border, true: Colors.primary }}
+            trackColor={{ false: Colors.border, true: Colors.accent }}
             thumbColor={Colors.textLight}
           />
         )}
         {showChevron && !toggle && (
-          <ChevronRight size={20} color={Colors.textMuted} />
+          <ChevronRight size={18} color={Colors.textMuted} />
         )}
       </View>
     </TouchableOpacity>
@@ -131,7 +133,7 @@ export default function ProfileScreen() {
 
   return (
     <SafeAreaView style={styles.container} edges={['top']}>
-      <ScrollView showsVerticalScrollIndicator={false}>
+      <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.scrollContent}>
         <View style={styles.header}>
           <Text style={styles.title}>Profile</Text>
         </View>
@@ -144,14 +146,14 @@ export default function ProfileScreen() {
             />
           ) : (
             <View style={[styles.avatar, styles.avatarPlaceholder]}>
-              <User size={28} color={Colors.textMuted} />
+              <User size={30} color={Colors.textMuted} />
             </View>
           )}
           <View style={styles.profileInfo}>
             <Text style={styles.profileName}>{profile.name || 'Traveler'}</Text>
             <Text style={styles.profileEmail}>{profile.email || 'No email set'}</Text>
           </View>
-          <TouchableOpacity style={styles.editButton} onPress={() => router.push('/personal-info')}>
+          <TouchableOpacity style={styles.editButton} onPress={() => router.push('/personal-info')} activeOpacity={0.7}>
             <Text style={styles.editButtonText}>Edit</Text>
           </TouchableOpacity>
         </View>
@@ -190,7 +192,7 @@ export default function ProfileScreen() {
                 {proFeatures.map((feature, index) => (
                   <View key={index} style={styles.proFeatureItem}>
                     <View style={styles.proFeatureCheck}>
-                      <Check size={14} color={Colors.primary} />
+                      <Check size={12} color={Colors.accent} />
                     </View>
                     <Text style={styles.proFeatureText}>{feature.text}</Text>
                   </View>
@@ -198,12 +200,12 @@ export default function ProfileScreen() {
               </View>
 
               <View style={styles.pricingOptions}>
-                <TouchableOpacity style={styles.pricingCard} onPress={() => openComingSoon('TripNest Pro subscription')}>
+                <TouchableOpacity style={styles.pricingCard} onPress={() => openComingSoon('TripNest Pro subscription')} activeOpacity={0.7}>
                   <Text style={styles.pricingLabel}>Monthly</Text>
                   <Text style={styles.pricingPrice}>$4.99</Text>
                   <Text style={styles.pricingPeriod}>/month</Text>
                 </TouchableOpacity>
-                <TouchableOpacity style={[styles.pricingCard, styles.pricingCardHighlight]} onPress={() => openComingSoon('TripNest Pro subscription')}>
+                <TouchableOpacity style={[styles.pricingCard, styles.pricingCardHighlight]} onPress={() => openComingSoon('TripNest Pro subscription')} activeOpacity={0.7}>
                   <View style={styles.bestValueBadge}>
                     <Text style={styles.bestValueText}>Best Value</Text>
                   </View>
@@ -214,7 +216,7 @@ export default function ProfileScreen() {
                 </TouchableOpacity>
               </View>
 
-              <TouchableOpacity style={styles.upgradeButton} onPress={() => openComingSoon('TripNest Pro subscription')}>
+              <TouchableOpacity style={styles.upgradeButton} onPress={() => openComingSoon('TripNest Pro subscription')} activeOpacity={0.8}>
                 <Text style={styles.upgradeButtonText}>Upgrade to Pro</Text>
               </TouchableOpacity>
 
@@ -229,7 +231,7 @@ export default function ProfileScreen() {
           <Text style={styles.sectionTitle}>Preferences</Text>
           <View style={styles.settingsCard}>
             <SettingsItem
-              icon={<Bell size={20} color={Colors.primary} />}
+              icon={<Bell size={18} color={Colors.accent} />}
               label="Notifications"
               toggle
               toggleValue={notifications}
@@ -237,7 +239,7 @@ export default function ProfileScreen() {
               showChevron={false}
             />
             <SettingsItem
-              icon={<Navigation size={20} color={Colors.primary} />}
+              icon={<Navigation size={18} color={Colors.accent} />}
               label="Location"
               toggle
               toggleValue={locationEnabled}
@@ -245,7 +247,7 @@ export default function ProfileScreen() {
               showChevron={false}
             />
             <SettingsItem
-              icon={<Download size={20} color={Colors.primary} />}
+              icon={<Download size={18} color={Colors.accent} />}
               label="Offline Mode"
               toggle
               toggleValue={offlineMode}
@@ -253,13 +255,13 @@ export default function ProfileScreen() {
               showChevron={false}
             />
             <SettingsItem
-              icon={<Globe size={20} color={Colors.primary} />}
+              icon={<Globe size={18} color={Colors.accent} />}
               label="Currency"
               value={currency}
               onPress={handleCurrencySelect}
             />
             <SettingsItem
-              icon={<Moon size={20} color={Colors.primary} />}
+              icon={<Moon size={18} color={Colors.accent} />}
               label="Appearance"
               value={appearance}
               onPress={handleAppearanceSelect}
@@ -271,17 +273,17 @@ export default function ProfileScreen() {
           <Text style={styles.sectionTitle}>Account</Text>
           <View style={styles.settingsCard}>
             <SettingsItem
-              icon={<User size={20} color={Colors.textSecondary} />}
+              icon={<User size={18} color={Colors.textSecondary} />}
               label="Personal Information"
               onPress={() => router.push('/personal-info')}
             />
             <SettingsItem
-              icon={<CreditCard size={20} color={Colors.textSecondary} />}
+              icon={<CreditCard size={18} color={Colors.textSecondary} />}
               label="Payment Methods"
               onPress={() => router.push('/payment-methods')}
             />
             <SettingsItem
-              icon={<Shield size={20} color={Colors.textSecondary} />}
+              icon={<Shield size={18} color={Colors.textSecondary} />}
               label="Privacy & Security"
               onPress={() => router.push('/privacy-security')}
             />
@@ -292,20 +294,20 @@ export default function ProfileScreen() {
           <Text style={styles.sectionTitle}>Support</Text>
           <View style={styles.settingsCard}>
             <SettingsItem
-              icon={<HelpCircle size={20} color={Colors.textSecondary} />}
+              icon={<HelpCircle size={18} color={Colors.textSecondary} />}
               label="Help Center"
               onPress={() => router.push('/help-center')}
             />
             <SettingsItem
-              icon={<Settings size={20} color={Colors.textSecondary} />}
+              icon={<Settings size={18} color={Colors.textSecondary} />}
               label="App Settings"
               onPress={() => router.push('/app-settings')}
             />
           </View>
         </View>
 
-        <TouchableOpacity style={styles.logoutButton} onPress={handleSignOut}>
-          <LogOut size={20} color={Colors.accent} />
+        <TouchableOpacity style={styles.logoutButton} onPress={handleSignOut} activeOpacity={0.7}>
+          <LogOut size={18} color={Colors.error} />
           <Text style={styles.logoutText}>Sign Out</Text>
         </TouchableOpacity>
 
@@ -320,24 +322,28 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: Colors.background,
   },
+  scrollContent: {
+    paddingBottom: 100,
+  },
   header: {
-    paddingHorizontal: 20,
-    paddingTop: 8,
-    paddingBottom: 16,
+    paddingHorizontal: 24,
+    paddingTop: 12,
+    paddingBottom: 20,
   },
   title: {
     fontSize: 28,
-    fontWeight: '700' as const,
+    fontWeight: '800' as const,
     color: Colors.text,
+    letterSpacing: -0.3,
   },
   profileCard: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginHorizontal: 20,
-    padding: 16,
+    marginHorizontal: 24,
+    padding: 18,
     backgroundColor: Colors.surface,
-    borderRadius: 20,
-    marginBottom: 20,
+    borderRadius: 18,
+    marginBottom: 16,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.05,
@@ -345,10 +351,10 @@ const styles = StyleSheet.create({
     elevation: 2,
   },
   avatar: {
-    width: 60,
-    height: 60,
-    borderRadius: 30,
-    marginRight: 14,
+    width: 64,
+    height: 64,
+    borderRadius: 32,
+    marginRight: 16,
   },
   avatarPlaceholder: {
     backgroundColor: Colors.borderLight,
@@ -360,46 +366,52 @@ const styles = StyleSheet.create({
   },
   profileName: {
     fontSize: 18,
-    fontWeight: '600' as const,
+    fontWeight: '700' as const,
     color: Colors.text,
-    marginBottom: 2,
+    marginBottom: 3,
   },
   profileEmail: {
-    fontSize: 14,
+    fontSize: 13,
     color: Colors.textSecondary,
   },
   editButton: {
     paddingHorizontal: 16,
     paddingVertical: 8,
-    backgroundColor: Colors.primary + '15',
+    backgroundColor: Colors.accent + '15',
     borderRadius: 10,
   },
   editButtonText: {
-    fontSize: 14,
-    fontWeight: '500' as const,
-    color: Colors.primary,
+    fontSize: 13,
+    fontWeight: '600' as const,
+    color: Colors.accent,
   },
   statsRow: {
     flexDirection: 'row',
-    marginHorizontal: 20,
+    marginHorizontal: 24,
     padding: 20,
     backgroundColor: Colors.surface,
-    borderRadius: 20,
-    marginBottom: 24,
+    borderRadius: 18,
+    marginBottom: 28,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.04,
+    shadowRadius: 6,
+    elevation: 1,
   },
   statItem: {
     flex: 1,
     alignItems: 'center',
   },
   statValue: {
-    fontSize: 24,
-    fontWeight: '700' as const,
+    fontSize: 26,
+    fontWeight: '800' as const,
     color: Colors.text,
     marginBottom: 4,
   },
   statLabel: {
-    fontSize: 13,
+    fontSize: 12,
     color: Colors.textSecondary,
+    fontWeight: '500' as const,
   },
   statDivider: {
     width: 1,
@@ -407,15 +419,20 @@ const styles = StyleSheet.create({
     marginVertical: 4,
   },
   proSection: {
-    marginBottom: 24,
-    paddingHorizontal: 20,
+    marginBottom: 28,
+    paddingHorizontal: 24,
   },
   proCard: {
     backgroundColor: Colors.surface,
-    borderRadius: 24,
-    padding: 20,
+    borderRadius: 20,
+    padding: 22,
     borderWidth: 1,
-    borderColor: Colors.primary + '30',
+    borderColor: Colors.accent + '25',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.05,
+    shadowRadius: 8,
+    elevation: 2,
   },
   proHeader: {
     flexDirection: 'row',
@@ -426,7 +443,7 @@ const styles = StyleSheet.create({
     width: 44,
     height: 44,
     borderRadius: 14,
-    backgroundColor: Colors.primary,
+    backgroundColor: Colors.accent,
     justifyContent: 'center',
     alignItems: 'center',
     marginRight: 14,
@@ -440,8 +457,9 @@ const styles = StyleSheet.create({
     color: Colors.text,
   },
   proSubtitle: {
-    fontSize: 14,
+    fontSize: 13,
     color: Colors.textSecondary,
+    marginTop: 1,
   },
   proFeatures: {
     marginBottom: 20,
@@ -456,12 +474,12 @@ const styles = StyleSheet.create({
     width: 22,
     height: 22,
     borderRadius: 11,
-    backgroundColor: Colors.primary + '15',
+    backgroundColor: Colors.accent + '15',
     justifyContent: 'center',
     alignItems: 'center',
   },
   proFeatureText: {
-    fontSize: 15,
+    fontSize: 14,
     color: Colors.text,
   },
   pricingOptions: {
@@ -472,52 +490,52 @@ const styles = StyleSheet.create({
   pricingCard: {
     flex: 1,
     backgroundColor: Colors.background,
-    borderRadius: 16,
+    borderRadius: 14,
     padding: 16,
     alignItems: 'center',
     borderWidth: 2,
     borderColor: Colors.borderLight,
   },
   pricingCardHighlight: {
-    borderColor: Colors.primary,
+    borderColor: Colors.accent,
     position: 'relative',
   },
   bestValueBadge: {
     position: 'absolute',
     top: -10,
-    backgroundColor: Colors.primary,
+    backgroundColor: Colors.accent,
     paddingHorizontal: 10,
     paddingVertical: 4,
     borderRadius: 10,
   },
   bestValueText: {
     fontSize: 10,
-    fontWeight: '600' as const,
+    fontWeight: '700' as const,
     color: Colors.textLight,
     textTransform: 'uppercase',
   },
   pricingLabel: {
-    fontSize: 13,
+    fontSize: 12,
     color: Colors.textSecondary,
     marginBottom: 4,
   },
   pricingPrice: {
     fontSize: 24,
-    fontWeight: '700' as const,
+    fontWeight: '800' as const,
     color: Colors.text,
   },
   pricingPeriod: {
-    fontSize: 12,
+    fontSize: 11,
     color: Colors.textMuted,
   },
   pricingSavings: {
-    fontSize: 12,
-    fontWeight: '600' as const,
-    color: Colors.primary,
+    fontSize: 11,
+    fontWeight: '700' as const,
+    color: Colors.accent,
     marginTop: 4,
   },
   upgradeButton: {
-    backgroundColor: Colors.primary,
+    backgroundColor: Colors.accent,
     paddingVertical: 16,
     borderRadius: 14,
     alignItems: 'center',
@@ -525,11 +543,11 @@ const styles = StyleSheet.create({
   },
   upgradeButtonText: {
     fontSize: 16,
-    fontWeight: '600' as const,
+    fontWeight: '700' as const,
     color: Colors.textLight,
   },
   proDisclaimer: {
-    fontSize: 12,
+    fontSize: 11,
     color: Colors.textMuted,
     textAlign: 'center',
   },
@@ -537,19 +555,24 @@ const styles = StyleSheet.create({
     marginBottom: 24,
   },
   sectionTitle: {
-    fontSize: 14,
+    fontSize: 13,
     fontWeight: '600' as const,
     color: Colors.textMuted,
     textTransform: 'uppercase',
-    letterSpacing: 0.5,
-    marginBottom: 12,
-    paddingHorizontal: 20,
+    letterSpacing: 0.8,
+    marginBottom: 10,
+    paddingHorizontal: 24,
   },
   settingsCard: {
-    marginHorizontal: 20,
+    marginHorizontal: 24,
     backgroundColor: Colors.surface,
     borderRadius: 16,
     overflow: 'hidden',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.03,
+    shadowRadius: 4,
+    elevation: 1,
   },
   settingsItem: {
     flexDirection: 'row',
@@ -557,7 +580,7 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     paddingVertical: 14,
     paddingHorizontal: 16,
-    borderBottomWidth: 1,
+    borderBottomWidth: StyleSheet.hairlineWidth,
     borderBottomColor: Colors.borderLight,
   },
   settingsItemLeft: {
@@ -565,9 +588,18 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: 12,
   },
+  settingsIconWrap: {
+    width: 32,
+    height: 32,
+    borderRadius: 8,
+    backgroundColor: Colors.background,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
   settingsItemLabel: {
     fontSize: 15,
     color: Colors.text,
+    fontWeight: '500' as const,
   },
   settingsItemRight: {
     flexDirection: 'row',
@@ -575,7 +607,7 @@ const styles = StyleSheet.create({
     gap: 8,
   },
   settingsItemValue: {
-    fontSize: 14,
+    fontSize: 13,
     color: Colors.textMuted,
   },
   logoutButton: {
@@ -583,21 +615,23 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     gap: 8,
-    marginHorizontal: 20,
+    marginHorizontal: 24,
     paddingVertical: 16,
-    backgroundColor: Colors.accent + '10',
+    backgroundColor: Colors.error + '08',
     borderRadius: 14,
     marginBottom: 16,
+    borderWidth: 1,
+    borderColor: Colors.error + '15',
   },
   logoutText: {
     fontSize: 15,
     fontWeight: '600' as const,
-    color: Colors.accent,
+    color: Colors.error,
   },
   version: {
     fontSize: 12,
     color: Colors.textMuted,
     textAlign: 'center',
-    marginBottom: 100,
+    marginBottom: 20,
   },
 });

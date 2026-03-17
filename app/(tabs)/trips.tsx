@@ -1,12 +1,11 @@
-import React, { useState, useCallback } from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Alert } from 'react-native';
+import React, { useState, useRef, useCallback } from 'react';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Animated, Pressable } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
-import { Plus, Plane, Clock, CheckCircle, Trash2 } from 'lucide-react-native';
+import { Plus, Plane, Clock, CheckCircle } from 'lucide-react-native';
 import Colors from '@/constants/colors';
 import TripCard from '@/components/TripCard';
 import { useTripsStore } from '@/store/useTripsStore';
-import { Trip } from '@/types/trip';
 
 const tabs = [
   { id: 'upcoming', label: 'Upcoming', icon: Plane },
@@ -17,25 +16,7 @@ const tabs = [
 export default function TripsScreen() {
   const router = useRouter();
   const [activeTab, setActiveTab] = useState('upcoming');
-  const { trips, deleteTrip } = useTripsStore();
-
-  const handleDeleteTrip = useCallback((trip: Trip) => {
-    Alert.alert(
-      'Remove this trip?',
-      'This will delete the trip and its related data.',
-      [
-        { text: 'Cancel', style: 'cancel' },
-        {
-          text: 'Delete',
-          style: 'destructive',
-          onPress: () => {
-            deleteTrip(trip.id);
-            console.log('[MyTrips] Deleted trip:', trip.id);
-          },
-        },
-      ]
-    );
-  }, [deleteTrip]);
+  const { trips } = useTripsStore();
 
   const filteredTrips = trips.filter((trip) => {
     if (activeTab === 'upcoming') return trip.status === 'upcoming' || trip.status === 'ongoing';
@@ -44,19 +25,30 @@ export default function TripsScreen() {
     return true;
   });
 
+  const addBtnScale = useRef(new Animated.Value(1)).current;
+  const onAddPressIn = useCallback(() => {
+    Animated.spring(addBtnScale, { toValue: 0.92, useNativeDriver: true, speed: 50, bounciness: 4 }).start();
+  }, [addBtnScale]);
+  const onAddPressOut = useCallback(() => {
+    Animated.spring(addBtnScale, { toValue: 1, useNativeDriver: true, speed: 50, bounciness: 4 }).start();
+  }, [addBtnScale]);
+
   return (
     <SafeAreaView style={styles.container} edges={['top']}>
       <View style={styles.header}>
         <View>
           <Text style={styles.title}>My Trips</Text>
-          <Text style={styles.subtitle}>{trips.length} trips total</Text>
+          <Text style={styles.subtitle}>{trips.length} trip{trips.length !== 1 ? 's' : ''}</Text>
         </View>
-        <TouchableOpacity 
-          style={styles.addButton}
+        <Pressable
           onPress={() => router.push('/create-trip' as any)}
+          onPressIn={onAddPressIn}
+          onPressOut={onAddPressOut}
         >
-          <Plus size={24} color={Colors.textLight} />
-        </TouchableOpacity>
+          <Animated.View style={[styles.addButton, { transform: [{ scale: addBtnScale }] }]}>
+            <Plus size={22} color={Colors.textLight} />
+          </Animated.View>
+        </Pressable>
       </View>
 
       <View style={styles.tabs}>
@@ -65,10 +57,11 @@ export default function TripsScreen() {
             key={tab.id}
             style={[styles.tab, activeTab === tab.id && styles.tabActive]}
             onPress={() => setActiveTab(tab.id)}
+            activeOpacity={0.7}
           >
-            <tab.icon 
-              size={18} 
-              color={activeTab === tab.id ? Colors.primary : Colors.textMuted} 
+            <tab.icon
+              size={16}
+              color={activeTab === tab.id ? '#FFFFFF' : Colors.textMuted}
             />
             <Text style={[styles.tabText, activeTab === tab.id && styles.tabTextActive]}>
               {tab.label}
@@ -77,42 +70,31 @@ export default function TripsScreen() {
         ))}
       </View>
 
-      <ScrollView 
+      <ScrollView
         showsVerticalScrollIndicator={false}
         contentContainerStyle={styles.content}
       >
         {filteredTrips.length > 0 ? (
           filteredTrips.map((trip) => (
-            <View key={trip.id} style={styles.tripRow}>
-              <View style={styles.tripCardWrap}>
-                <TripCard
-                  trip={trip}
-                  onPress={() => router.push(`/trip/${trip.id}` as any)}
-                />
-              </View>
-              {(trip.status === 'planning' || trip.status === 'upcoming') && (
-                <TouchableOpacity
-                  style={styles.tripDeleteBtn}
-                  onPress={() => handleDeleteTrip(trip)}
-                  hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
-                >
-                  <Trash2 size={16} color="#EF4444" />
-                </TouchableOpacity>
-              )}
-            </View>
+            <TripCard
+              key={trip.id}
+              trip={trip}
+              onPress={() => router.push(`/trip/${trip.id}` as any)}
+            />
           ))
         ) : (
           <View style={styles.emptyState}>
             <View style={styles.emptyIcon}>
-              <Plane size={40} color={Colors.textMuted} />
+              <Plane size={32} color={Colors.textMuted} />
             </View>
             <Text style={styles.emptyTitle}>No trips yet</Text>
             <Text style={styles.emptyText}>
-              Start planning your next adventure!
+              Start planning your next adventure
             </Text>
-            <TouchableOpacity 
+            <TouchableOpacity
               style={styles.emptyButton}
               onPress={() => router.push('/create-trip' as any)}
+              activeOpacity={0.8}
             >
               <Text style={styles.emptyButtonText}>Create a Trip</Text>
             </TouchableOpacity>
@@ -132,28 +114,29 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    paddingHorizontal: 20,
-    paddingTop: 8,
-    paddingBottom: 16,
+    paddingHorizontal: 24,
+    paddingTop: 12,
+    paddingBottom: 20,
   },
   title: {
     fontSize: 28,
-    fontWeight: '700',
+    fontWeight: '800' as const,
     color: Colors.text,
     marginBottom: 4,
+    letterSpacing: -0.3,
   },
   subtitle: {
     fontSize: 14,
     color: Colors.textSecondary,
   },
   addButton: {
-    width: 48,
-    height: 48,
-    borderRadius: 24,
-    backgroundColor: Colors.primary,
+    width: 46,
+    height: 46,
+    borderRadius: 23,
+    backgroundColor: Colors.accent,
     justifyContent: 'center',
     alignItems: 'center',
-    shadowColor: Colors.primary,
+    shadowColor: Colors.accent,
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.3,
     shadowRadius: 8,
@@ -161,8 +144,8 @@ const styles = StyleSheet.create({
   },
   tabs: {
     flexDirection: 'row',
-    paddingHorizontal: 20,
-    marginBottom: 20,
+    paddingHorizontal: 24,
+    marginBottom: 24,
     gap: 8,
   },
   tab: {
@@ -171,23 +154,23 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     gap: 6,
-    paddingVertical: 12,
+    paddingVertical: 11,
     backgroundColor: Colors.surface,
     borderRadius: 12,
   },
   tabActive: {
-    backgroundColor: Colors.primary + '15',
+    backgroundColor: Colors.text,
   },
   tabText: {
-    fontSize: 14,
-    fontWeight: '500',
+    fontSize: 13,
+    fontWeight: '600' as const,
     color: Colors.textMuted,
   },
   tabTextActive: {
-    color: Colors.primary,
+    color: '#FFFFFF',
   },
   content: {
-    paddingHorizontal: 20,
+    paddingHorizontal: 24,
     paddingBottom: 100,
   },
   emptyState: {
@@ -196,53 +179,35 @@ const styles = StyleSheet.create({
     paddingHorizontal: 40,
   },
   emptyIcon: {
-    width: 80,
-    height: 80,
-    borderRadius: 40,
-    backgroundColor: Colors.surface,
+    width: 72,
+    height: 72,
+    borderRadius: 36,
+    backgroundColor: Colors.borderLight,
     justifyContent: 'center',
     alignItems: 'center',
     marginBottom: 20,
   },
   emptyTitle: {
-    fontSize: 20,
-    fontWeight: '600',
+    fontSize: 18,
+    fontWeight: '600' as const,
     color: Colors.text,
-    marginBottom: 8,
+    marginBottom: 6,
   },
   emptyText: {
-    fontSize: 15,
+    fontSize: 14,
     color: Colors.textSecondary,
     textAlign: 'center',
     marginBottom: 24,
   },
   emptyButton: {
-    backgroundColor: Colors.primary,
-    paddingHorizontal: 24,
+    backgroundColor: Colors.accent,
+    paddingHorizontal: 28,
     paddingVertical: 14,
     borderRadius: 12,
   },
   emptyButtonText: {
     fontSize: 15,
-    fontWeight: '600',
+    fontWeight: '600' as const,
     color: Colors.textLight,
-  },
-  tripRow: {
-    position: 'relative' as const,
-  },
-  tripCardWrap: {
-    flex: 1,
-  },
-  tripDeleteBtn: {
-    position: 'absolute' as const,
-    top: 12,
-    right: 12,
-    width: 32,
-    height: 32,
-    borderRadius: 16,
-    backgroundColor: 'rgba(255,255,255,0.85)',
-    justifyContent: 'center',
-    alignItems: 'center',
-    zIndex: 10,
   },
 });

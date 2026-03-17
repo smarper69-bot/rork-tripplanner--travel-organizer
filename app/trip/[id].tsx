@@ -140,9 +140,9 @@ export default function TripDetailScreen() {
   const getStatusColor = (status: string) => {
     switch (status) {
       case 'planning': return '#6B7280';
-      case 'upcoming': return '#3B82F6';
-      case 'ongoing': return '#10B981';
-      case 'completed': return '#8B5CF6';
+      case 'upcoming': return Colors.accent;
+      case 'ongoing': return '#059669';
+      case 'completed': return '#7C3AED';
       default: return Colors.textSecondary;
     }
   };
@@ -1028,7 +1028,7 @@ const styles = StyleSheet.create({
     color: Colors.textSecondary,
   },
   heroContainer: {
-    height: 300,
+    height: 320,
   },
   heroIconContainer: {
     position: 'absolute',
@@ -1049,34 +1049,34 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   backButton: {
-    width: 44,
-    height: 44,
-    borderRadius: 22,
-    backgroundColor: Colors.surface,
+    width: 42,
+    height: 42,
+    borderRadius: 21,
+    backgroundColor: 'rgba(255,255,255,0.92)',
     justifyContent: 'center',
     alignItems: 'center',
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 2,
+    shadowRadius: 6,
+    elevation: 3,
   },
   heroActions: {
     flexDirection: 'row',
     gap: 10,
   },
   actionButton: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    backgroundColor: Colors.surface,
+    width: 38,
+    height: 38,
+    borderRadius: 19,
+    backgroundColor: 'rgba(255,255,255,0.92)',
     justifyContent: 'center',
     alignItems: 'center',
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 2,
+    shadowRadius: 6,
+    elevation: 3,
   },
   heroInfo: {},
   statusBadge: {
@@ -1099,10 +1099,11 @@ const styles = StyleSheet.create({
     fontWeight: '600' as const,
   },
   heroTitle: {
-    fontSize: 26,
-    fontWeight: '700' as const,
+    fontSize: 28,
+    fontWeight: '800' as const,
     color: Colors.text,
     marginBottom: 6,
+    letterSpacing: -0.3,
   },
   heroLocation: {
     flexDirection: 'row',
@@ -1124,14 +1125,19 @@ const styles = StyleSheet.create({
     color: Colors.textSecondary,
   },
   content: {
-    padding: 20,
+    padding: 22,
     paddingBottom: 40,
   },
   collaboratorsFullSection: {
     backgroundColor: Colors.surface,
-    borderRadius: 16,
-    padding: 16,
+    borderRadius: 18,
+    padding: 18,
     marginBottom: 20,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.04,
+    shadowRadius: 6,
+    elevation: 1,
   },
   collabHeader: {
     flexDirection: 'row',
@@ -1150,8 +1156,8 @@ const styles = StyleSheet.create({
     gap: 5,
     paddingHorizontal: 12,
     paddingVertical: 7,
-    backgroundColor: Colors.primary,
-    borderRadius: 8,
+    backgroundColor: Colors.accent,
+    borderRadius: 10,
   },
   inviteSmallBtnText: {
     fontSize: 12,
@@ -1211,7 +1217,7 @@ const styles = StyleSheet.create({
   collabGroupBtnText: {
     fontSize: 14,
     fontWeight: '500' as const,
-    color: Colors.primary,
+    color: Colors.accent,
   },
   tabsContainer: {
     marginBottom: 20,
@@ -1226,7 +1232,7 @@ const styles = StyleSheet.create({
     borderRadius: 10,
   },
   tabActive: {
-    backgroundColor: Colors.text,
+    backgroundColor: Colors.accent,
   },
   tabText: {
     fontSize: 14,
@@ -1241,9 +1247,14 @@ const styles = StyleSheet.create({
   
   overviewCard: {
     backgroundColor: Colors.surface,
-    borderRadius: 16,
-    padding: 16,
+    borderRadius: 18,
+    padding: 18,
     marginBottom: 16,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.04,
+    shadowRadius: 6,
+    elevation: 1,
   },
   overviewCardTitle: {
     fontSize: 15,
@@ -1298,7 +1309,7 @@ const styles = StyleSheet.create({
   },
   budgetBarFill: {
     height: '100%',
-    backgroundColor: Colors.primary,
+    backgroundColor: Colors.accent,
     borderRadius: 4,
   },
   budgetRemaining: {
@@ -1323,6 +1334,11 @@ const styles = StyleSheet.create({
     borderRadius: 14,
     padding: 16,
     alignItems: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.03,
+    shadowRadius: 4,
+    elevation: 1,
   },
   quickActionIcon: {
     width: 44,
@@ -1372,7 +1388,7 @@ const styles = StyleSheet.create({
   itineraryItemTime: {
     fontSize: 13,
     fontWeight: '600' as const,
-    color: Colors.primary,
+    color: Colors.accent,
   },
   itineraryItemContent: {
     flex: 1,
@@ -1423,7 +1439,7 @@ const styles = StyleSheet.create({
     gap: 6,
     paddingHorizontal: 20,
     paddingVertical: 12,
-    backgroundColor: Colors.primary,
+    backgroundColor: Colors.accent,
     borderRadius: 12,
   },
   emptyButtonText: {
@@ -1447,7 +1463,7 @@ const styles = StyleSheet.create({
   addItemText: {
     fontSize: 14,
     fontWeight: '500' as const,
-    color: Colors.primary,
+    color: Colors.accent,
   },
   hintText: {
     fontSize: 12,
@@ -1489,7 +1505,7 @@ const styles = StyleSheet.create({
   budgetSpentValue: {
     fontSize: 18,
     fontWeight: '600' as const,
-    color: Colors.primary,
+    color: Colors.accent,
   },
   budgetBarBgLarge: {
     height: 10,
@@ -1499,7 +1515,7 @@ const styles = StyleSheet.create({
   },
   budgetBarFillLarge: {
     height: '100%',
-    backgroundColor: Colors.primary,
+    backgroundColor: Colors.accent,
     borderRadius: 5,
   },
   budgetFooterRow: {
@@ -1531,7 +1547,7 @@ const styles = StyleSheet.create({
     width: 44,
     height: 44,
     borderRadius: 12,
-    backgroundColor: Colors.primary + '12',
+    backgroundColor: Colors.accent + '15',
     justifyContent: 'center',
     alignItems: 'center',
     marginRight: 12,
@@ -1612,8 +1628,8 @@ const styles = StyleSheet.create({
   },
   modalContent: {
     backgroundColor: Colors.surface,
-    borderTopLeftRadius: 24,
-    borderTopRightRadius: 24,
+    borderTopLeftRadius: 28,
+    borderTopRightRadius: 28,
     padding: 24,
     paddingBottom: 40,
   },
@@ -1625,8 +1641,9 @@ const styles = StyleSheet.create({
   },
   modalTitle: {
     fontSize: 20,
-    fontWeight: '700' as const,
+    fontWeight: '800' as const,
     color: Colors.text,
+    letterSpacing: -0.2,
   },
   modalCloseBtn: {
     width: 36,
@@ -1666,7 +1683,7 @@ const styles = StyleSheet.create({
     marginBottom: 6,
   },
   formSaveBtn: {
-    backgroundColor: Colors.primary,
+    backgroundColor: Colors.accent,
     borderRadius: 14,
     paddingVertical: 16,
     alignItems: 'center',
@@ -1747,7 +1764,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     gap: 8,
     paddingVertical: 14,
-    backgroundColor: Colors.primary,
+    backgroundColor: Colors.accent,
     borderRadius: 14,
   },
   shareActionButtonSuccess: {
@@ -1768,11 +1785,11 @@ const styles = StyleSheet.create({
     backgroundColor: Colors.background,
     borderRadius: 14,
     borderWidth: 1,
-    borderColor: Colors.primary + '30',
+    borderColor: Colors.accent + '30',
   },
   shareActionTextOutline: {
     fontSize: 15,
     fontWeight: '600' as const,
-    color: Colors.primary,
+    color: Colors.accent,
   },
 });
