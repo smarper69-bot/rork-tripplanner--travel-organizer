@@ -1,8 +1,10 @@
-import React from 'react';
-import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
+import React, { useRef, useCallback } from 'react';
+import { View, Text, StyleSheet, Pressable, Animated } from 'react-native';
 import { Star, MapPin, Sun, Mountain, Snowflake, Store, Trees, Landmark, Palmtree } from 'lucide-react-native';
+import { LinearGradient } from 'expo-linear-gradient';
 import Colors from '@/constants/colors';
 import { Destination, DestinationIcon } from '@/types/trip';
+import { getDestinationImage } from '@/utils/destinationImages';
 
 interface DestinationCardProps {
   destination: Destination;
@@ -26,93 +28,192 @@ const getIconComponent = (iconName: DestinationIcon) => {
 
 export default function DestinationCard({ destination, onPress, variant = 'medium' }: DestinationCardProps) {
   const IconComponent = getIconComponent(destination.icon);
+  const scaleAnim = useRef(new Animated.Value(1)).current;
+  const imageOpacity = useRef(new Animated.Value(0)).current;
+  const imageUrl = getDestinationImage(destination.name);
+
+  const onPressIn = useCallback(() => {
+    Animated.spring(scaleAnim, {
+      toValue: 0.96,
+      useNativeDriver: true,
+      speed: 50,
+      bounciness: 4,
+    }).start();
+  }, [scaleAnim]);
+
+  const onPressOut = useCallback(() => {
+    Animated.spring(scaleAnim, {
+      toValue: 1,
+      useNativeDriver: true,
+      speed: 50,
+      bounciness: 4,
+    }).start();
+  }, [scaleAnim]);
+
+  const onImageLoad = useCallback(() => {
+    Animated.timing(imageOpacity, {
+      toValue: 1,
+      duration: 350,
+      useNativeDriver: true,
+    }).start();
+  }, [imageOpacity]);
 
   if (variant === 'large') {
     return (
-      <TouchableOpacity style={styles.largeCard} onPress={onPress} activeOpacity={0.9}>
-        <View style={[styles.largeIconContainer, { backgroundColor: destination.iconColor + '15' }]}>
-          <IconComponent size={64} color={destination.iconColor} />
-        </View>
-        <View style={styles.largeContent}>
-          <View style={styles.ratingBadge}>
-            <Star size={12} color={Colors.text} fill={Colors.text} />
-            <Text style={styles.ratingText}>{destination.rating}</Text>
+      <Animated.View style={{ transform: [{ scale: scaleAnim }] }}>
+        <Pressable
+          style={styles.largeCard}
+          onPress={onPress}
+          onPressIn={onPressIn}
+          onPressOut={onPressOut}
+        >
+          <Animated.Image
+            source={{ uri: imageUrl }}
+            style={[styles.largeImage, { opacity: imageOpacity }]}
+            onLoad={onImageLoad}
+          />
+          <LinearGradient
+            colors={['transparent', 'rgba(0,0,0,0.1)', 'rgba(0,0,0,0.7)']}
+            locations={[0, 0.4, 1]}
+            style={StyleSheet.absoluteFillObject}
+          />
+          <View style={styles.largeContent}>
+            <View style={styles.ratingBadge}>
+              <Star size={12} color="#FFD700" fill="#FFD700" />
+              <Text style={styles.ratingText}>{destination.rating}</Text>
+            </View>
+            <View style={styles.largeInfo}>
+              <Text style={styles.largeName}>{destination.name}</Text>
+              <Text style={styles.largeCountry}>{destination.country}</Text>
+            </View>
           </View>
-          <View style={styles.largeInfo}>
-            <Text style={styles.largeName}>{destination.name}</Text>
-            <Text style={styles.largeCountry}>{destination.country}</Text>
-          </View>
-        </View>
-      </TouchableOpacity>
+        </Pressable>
+      </Animated.View>
     );
   }
 
   if (variant === 'small') {
     return (
-      <TouchableOpacity style={styles.smallCard} onPress={onPress} activeOpacity={0.8}>
-        <View style={[styles.smallIconContainer, { backgroundColor: destination.iconColor + '15' }]}>
-          <IconComponent size={32} color={destination.iconColor} />
-        </View>
-        <View style={styles.smallContent}>
-          <Text style={styles.smallName} numberOfLines={1}>{destination.name}</Text>
-          <Text style={styles.smallCountry}>{destination.country}</Text>
-        </View>
-      </TouchableOpacity>
+      <Animated.View style={{ transform: [{ scale: scaleAnim }] }}>
+        <Pressable
+          style={styles.smallCard}
+          onPress={onPress}
+          onPressIn={onPressIn}
+          onPressOut={onPressOut}
+        >
+          <View style={styles.smallImageWrap}>
+            <Animated.Image
+              source={{ uri: imageUrl }}
+              style={[styles.smallImage, { opacity: imageOpacity }]}
+              onLoad={onImageLoad}
+            />
+            <LinearGradient
+              colors={['transparent', 'rgba(0,0,0,0.35)']}
+              style={StyleSheet.absoluteFillObject}
+            />
+          </View>
+          <View style={styles.smallContent}>
+            <Text style={styles.smallName} numberOfLines={1}>{destination.name}</Text>
+            <Text style={styles.smallCountry}>{destination.country}</Text>
+          </View>
+        </Pressable>
+      </Animated.View>
     );
   }
 
   return (
-    <TouchableOpacity style={styles.card} onPress={onPress} activeOpacity={0.9}>
-      <View style={[styles.iconContainer, { backgroundColor: destination.iconColor + '12' }]}>
-        <IconComponent size={48} color={destination.iconColor} />
-      </View>
-      <View style={styles.content}>
-        <View style={styles.header}>
-          <View style={styles.headerLeft}>
-            <Text style={styles.name}>{destination.name}</Text>
-            <View style={styles.locationRow}>
-              <MapPin size={12} color={Colors.textSecondary} />
-              <Text style={styles.country}>{destination.country}</Text>
+    <Animated.View style={[styles.cardOuter, { transform: [{ scale: scaleAnim }] }]}>
+      <Pressable
+        style={styles.card}
+        onPress={onPress}
+        onPressIn={onPressIn}
+        onPressOut={onPressOut}
+      >
+        <View style={styles.imageContainer}>
+          <Animated.Image
+            source={{ uri: imageUrl }}
+            style={[styles.cardImage, { opacity: imageOpacity }]}
+            onLoad={onImageLoad}
+          />
+          <LinearGradient
+            colors={['transparent', 'rgba(0,0,0,0.1)', 'rgba(0,0,0,0.55)']}
+            locations={[0, 0.5, 1]}
+            style={StyleSheet.absoluteFillObject}
+          />
+          <View style={styles.imageOverlay}>
+            <View style={styles.iconBubble}>
+              <IconComponent size={18} color="#FFFFFF" />
             </View>
           </View>
-          <View style={styles.rating}>
-            <Star size={14} color={Colors.text} fill={Colors.text} />
-            <Text style={styles.ratingValue}>{destination.rating}</Text>
+        </View>
+        <View style={styles.content}>
+          <View style={styles.header}>
+            <View style={styles.headerLeft}>
+              <Text style={styles.name}>{destination.name}</Text>
+              <View style={styles.locationRow}>
+                <MapPin size={12} color={Colors.textSecondary} />
+                <Text style={styles.country}>{destination.country}</Text>
+              </View>
+            </View>
+            <View style={styles.rating}>
+              <Star size={14} color="#FFD700" fill="#FFD700" />
+              <Text style={styles.ratingValue}>{destination.rating}</Text>
+            </View>
+          </View>
+          <Text style={styles.description} numberOfLines={2}>{destination.description}</Text>
+          <View style={styles.tags}>
+            {destination.tags.slice(0, 3).map((tag, index) => (
+              <View key={index} style={styles.tag}>
+                <Text style={styles.tagText}>{tag}</Text>
+              </View>
+            ))}
+          </View>
+          <View style={styles.meta}>
+            <Text style={styles.metaText}>{destination.averageBudget}</Text>
+            <Text style={styles.metaDot}>•</Text>
+            <Text style={styles.metaText}>{destination.bestTime}</Text>
           </View>
         </View>
-        <Text style={styles.description} numberOfLines={2}>{destination.description}</Text>
-        <View style={styles.tags}>
-          {destination.tags.slice(0, 3).map((tag, index) => (
-            <View key={index} style={[styles.tag, { backgroundColor: destination.iconColor + '15' }]}>
-              <Text style={[styles.tagText, { color: destination.iconColor }]}>{tag}</Text>
-            </View>
-          ))}
-        </View>
-        <View style={styles.meta}>
-          <Text style={styles.metaText}>{destination.averageBudget}</Text>
-          <Text style={styles.metaDot}>•</Text>
-          <Text style={styles.metaText}>{destination.bestTime}</Text>
-        </View>
-      </View>
-    </TouchableOpacity>
+      </Pressable>
+    </Animated.View>
   );
 }
 
 const styles = StyleSheet.create({
+  cardOuter: {
+    marginBottom: 16,
+    borderRadius: 20,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.1,
+    shadowRadius: 12,
+    elevation: 4,
+  },
   card: {
     backgroundColor: Colors.surface,
     borderRadius: 20,
     overflow: 'hidden',
-    marginBottom: 16,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.08,
-    shadowRadius: 12,
-    elevation: 4,
   },
-  iconContainer: {
+  imageContainer: {
     width: '100%',
-    height: 120,
+    height: 160,
+    backgroundColor: Colors.cardBg,
+  },
+  cardImage: {
+    ...StyleSheet.absoluteFillObject,
+    width: '100%',
+    height: '100%',
+  },
+  imageOverlay: {
+    position: 'absolute' as const,
+    top: 12,
+    left: 12,
+  },
+  iconBubble: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: 'rgba(0,0,0,0.35)',
     justifyContent: 'center',
     alignItems: 'center',
   },
@@ -172,10 +273,12 @@ const styles = StyleSheet.create({
     paddingHorizontal: 10,
     paddingVertical: 4,
     borderRadius: 12,
+    backgroundColor: Colors.cardBg,
   },
   tagText: {
     fontSize: 12,
     fontWeight: '500' as const,
+    color: Colors.textSecondary,
   },
   meta: {
     flexDirection: 'row',
@@ -196,16 +299,15 @@ const styles = StyleSheet.create({
     borderRadius: 20,
     overflow: 'hidden',
     marginRight: 16,
-    backgroundColor: Colors.surface,
+    backgroundColor: Colors.cardBg,
   },
-  largeIconContainer: {
+  largeImage: {
+    ...StyleSheet.absoluteFillObject,
     width: '100%',
     height: '100%',
-    justifyContent: 'center',
-    alignItems: 'center',
   },
   largeContent: {
-    position: 'absolute',
+    position: 'absolute' as const,
     top: 0,
     left: 0,
     right: 0,
@@ -217,7 +319,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 4,
-    backgroundColor: 'rgba(255,255,255,0.95)',
+    backgroundColor: 'rgba(255,255,255,0.92)',
     paddingHorizontal: 8,
     paddingVertical: 4,
     borderRadius: 12,
@@ -232,24 +334,34 @@ const styles = StyleSheet.create({
   largeName: {
     fontSize: 22,
     fontWeight: '700' as const,
-    color: Colors.text,
+    color: '#FFFFFF',
     marginBottom: 2,
+    textShadowColor: 'rgba(0,0,0,0.4)',
+    textShadowOffset: { width: 0, height: 1 },
+    textShadowRadius: 4,
   },
   largeCountry: {
     fontSize: 14,
-    color: Colors.textSecondary,
+    color: 'rgba(255,255,255,0.85)',
+    textShadowColor: 'rgba(0,0,0,0.3)',
+    textShadowOffset: { width: 0, height: 1 },
+    textShadowRadius: 3,
   },
   smallCard: {
     width: 120,
     marginRight: 12,
   },
-  smallIconContainer: {
+  smallImageWrap: {
     width: '100%',
     height: 90,
     borderRadius: 16,
+    overflow: 'hidden',
     marginBottom: 8,
-    justifyContent: 'center',
-    alignItems: 'center',
+    backgroundColor: Colors.cardBg,
+  },
+  smallImage: {
+    width: '100%',
+    height: '100%',
   },
   smallContent: {},
   smallName: {

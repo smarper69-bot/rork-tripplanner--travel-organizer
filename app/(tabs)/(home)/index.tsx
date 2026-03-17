@@ -8,31 +8,11 @@ import Colors from '@/constants/colors';
 import { useTripsStore } from '@/store/useTripsStore';
 import { useOnboardingStore } from '@/store/useOnboardingStore';
 import { Trip } from '@/types/trip';
+import { getDestinationImage } from '@/utils/destinationImages';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 const CARD_WIDTH = SCREEN_WIDTH - 48;
 const CARD_SPACING = 12;
-
-const DESTINATION_IMAGES: Record<string, string> = {
-  'Tokyo': 'https://images.unsplash.com/photo-1540959733332-eab4deabeeaf?w=800&h=500&fit=crop&q=80',
-  'Bali': 'https://images.unsplash.com/photo-1537996194471-e657df975ab4?w=800&h=500&fit=crop&q=80',
-  'Paris': 'https://images.unsplash.com/photo-1502602898657-3e91760cbb34?w=800&h=500&fit=crop&q=80',
-  'Santorini': 'https://images.unsplash.com/photo-1613395877344-13d4a8e0d49e?w=800&h=500&fit=crop&q=80',
-  'Barcelona': 'https://images.unsplash.com/photo-1583422409516-2895a77efded?w=800&h=500&fit=crop&q=80',
-  'Hanoi': 'https://images.unsplash.com/photo-1583417319070-4a69db38a482?w=800&h=500&fit=crop&q=80',
-};
-
-const FALLBACK_IMAGES = [
-  'https://images.unsplash.com/photo-1488646953014-85cb44e25828?w=800&h=500&fit=crop&q=80',
-  'https://images.unsplash.com/photo-1507525428034-b723cf961d3e?w=800&h=500&fit=crop&q=80',
-  'https://images.unsplash.com/photo-1476514525535-07fb3b4ae5f1?w=800&h=500&fit=crop&q=80',
-];
-
-function getTripImage(destination: string, id: string): string {
-  if (DESTINATION_IMAGES[destination]) return DESTINATION_IMAGES[destination];
-  const hash = id.split('').reduce((acc, c) => acc + c.charCodeAt(0), 0);
-  return FALLBACK_IMAGES[hash % FALLBACK_IMAGES.length];
-}
 
 const FEATURED_DESTINATIONS = [
   {
@@ -237,7 +217,7 @@ export default function HomeScreen() {
             >
               <View style={styles.mainCard}>
                 <Image
-                  source={{ uri: getTripImage(mainTrip.destination, mainTrip.id) }}
+                  source={{ uri: getDestinationImage(mainTrip.destination, mainTrip.id) }}
                   style={styles.mainCardImage}
                 />
                 <LinearGradient
@@ -285,7 +265,7 @@ export default function HomeScreen() {
                   >
                     <View style={styles.otherCard}>
                       <Image
-                        source={{ uri: getTripImage(trip.destination, trip.id) }}
+                        source={{ uri: getDestinationImage(trip.destination, trip.id) }}
                         style={styles.otherCardImage}
                       />
                       <View style={styles.otherCardContent}>

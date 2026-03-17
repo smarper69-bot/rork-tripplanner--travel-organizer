@@ -1,5 +1,5 @@
-import React, { useState, useMemo } from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, TextInput, Image } from 'react-native';
+import React, { useState, useMemo, useRef, useCallback } from 'react';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, TextInput, Image, Animated, Pressable } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
@@ -48,26 +48,35 @@ interface DestinationCardCompactProps {
 }
 
 function DestinationCardCompact({ destination, onPress }: DestinationCardCompactProps) {
+  const scale = useRef(new Animated.Value(1)).current;
+  const onPressIn = useCallback(() => {
+    Animated.spring(scale, { toValue: 0.96, useNativeDriver: true, speed: 50, bounciness: 4 }).start();
+  }, [scale]);
+  const onPressOut = useCallback(() => {
+    Animated.spring(scale, { toValue: 1, useNativeDriver: true, speed: 50, bounciness: 4 }).start();
+  }, [scale]);
   return (
-    <TouchableOpacity style={styles.compactCard} onPress={onPress} activeOpacity={0.9}>
-      <Image source={{ uri: destination.imageUrl }} style={styles.compactImage} />
-      <LinearGradient
-        colors={['transparent', 'rgba(0,0,0,0.15)', 'rgba(0,0,0,0.7)']}
-        locations={[0, 0.4, 1]}
-        style={StyleSheet.absoluteFillObject}
-      />
-      <View style={styles.compactContent}>
-        <View style={styles.compactBadge}>
-          <Star size={10} color="#FFD700" fill="#FFD700" />
-          <Text style={styles.compactBadgeText}>{(destination.popularityScore / 20).toFixed(1)}</Text>
+    <Animated.View style={{ transform: [{ scale }] }}>
+      <Pressable style={styles.compactCard} onPress={onPress} onPressIn={onPressIn} onPressOut={onPressOut}>
+        <Image source={{ uri: destination.imageUrl }} style={styles.compactImage} />
+        <LinearGradient
+          colors={['transparent', 'rgba(0,0,0,0.15)', 'rgba(0,0,0,0.7)']}
+          locations={[0, 0.4, 1]}
+          style={StyleSheet.absoluteFillObject}
+        />
+        <View style={styles.compactContent}>
+          <View style={styles.compactBadge}>
+            <Star size={10} color="#FFD700" fill="#FFD700" />
+            <Text style={styles.compactBadgeText}>{(destination.popularityScore / 20).toFixed(1)}</Text>
+          </View>
+          <View style={styles.compactInfo}>
+            <Text style={styles.compactCity}>{destination.city}</Text>
+            <Text style={styles.compactCountry}>{destination.country}</Text>
+            <Text style={styles.compactPrice}>From ${destination.avgDailyCost}/day</Text>
+          </View>
         </View>
-        <View style={styles.compactInfo}>
-          <Text style={styles.compactCity}>{destination.city}</Text>
-          <Text style={styles.compactCountry}>{destination.country}</Text>
-          <Text style={styles.compactPrice}>From ${destination.avgDailyCost}/day</Text>
-        </View>
-      </View>
-    </TouchableOpacity>
+      </Pressable>
+    </Animated.View>
   );
 }
 
@@ -77,32 +86,41 @@ interface DestinationCardLargeProps {
 }
 
 function DestinationCardLarge({ destination, onPress }: DestinationCardLargeProps) {
+  const scale = useRef(new Animated.Value(1)).current;
+  const onPressIn = useCallback(() => {
+    Animated.spring(scale, { toValue: 0.97, useNativeDriver: true, speed: 50, bounciness: 4 }).start();
+  }, [scale]);
+  const onPressOut = useCallback(() => {
+    Animated.spring(scale, { toValue: 1, useNativeDriver: true, speed: 50, bounciness: 4 }).start();
+  }, [scale]);
   return (
-    <TouchableOpacity style={styles.largeCard} onPress={onPress} activeOpacity={0.9}>
-      <Image source={{ uri: destination.imageUrl }} style={styles.largeImage} />
-      <LinearGradient
-        colors={['rgba(0,0,0,0.05)', 'rgba(0,0,0,0.15)', 'rgba(0,0,0,0.75)']}
-        locations={[0, 0.35, 1]}
-        style={StyleSheet.absoluteFillObject}
-      />
-      <View style={styles.largeContent}>
-        <View style={styles.largeBadgeRow}>
-          <View style={styles.largeBadge}>
-            <TrendingUp size={12} color="#fff" />
-            <Text style={styles.largeBadgeText}>Trending</Text>
+    <Animated.View style={{ transform: [{ scale }] }}>
+      <Pressable style={styles.largeCard} onPress={onPress} onPressIn={onPressIn} onPressOut={onPressOut}>
+        <Image source={{ uri: destination.imageUrl }} style={styles.largeImage} />
+        <LinearGradient
+          colors={['rgba(0,0,0,0.05)', 'rgba(0,0,0,0.15)', 'rgba(0,0,0,0.75)']}
+          locations={[0, 0.35, 1]}
+          style={StyleSheet.absoluteFillObject}
+        />
+        <View style={styles.largeContent}>
+          <View style={styles.largeBadgeRow}>
+            <View style={styles.largeBadge}>
+              <TrendingUp size={12} color="#fff" />
+              <Text style={styles.largeBadgeText}>Trending</Text>
+            </View>
+          </View>
+          <View style={styles.largeInfo}>
+            <Text style={styles.largeCity}>{destination.city}</Text>
+            <Text style={styles.largeCountry}>{destination.country}</Text>
+            <View style={styles.largeMetaRow}>
+              <Text style={styles.largePrice}>From ${destination.avgDailyCost}/day</Text>
+              <View style={styles.largeDot} />
+              <Text style={styles.largeTags}>{destination.tripTypes.slice(0, 2).join(' · ')}</Text>
+            </View>
           </View>
         </View>
-        <View style={styles.largeInfo}>
-          <Text style={styles.largeCity}>{destination.city}</Text>
-          <Text style={styles.largeCountry}>{destination.country}</Text>
-          <View style={styles.largeMetaRow}>
-            <Text style={styles.largePrice}>From ${destination.avgDailyCost}/day</Text>
-            <View style={styles.largeDot} />
-            <Text style={styles.largeTags}>{destination.tripTypes.slice(0, 2).join(' · ')}</Text>
-          </View>
-        </View>
-      </View>
-    </TouchableOpacity>
+      </Pressable>
+    </Animated.View>
   );
 }
 
@@ -112,21 +130,30 @@ interface DestinationCardRowProps {
 }
 
 function DestinationCardRow({ destination, onPress }: DestinationCardRowProps) {
+  const scale = useRef(new Animated.Value(1)).current;
+  const onPressIn = useCallback(() => {
+    Animated.spring(scale, { toValue: 0.97, useNativeDriver: true, speed: 50, bounciness: 4 }).start();
+  }, [scale]);
+  const onPressOut = useCallback(() => {
+    Animated.spring(scale, { toValue: 1, useNativeDriver: true, speed: 50, bounciness: 4 }).start();
+  }, [scale]);
   return (
-    <TouchableOpacity style={styles.rowCard} onPress={onPress} activeOpacity={0.9}>
-      <Image source={{ uri: destination.imageUrl }} style={styles.rowImage} />
-      <View style={styles.rowContent}>
-        <Text style={styles.rowCity}>{destination.city}</Text>
-        <Text style={styles.rowCountry}>{destination.country}</Text>
-        <View style={styles.rowMeta}>
-          <DollarSign size={12} color={Colors.textSecondary} />
-          <Text style={styles.rowPrice}>${destination.avgDailyCost}/day</Text>
+    <Animated.View style={{ transform: [{ scale }] }}>
+      <Pressable style={styles.rowCard} onPress={onPress} onPressIn={onPressIn} onPressOut={onPressOut}>
+        <Image source={{ uri: destination.imageUrl }} style={styles.rowImage} />
+        <View style={styles.rowContent}>
+          <Text style={styles.rowCity}>{destination.city}</Text>
+          <Text style={styles.rowCountry}>{destination.country}</Text>
+          <View style={styles.rowMeta}>
+            <DollarSign size={12} color={Colors.textSecondary} />
+            <Text style={styles.rowPrice}>${destination.avgDailyCost}/day</Text>
+          </View>
         </View>
-      </View>
-      <TouchableOpacity style={styles.rowAction} onPress={onPress}>
-        <Plane size={16} color={Colors.primary} />
-      </TouchableOpacity>
-    </TouchableOpacity>
+        <View style={styles.rowAction}>
+          <Plane size={16} color={Colors.primary} />
+        </View>
+      </Pressable>
+    </Animated.View>
   );
 }
 

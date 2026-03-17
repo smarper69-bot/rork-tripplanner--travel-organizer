@@ -4,36 +4,7 @@ import { MapPin, Calendar } from 'lucide-react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import Colors from '@/constants/colors';
 import { Trip } from '@/types/trip';
-
-const DESTINATION_IMAGES: Record<string, string> = {
-  'Tokyo': 'https://images.unsplash.com/photo-1540959733332-eab4deabeeaf?w=800&h=500&fit=crop&q=80',
-  'Bali': 'https://images.unsplash.com/photo-1537996194471-e657df975ab4?w=800&h=500&fit=crop&q=80',
-  'Paris': 'https://images.unsplash.com/photo-1502602898657-3e91760cbb34?w=800&h=500&fit=crop&q=80',
-  'London': 'https://images.unsplash.com/photo-1513635269975-59663e0ac1ad?w=800&h=500&fit=crop&q=80',
-  'New York': 'https://images.unsplash.com/photo-1496442226666-8d4d0e62e6e9?w=800&h=500&fit=crop&q=80',
-  'Santorini': 'https://images.unsplash.com/photo-1613395877344-13d4a8e0d49e?w=800&h=500&fit=crop&q=80',
-  'Barcelona': 'https://images.unsplash.com/photo-1583422409516-2895a77efded?w=800&h=500&fit=crop&q=80',
-  'Rome': 'https://images.unsplash.com/photo-1552832230-c0197dd311b5?w=800&h=500&fit=crop&q=80',
-  'Dubai': 'https://images.unsplash.com/photo-1512453979798-5ea266f8880c?w=800&h=500&fit=crop&q=80',
-  'Sydney': 'https://images.unsplash.com/photo-1506973035872-a4ec16b8e8d9?w=800&h=500&fit=crop&q=80',
-  'Hanoi': 'https://images.unsplash.com/photo-1583417319070-4a69db38a482?w=800&h=500&fit=crop&q=80',
-  'Bangkok': 'https://images.unsplash.com/photo-1508009603885-50cf7c579365?w=800&h=500&fit=crop&q=80',
-  'Istanbul': 'https://images.unsplash.com/photo-1524231757912-21f4fe3a7200?w=800&h=500&fit=crop&q=80',
-  'Kyoto': 'https://images.unsplash.com/photo-1493976040374-85c8e12f0c0e?w=800&h=500&fit=crop&q=80',
-  'Marrakech': 'https://images.unsplash.com/photo-1597212618440-806262de4f6b?w=800&h=500&fit=crop&q=80',
-};
-
-const FALLBACK_IMAGES = [
-  'https://images.unsplash.com/photo-1488646953014-85cb44e25828?w=800&h=500&fit=crop&q=80',
-  'https://images.unsplash.com/photo-1507525428034-b723cf961d3e?w=800&h=500&fit=crop&q=80',
-  'https://images.unsplash.com/photo-1476514525535-07fb3b4ae5f1?w=800&h=500&fit=crop&q=80',
-];
-
-function getDestinationImage(destination: string, id: string): string {
-  if (DESTINATION_IMAGES[destination]) return DESTINATION_IMAGES[destination];
-  const hash = id.split('').reduce((acc, c) => acc + c.charCodeAt(0), 0);
-  return FALLBACK_IMAGES[hash % FALLBACK_IMAGES.length];
-}
+import { getDestinationImage } from '@/utils/destinationImages';
 
 interface TripCardProps {
   trip: Trip;
@@ -71,6 +42,15 @@ export default function TripCard({ trip, onPress, variant = 'large' }: TripCardP
   }, [scaleAnim]);
 
   const imageUrl = getDestinationImage(trip.destination, trip.id);
+  const imageOpacity = useRef(new Animated.Value(0)).current;
+
+  const onImageLoad = useCallback(() => {
+    Animated.timing(imageOpacity, {
+      toValue: 1,
+      duration: 350,
+      useNativeDriver: true,
+    }).start();
+  }, [imageOpacity]);
 
   const getBadgeText = () => {
     if (trip.status === 'ongoing') return 'In progress';
@@ -93,7 +73,11 @@ export default function TripCard({ trip, onPress, variant = 'large' }: TripCardP
           onPressIn={onPressIn}
           onPressOut={onPressOut}
         >
-          <Image source={{ uri: imageUrl }} style={styles.compactImage} />
+          <Animated.Image
+            source={{ uri: imageUrl }}
+            style={[styles.compactImage, { opacity: imageOpacity }]}
+            onLoad={onImageLoad}
+          />
           <LinearGradient
             colors={['transparent', 'rgba(0,0,0,0.6)']}
             style={styles.compactGradient}
@@ -115,7 +99,11 @@ export default function TripCard({ trip, onPress, variant = 'large' }: TripCardP
         onPressIn={onPressIn}
         onPressOut={onPressOut}
       >
-        <Image source={{ uri: imageUrl }} style={styles.cardImage} />
+        <Animated.Image
+          source={{ uri: imageUrl }}
+          style={[styles.cardImage, { opacity: imageOpacity }]}
+          onLoad={onImageLoad}
+        />
         <LinearGradient
           colors={['transparent', 'rgba(0,0,0,0.15)', 'rgba(0,0,0,0.75)']}
           locations={[0, 0.4, 1]}

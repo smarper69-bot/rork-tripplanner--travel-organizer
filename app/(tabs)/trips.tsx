@@ -1,4 +1,4 @@
-import React, { useState, useRef, useCallback } from 'react';
+import React, { useState, useRef, useCallback, useEffect } from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Animated, Pressable } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
@@ -12,6 +12,25 @@ const tabs = [
   { id: 'planning', label: 'Planning', icon: Clock },
   { id: 'completed', label: 'Past', icon: CheckCircle },
 ];
+
+function AnimatedTripCard({ children, index }: { children: React.ReactNode; index: number }) {
+  const fadeAnim = useRef(new Animated.Value(0)).current;
+  const slideAnim = useRef(new Animated.Value(24)).current;
+
+  useEffect(() => {
+    const delay = index * 80;
+    Animated.parallel([
+      Animated.timing(fadeAnim, { toValue: 1, duration: 400, delay, useNativeDriver: true }),
+      Animated.timing(slideAnim, { toValue: 0, duration: 400, delay, useNativeDriver: true }),
+    ]).start();
+  }, [fadeAnim, slideAnim, index]);
+
+  return (
+    <Animated.View style={{ opacity: fadeAnim, transform: [{ translateY: slideAnim }] }}>
+      {children}
+    </Animated.View>
+  );
+}
 
 export default function TripsScreen() {
   const router = useRouter();
@@ -75,12 +94,13 @@ export default function TripsScreen() {
         contentContainerStyle={styles.content}
       >
         {filteredTrips.length > 0 ? (
-          filteredTrips.map((trip) => (
-            <TripCard
-              key={trip.id}
-              trip={trip}
-              onPress={() => router.push(`/trip/${trip.id}` as any)}
-            />
+          filteredTrips.map((trip, index) => (
+            <AnimatedTripCard key={trip.id} index={index}>
+              <TripCard
+                trip={trip}
+                onPress={() => router.push(`/trip/${trip.id}` as any)}
+              />
+            </AnimatedTripCard>
           ))
         ) : (
           <View style={styles.emptyState}>
