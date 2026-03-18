@@ -1,6 +1,6 @@
 import React, { useRef, useCallback } from 'react';
 import { View, Text, StyleSheet, Image, Animated, Pressable } from 'react-native';
-import { MapPin, Calendar, User } from 'lucide-react-native';
+import { MapPin, Calendar, User, Users } from 'lucide-react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Trip } from '@/types/trip';
 import { getDestinationImageWithConfidence, DEFAULT_FALLBACK_IMAGE } from '@/utils/destinationImages';
@@ -55,6 +55,7 @@ export default function TripCard({ trip, onPress, variant = 'large' }: TripCardP
   });
   const imageOpacity = useRef(new Animated.Value(0)).current;
   const isDemo = trip.id === DEMO_TRIP_ID;
+  const isShared = trip.collaborators.length > 1;
 
   const onImageLoad = useCallback(() => {
     Animated.timing(imageOpacity, {
@@ -144,6 +145,13 @@ export default function TripCard({ trip, onPress, variant = 'large' }: TripCardP
         {badgeText && (
           <View style={[s.badge, isDemo && s.badgeWithDemo]}>
             <Text style={s.badgeText}>{badgeText}</Text>
+          </View>
+        )}
+
+        {isShared && (
+          <View style={s.sharedBadge}>
+            <Users size={10} color="#fff" />
+            <Text style={s.sharedBadgeText}>Shared Trip</Text>
           </View>
         )}
 
@@ -248,6 +256,24 @@ const createStyles = (colors: ThemeColors) => StyleSheet.create({
     fontSize: 10,
     fontWeight: '800' as const,
     letterSpacing: 0.8,
+  },
+  sharedBadge: {
+    position: 'absolute' as const,
+    top: 14,
+    left: 14,
+    flexDirection: 'row' as const,
+    alignItems: 'center' as const,
+    gap: 4,
+    backgroundColor: 'rgba(8, 145, 178, 0.85)',
+    paddingHorizontal: 9,
+    paddingVertical: 4,
+    borderRadius: 20,
+  },
+  sharedBadgeText: {
+    color: '#FFFFFF',
+    fontSize: 10,
+    fontWeight: '700' as const,
+    letterSpacing: 0.3,
   },
   cardContent: {
     position: 'absolute' as const,

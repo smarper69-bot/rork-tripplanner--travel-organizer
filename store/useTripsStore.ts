@@ -2,7 +2,7 @@ import { create } from 'zustand';
 import { combine } from 'zustand/middleware';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Platform } from 'react-native';
-import { Trip, StoredItineraryItem, StoredStay, StoredMemory } from '@/types/trip';
+import { Trip, StoredItineraryItem, StoredStay, StoredMemory, ActivityLogEntry, ActivityLogAction } from '@/types/trip';
 import { DEMO_TRIP_ID, demoTrip } from '@/mocks/demoTrip';
 
 function getBaseUrl(): string {
@@ -30,6 +30,7 @@ interface PersistedData {
   itineraryItems: StoredItineraryItem[];
   stays: StoredStay[];
   memories: StoredMemory[];
+  activityLog: ActivityLogEntry[];
 }
 
 export function isUserTrip(trip: Trip): boolean {
@@ -86,6 +87,7 @@ export const useTripsStore = create(
       itineraryItems: [] as StoredItineraryItem[],
       stays: [] as StoredStay[],
       memories: [] as StoredMemory[],
+      activityLog: [] as ActivityLogEntry[],
       isHydrated: false,
     },
     (set, get) => {
@@ -94,7 +96,24 @@ export const useTripsStore = create(
         itineraryItems: get().itineraryItems,
         stays: get().stays,
         memories: get().memories,
+        activityLog: get().activityLog,
       });
+
+      const addLogEntry = (tripId: string, userName: string, action: ActivityLogAction, detail?: string) => {
+        const entry: ActivityLogEntry = {
+          id: generateId(),
+          tripId,
+          userId: 'self',
+          userName,
+          action,
+          detail,
+          timestamp: new Date().toISOString(),
+        };
+        const activityLog = [...get().activityLog, entry];
+        set({ activityLog });
+        void persistData({ ...toData(), activityLog });
+        console.log('[TripsStore] Activity log:', userName, action, detail ?? '');
+      };
 
       return {
         hydrate: async () => {
@@ -107,6 +126,7 @@ export const useTripsStore = create(
             let itineraryItems: StoredItineraryItem[] = [];
             let stays: StoredStay[] = [];
             let memories: StoredMemory[] = [];
+            let activityLog: ActivityLogEntry[] = [];
 
             if (raw) {
               const parsed = JSON.parse(raw);
@@ -118,6 +138,7 @@ export const useTripsStore = create(
                 itineraryItems = data.itineraryItems ?? [];
                 stays = data.stays ?? [];
                 memories = data.memories ?? [];
+                activityLog = (data as any).activityLog ?? [];
               }
             }
 
@@ -128,7 +149,7 @@ export const useTripsStore = create(
               console.log('[TripsStore] Injected demo trip');
             }
 
-            set({ trips, itineraryItems, stays, memories, isHydrated: true });
+            set({ trips, itineraryItems, stays, memories, activityLog, isHydrated: true });
           } catch (e) {
             console.error('[TripsStore] Failed to hydrate:', e);
             set({ isHydrated: true });
@@ -201,16 +222,18 @@ export const useTripsStore = create(
           const itineraryItems = s.itineraryItems.filter((i) => i.tripId !== tripId);
           const stays = s.stays.filter((st) => st.tripId !== tripId);
           const memories = s.memories.filter((m) => m.tripId !== tripId);
-          set({ trips, itineraryItems, stays, memories });
-          void persistData({ trips, itineraryItems, stays, memories });
+          const activityLog = get().activityLog.filter((e) => e.tripId !== tripId);
+          set({ trips, itineraryItems, stays, memories, activityLog });
+          void persistData({ trips, itineraryItems, stays, memories, activityLog });
           console.log('[TripsStore] Deleted trip:', tripId);
         },
 
-        addItineraryItem: (tripId: string, draft: Omit<StoredItineraryItem, 'id' | 'tripId'>) => {
+        addItineraryItem: (tripId: string, draft: Omit<StoredItineraryItem, 'id' | 'tripId'>, userName?: string) => {
           const item: StoredItineraryItem = { id: generateId(), tripId, ...draft };
           const itineraryItems = [...get().itineraryItems, item];
           set({ itineraryItems });
           void persistData({ ...toData(), itineraryItems });
+          addLogEntry(tripId, userName || 'You', 'added_activity', draft.title);
           console.log('[TripsStore] Added itinerary item:', item.id);
         },
 
@@ -220,37 +243,51 @@ export const useTripsStore = create(
           void persistData({ ...toData(), itineraryItems });
         },
 
-        deleteItineraryItem: (itemId: string) => {
+        deleteItineraryItem: (itemId: string, userName?: string) => {
+          const item = get().itineraryItems.find((i) => i.id === itemId);
           const itineraryItems = get().itineraryItems.filter((i) => i.id !== itemId);
           set({ itineraryItems });
           void persistData({ ...toData(), itineraryItems });
+          if (item) {
+            addLogEntry(item.tripId, userName || 'You', 'removed_activity', item.title);
+          }
         },
 
-        addStay: (tripId: string, draft: Omit<StoredStay, 'id' | 'tripId'>) => {
+        addStay: (tripId: string, draft: Omit<StoredStay, 'id' | 'tripId'>, userName?: string) => {
           const stay: StoredStay = { id: generateId(), tripId, ...draft };
           const stays = [...get().stays, stay];
           set({ stays });
           void persistData({ ...toData(), stays });
+          addLogEntry(tripId, userName || 'You', 'added_stay', draft.name);
           console.log('[TripsStore] Added stay:', stay.id);
         },
 
-        deleteStay: (stayId: string) => {
+        deleteStay: (stayId: string, userName?: string) => {
+          const stay = get().stays.find((s) => s.id === stayId);
           const stays = get().stays.filter((s) => s.id !== stayId);
           set({ stays });
           void persistData({ ...toData(), stays });
+          if (stay) {
+            addLogEntry(stay.tripId, userName || 'You', 'removed_stay', stay.name);
+          }
         },
 
-        addMemory: (tripId: string, draft: Omit<StoredMemory, 'id' | 'tripId' | 'createdAt'>) => {
+        addMemory: (tripId: string, draft: Omit<StoredMemory, 'id' | 'tripId' | 'createdAt'>, userName?: string) => {
           const memory: StoredMemory = { id: generateId(), tripId, ...draft, createdAt: new Date().toISOString() };
           const memories = [...get().memories, memory];
           set({ memories });
           void persistData({ ...toData(), memories });
+          addLogEntry(tripId, userName || 'You', 'added_memory');
         },
 
-        deleteMemory: (memoryId: string) => {
+        deleteMemory: (memoryId: string, userName?: string) => {
+          const memory = get().memories.find((m) => m.id === memoryId);
           const memories = get().memories.filter((m) => m.id !== memoryId);
           set({ memories });
           void persistData({ ...toData(), memories });
+          if (memory) {
+            addLogEntry(memory.tripId, userName || 'You', 'removed_memory');
+          }
         },
 
         generateInviteLink: (tripId: string) => {
@@ -299,6 +336,7 @@ export const useTripsStore = create(
           );
           set({ trips });
           void persistData({ ...toData(), trips });
+          addLogEntry(trip.id, userName, 'joined');
           console.log('[TripsStore] User joined trip:', trip.id, 'as:', userName);
           return trip.id;
         },
@@ -317,6 +355,7 @@ export const useTripsStore = create(
           );
           set({ trips });
           void persistData({ ...toData(), trips });
+          addLogEntry(tripId, name, 'joined');
           console.log('[TripsStore] Added collaborator:', name, 'to trip:', tripId);
         },
 
@@ -342,6 +381,7 @@ export const useTripsStore = create(
           );
           set({ trips });
           void persistData({ ...toData(), trips });
+          addLogEntry(trip.id, userName, 'joined');
           console.log('[TripsStore] User joined trip by ID:', trip.id, 'as:', userName);
           return trip.id;
         },
@@ -354,7 +394,26 @@ export const useTripsStore = create(
           );
           set({ trips });
           void persistData({ ...toData(), trips });
+          const removed = trip.collaborators.find((c) => c.id === collaboratorId);
+          if (removed) {
+            addLogEntry(tripId, 'You', 'removed_member', removed.name);
+          }
           console.log('[TripsStore] Removed collaborator:', collaboratorId, 'from trip:', tripId);
+        },
+
+        getActivityLog: (tripId: string) => {
+          return get().activityLog.filter((e) => e.tripId === tripId).sort((a, b) => b.timestamp.localeCompare(a.timestamp));
+        },
+
+        addActivityLogEntry: (tripId: string, userName: string, action: ActivityLogAction, detail?: string) => {
+          addLogEntry(tripId, userName, action, detail);
+        },
+
+        getUserRole: (tripId: string): 'owner' | 'editor' | 'viewer' | null => {
+          const trip = get().trips.find((t) => t.id === tripId);
+          if (!trip) return null;
+          const self = trip.collaborators.find((c) => c.id === 'self');
+          return self?.role ?? 'owner';
         },
       };
     }

@@ -3,7 +3,7 @@ import {
   View, Text, StyleSheet, ScrollView, TouchableOpacity, Image, 
   Dimensions, Modal, TextInput, Alert, Platform, Share
 } from 'react-native';
-import { TripIcon, StoredItineraryItem } from '@/types/trip';
+import { TripIcon, StoredItineraryItem, ActivityLogEntry } from '@/types/trip';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useLocalSearchParams, useRouter, Stack } from 'expo-router';
 import { 
@@ -12,7 +12,7 @@ import {
   Hotel, Camera, Heart, BarChart3,
   Flower2, Church, Palmtree, Mountain, Sun, Landmark, Trees, Snowflake, Tent,
   X, Trash2, ExternalLink, Plane, Link2, Copy, Check,
-  Crown, UserPlus, UserMinus
+  Crown, UserPlus, UserMinus, Activity
 } from 'lucide-react-native';
 import * as ImagePicker from 'expo-image-picker';
 import * as Clipboard from 'expo-clipboard';
@@ -26,7 +26,7 @@ import { openHotelSearch, openFlightSearch } from '@/utils/bookingLinks';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
-type TabType = 'overview' | 'itinerary' | 'budget' | 'stays' | 'memories';
+type TabType = 'overview' | 'itinerary' | 'budget' | 'stays' | 'memories' | 'activity';
 
 const TABS: { id: TabType; label: string }[] = [
   { id: 'overview', label: 'Overview' },
@@ -34,6 +34,7 @@ const TABS: { id: TabType; label: string }[] = [
   { id: 'budget', label: 'Budget' },
   { id: 'stays', label: 'Stays' },
   { id: 'memories', label: 'Memories' },
+  { id: 'activity', label: 'Activity' },
 ];
 
 export default function TripDetailScreen() {
@@ -59,10 +60,16 @@ export default function TripDetailScreen() {
   const deleteStay = useTripsStore((s) => s.deleteStay);
   const addMemory = useTripsStore((s) => s.addMemory);
   const deleteMemory = useTripsStore((s) => s.deleteMemory);
+  const getActivityLog = useTripsStore((s) => s.getActivityLog);
+  const getUserRole = useTripsStore((s) => s.getUserRole);
 
   const styles = createTripStyles(colors);
 
   const trip = useMemo(() => trips.find((t) => t.id === id), [trips, id]);
+  const activityLog = useMemo(() => id ? getActivityLog(id) : [], [id, getActivityLog]);
+  const userRole = useMemo(() => id ? getUserRole(id) : 'owner', [id, getUserRole]);
+  const isOwner = userRole === 'owner';
+  const canEdit = userRole === 'owner' || userRole === 'editor';
   const itineraryItems = useMemo(() => allItineraryItems.filter((i) => i.tripId === id), [allItineraryItems, id]);
   const tripStays = useMemo(() => allStays.filter((s) => s.tripId === id), [allStays, id]);
   const tripMemories = useMemo(() => allMemories.filter((m) => m.tripId === id), [allMemories, id]);
@@ -671,6 +678,89 @@ export default function TripDetailScreen() {
     </View>
   );
 
+  const getLogActionText = (entry: ActivityLogEntry) => {
+    switch (entry.action) {
+      case 'joined': return 'joined the trip';
+      case 'left': return 'left the trip';
+      case 'added_activity': return `added "${entry.detail}"`;
+      case 'removed_activity': return `removed "${entry.detail}"`;
+      case 'added_stay': return `added stay "${entry.detail}"`;
+      case 'removed_stay': return `removed stay "${entry.detail}"`;
+      case 'updated_budget': return 'updated the budget';
+      case 'added_memory': return 'added a photo';
+      case 'removed_memory': return 'removed a photo';
+      case 'updated_trip': return 'updated trip details';
+      case 'invited': return `invited ${entry.detail ?? 'someone'}`;
+      case 'removed_member': return `removed ${entry.detail ?? 'a member'}`;
+      default: return 'made a change';
+    }
+  };
+
+  const getLogActionIcon = (action: ActivityLogEntry['action']) => {
+    switch (action) {
+      case 'joined': return <UserPlus size={14} color="#059669" />;
+      case 'left': return <UserMinus size={14} color="#EF4444" />;
+      case 'added_activity': return <Plus size={14} color={colors.accent} />;
+      case 'removed_activity': return <Trash2 size={14} color="#EF4444" />;
+      case 'added_stay': return <Hotel size={14} color="#D97706" />;
+      case 'removed_stay': return <Trash2 size={14} color="#EF4444" />;
+      case 'updated_budget': return <DollarSign size={14} color="#059669" />;
+      case 'added_memory': return <Camera size={14} color="#DB2777" />;
+      case 'removed_memory': return <Trash2 size={14} color="#EF4444" />;
+      case 'updated_trip': return <Edit3 size={14} color={colors.accent} />;
+      case 'invited': return <UserPlus size={14} color={colors.accent} />;
+      case 'removed_member': return <UserMinus size={14} color="#EF4444" />;
+      default: return <Activity size={14} color={colors.textMuted} />;
+    }
+  };
+
+  const formatRelativeTime = (timestamp: string) => {
+    const now = new Date();
+    const date = new Date(timestamp);
+    const diffMs = now.getTime() - date.getTime();
+    const diffMin = Math.floor(diffMs / 60000);
+    if (diffMin < 1) return 'Just now';
+    if (diffMin < 60) return `${diffMin}m ago`;
+    const diffHours = Math.floor(diffMin / 60);
+    if (diffHours < 24) return `${diffHours}h ago`;
+    const diffDays = Math.floor(diffHours / 24);
+    if (diffDays < 7) return `${diffDays}d ago`;
+    return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+  };
+
+  const renderActivity = () => (
+    <View style={styles.tabContentInner}>
+      {activityLog.length > 0 ? (
+        <View style={styles.activityLogContainer}>
+          {activityLog.slice(0, 50).map((entry) => (
+            <View key={entry.id} style={styles.activityLogItem}>
+              <View style={styles.activityLogIconWrap}>
+                {getLogActionIcon(entry.action)}
+              </View>
+              <View style={styles.activityLogContent}>
+                <Text style={styles.activityLogText}>
+                  <Text style={styles.activityLogUserName}>{entry.userName}</Text>
+                  {' '}{getLogActionText(entry)}
+                </Text>
+                <Text style={styles.activityLogTime}>{formatRelativeTime(entry.timestamp)}</Text>
+              </View>
+            </View>
+          ))}
+        </View>
+      ) : (
+        <View style={styles.emptyState}>
+          <View style={styles.emptyIconComposed}>
+            <View style={[styles.emptyIconCircle, { backgroundColor: colors.accent + '15' }]}>
+              <Activity size={28} color={colors.accent} />
+            </View>
+          </View>
+          <Text style={styles.emptyTitle}>No activity yet</Text>
+          <Text style={styles.emptyText}>Changes made by you and your collaborators will appear here.</Text>
+        </View>
+      )}
+    </View>
+  );
+
   const renderTabContent = () => {
     switch (activeTab) {
       case 'overview': return renderOverview();
@@ -678,6 +768,7 @@ export default function TripDetailScreen() {
       case 'budget': return renderBudget();
       case 'stays': return renderStays();
       case 'memories': return renderMemories();
+      case 'activity': return renderActivity();
       default: return renderOverview();
     }
   };
@@ -701,9 +792,11 @@ export default function TripDetailScreen() {
                   <ArrowLeft size={24} color={colors.text} />
                 </TouchableOpacity>
                 <View style={styles.heroActions}>
-                  <TouchableOpacity style={styles.actionButton} onPress={() => router.push({ pathname: '/edit-trip', params: { id: trip.id } } as any)}>
-                    <Edit3 size={18} color={colors.text} />
-                  </TouchableOpacity>
+                  {canEdit && (
+                    <TouchableOpacity style={styles.actionButton} onPress={() => router.push({ pathname: '/edit-trip', params: { id: trip.id } } as any)}>
+                      <Edit3 size={18} color={colors.text} />
+                    </TouchableOpacity>
+                  )}
                   <TouchableOpacity style={styles.actionButton} onPress={() => {
                     setLinkCopied(false);
                     const link = generateInviteLink(trip.id);
@@ -713,18 +806,28 @@ export default function TripDetailScreen() {
                   }}>
                     <Share2 size={18} color={colors.text} />
                   </TouchableOpacity>
-                  <TouchableOpacity style={styles.actionButton} onPress={handleDeleteTrip} testID="trip-detail-delete">
-                    <Trash2 size={18} color="#EF4444" />
-                  </TouchableOpacity>
+                  {isOwner && (
+                    <TouchableOpacity style={styles.actionButton} onPress={handleDeleteTrip} testID="trip-detail-delete">
+                      <Trash2 size={18} color="#EF4444" />
+                    </TouchableOpacity>
+                  )}
                 </View>
               </View>
 
               <View style={styles.heroInfo}>
-                <View style={[styles.statusBadge, { backgroundColor: getStatusColor(trip.status) + '20' }]}>
-                  <View style={[styles.statusDot, { backgroundColor: getStatusColor(trip.status) }]} />
-                  <Text style={[styles.statusText, { color: getStatusColor(trip.status) }]}>
-                    {getStatusLabel(trip.status)}
-                  </Text>
+                <View style={{ flexDirection: 'row' as const, gap: 8, flexWrap: 'wrap' as const }}>
+                  <View style={[styles.statusBadge, { backgroundColor: getStatusColor(trip.status) + '20' }]}>
+                    <View style={[styles.statusDot, { backgroundColor: getStatusColor(trip.status) }]} />
+                    <Text style={[styles.statusText, { color: getStatusColor(trip.status) }]}>
+                      {getStatusLabel(trip.status)}
+                    </Text>
+                  </View>
+                  {trip.collaborators.length > 1 && (
+                    <View style={[styles.statusBadge, { backgroundColor: 'rgba(8,145,178,0.15)' }]}>
+                      <Users size={11} color={colors.accent} />
+                      <Text style={[styles.statusText, { color: colors.accent }]}>Shared Trip</Text>
+                    </View>
+                  )}
                 </View>
                 <Text style={styles.heroTitle}>{trip.name}</Text>
                 <View style={styles.heroLocation}>
@@ -1890,5 +1993,45 @@ const createTripStyles = (colors: any) => StyleSheet.create({
     shadowOpacity: 0.08,
     shadowRadius: 3,
     elevation: 1,
+  },
+  activityLogContainer: {
+    gap: 2,
+  },
+  activityLogItem: {
+    flexDirection: 'row' as const,
+    alignItems: 'flex-start' as const,
+    paddingVertical: 12,
+    paddingHorizontal: 4,
+    borderBottomWidth: 1,
+    borderBottomColor: colors.borderLight,
+    gap: 12,
+  },
+  activityLogIconWrap: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    backgroundColor: colors.surface,
+    justifyContent: 'center' as const,
+    alignItems: 'center' as const,
+    borderWidth: 1,
+    borderColor: colors.borderLight,
+  },
+  activityLogContent: {
+    flex: 1,
+    paddingTop: 2,
+  },
+  activityLogText: {
+    fontSize: 14,
+    color: colors.text,
+    lineHeight: 20,
+  },
+  activityLogUserName: {
+    fontWeight: '600' as const,
+    color: colors.text,
+  },
+  activityLogTime: {
+    fontSize: 12,
+    color: colors.textMuted,
+    marginTop: 3,
   },
 });

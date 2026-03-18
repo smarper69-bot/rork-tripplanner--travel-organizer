@@ -234,3 +234,27 @@ export interface StoredMemory {
   type: 'photo' | 'video';
   createdAt: string;
 }
+
+export type ActivityLogAction =
+  | 'joined'
+  | 'left'
+  | 'added_activity'
+  | 'removed_activity'
+  | 'added_stay'
+  | 'removed_stay'
+  | 'updated_budget'
+  | 'added_memory'
+  | 'removed_memory'
+  | 'updated_trip'
+  | 'invited'
+  | 'removed_member';
+
+export interface ActivityLogEntry {
+  id: string;
+  tripId: string;
+  userId: string;
+  userName: string;
+  action: ActivityLogAction;
+  detail?: string;
+  timestamp: string;
+}
