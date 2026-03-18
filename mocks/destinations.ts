@@ -29,6 +29,8 @@ export interface DiscoverDestination {
   iconColor: string;
   description: string;
   highlights: string[];
+  coordinates?: { latitude: number; longitude: number };
+  tags?: string[];
   whyGo?: string;
   hotels?: Hotel[];
   activities?: Activity[];
@@ -668,11 +670,13 @@ export const destinations: DiscoverDestination[] = [
     bestMonths: [3, 4, 5, 10, 11],
     tripTypes: ['culture', 'adventure'],
     popularityScore: 80,
-    imageUrl: 'https://images.unsplash.com/photo-1580834341580-8c17a3a630ca?w=1600&h=900&fit=crop&q=80',
+    imageUrl: 'https://images.unsplash.com/photo-1579606032821-4e6161c81571?w=1600&h=900&fit=crop&q=80',
     icon: 'mountain',
     iconColor: '#E74C3C',
     description: 'Ancient rose-red city carved into dramatic desert cliffs.',
     highlights: ['The Treasury', 'The Monastery', 'Siq Canyon'],
+    coordinates: { latitude: 30.3285, longitude: 35.4444 },
+    tags: ['culture', 'adventure', 'history', 'desert', 'ancient'],
   },
   {
     id: '38',
@@ -743,11 +747,13 @@ export const destinations: DiscoverDestination[] = [
     bestMonths: [6, 7, 8, 9, 12, 1, 2],
     tripTypes: ['beach', 'culture', 'romantic'],
     popularityScore: 75,
-    imageUrl: 'https://images.unsplash.com/photo-1548550023-2bdb3c5beed7?w=1600&h=900&fit=crop&q=80',
+    imageUrl: 'https://images.unsplash.com/photo-1586861635167-e5223aadc9fe?w=1600&h=900&fit=crop&q=80',
     icon: 'palm-tree',
     iconColor: '#00CED1',
     description: 'Spice island paradise with pristine beaches and Stone Town\'s historic streets.',
     highlights: ['Stone Town', 'Prison Island', 'Spice Tours'],
+    coordinates: { latitude: -6.1659, longitude: 39.2026 },
+    tags: ['beach', 'culture', 'romantic', 'tropical', 'island'],
   },
   {
     id: '43',

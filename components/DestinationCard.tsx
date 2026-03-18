@@ -4,7 +4,7 @@ import { Star, MapPin, Sun, Mountain, Snowflake, Store, Trees, Landmark, Palmtre
 import { LinearGradient } from 'expo-linear-gradient';
 import { useThemeColors } from '@/hooks/useThemeColors';
 import { Destination, DestinationIcon } from '@/types/trip';
-import { getDestinationImage, DEFAULT_FALLBACK_IMAGE } from '@/utils/destinationImages';
+import { getDestinationImageWithConfidence, DEFAULT_FALLBACK_IMAGE } from '@/utils/destinationImages';
 import { ThemeColors } from '@/constants/themes';
 
 interface DestinationCardProps {
@@ -32,7 +32,11 @@ export default function DestinationCard({ destination, onPress, variant = 'mediu
   const IconComponent = getIconComponent(destination.icon);
   const scaleAnim = useRef(new Animated.Value(1)).current;
   const imageOpacity = useRef(new Animated.Value(0)).current;
-  const [imgSrc, setImgSrc] = useState<string>(getDestinationImage(destination.name));
+  const [imgSrc, setImgSrc] = useState<string>(() => {
+    const result = getDestinationImageWithConfidence(destination.name, destination.country);
+    console.log('[DestinationCard] Image for', destination.name, ':', result.confidence);
+    return result.url;
+  });
 
   const onImageError = useCallback((_e: NativeSyntheticEvent<ImageErrorEventData>) => {
     console.log('[DestinationCard] Image failed for:', destination.name, '- swapping to fallback');

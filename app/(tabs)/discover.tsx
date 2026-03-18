@@ -10,6 +10,7 @@ import { hapticLight } from '@/utils/haptics';
 import { destinations, DiscoverDestination, TripType } from '@/mocks/destinations';
 import { mockTrips } from '@/mocks/trips';
 import { ThemeColors } from '@/constants/themes';
+import { DEFAULT_FALLBACK_IMAGE } from '@/utils/destinationImages';
 
 const categories = [
   { id: 'all', label: 'All', icon: Compass },
@@ -51,6 +52,7 @@ interface DestinationCardCompactProps {
 
 function DestinationCardCompact({ destination, onPress }: DestinationCardCompactProps) {
   const scale = useRef(new Animated.Value(1)).current;
+  const [imgSrc, setImgSrc] = useState(destination.imageUrl);
   const onPressIn = useCallback(() => {
     hapticLight();
     Animated.spring(scale, { toValue: 0.96, useNativeDriver: true, speed: 50, bounciness: 4 }).start();
@@ -58,10 +60,14 @@ function DestinationCardCompact({ destination, onPress }: DestinationCardCompact
   const onPressOut = useCallback(() => {
     Animated.spring(scale, { toValue: 1, useNativeDriver: true, speed: 50, bounciness: 4 }).start();
   }, [scale]);
+  const onImageError = useCallback(() => {
+    console.log('[DiscoverCompact] Image failed for:', destination.city, '- using fallback');
+    setImgSrc(DEFAULT_FALLBACK_IMAGE);
+  }, [destination.city]);
   return (
     <Animated.View style={{ transform: [{ scale }] }}>
       <Pressable style={staticStyles.compactCard} onPress={onPress} onPressIn={onPressIn} onPressOut={onPressOut}>
-        <Image source={{ uri: destination.imageUrl }} style={staticStyles.compactImage} defaultSource={{ uri: destination.imageUrl }} />
+        <Image source={{ uri: imgSrc }} style={staticStyles.compactImage} onError={onImageError} />
         <LinearGradient
           colors={['transparent', 'rgba(0,0,0,0.15)', 'rgba(0,0,0,0.7)']}
           locations={[0, 0.4, 1]}
@@ -90,6 +96,7 @@ interface DestinationCardLargeProps {
 
 function DestinationCardLarge({ destination, onPress }: DestinationCardLargeProps) {
   const scale = useRef(new Animated.Value(1)).current;
+  const [imgSrc, setImgSrc] = useState(destination.imageUrl);
   const onPressIn = useCallback(() => {
     hapticLight();
     Animated.spring(scale, { toValue: 0.97, useNativeDriver: true, speed: 50, bounciness: 4 }).start();
@@ -97,10 +104,14 @@ function DestinationCardLarge({ destination, onPress }: DestinationCardLargeProp
   const onPressOut = useCallback(() => {
     Animated.spring(scale, { toValue: 1, useNativeDriver: true, speed: 50, bounciness: 4 }).start();
   }, [scale]);
+  const onImageError = useCallback(() => {
+    console.log('[DiscoverLarge] Image failed for:', destination.city, '- using fallback');
+    setImgSrc(DEFAULT_FALLBACK_IMAGE);
+  }, [destination.city]);
   return (
     <Animated.View style={{ transform: [{ scale }] }}>
       <Pressable style={staticStyles.largeCard} onPress={onPress} onPressIn={onPressIn} onPressOut={onPressOut}>
-        <Image source={{ uri: destination.imageUrl }} style={staticStyles.largeImage} defaultSource={{ uri: destination.imageUrl }} />
+        <Image source={{ uri: imgSrc }} style={staticStyles.largeImage} onError={onImageError} />
         <LinearGradient
           colors={['rgba(0,0,0,0.05)', 'rgba(0,0,0,0.15)', 'rgba(0,0,0,0.75)']}
           locations={[0, 0.35, 1]}
@@ -136,6 +147,7 @@ interface DestinationCardRowProps {
 
 function DestinationCardRow({ destination, onPress, colors }: DestinationCardRowProps) {
   const scale = useRef(new Animated.Value(1)).current;
+  const [imgSrc, setImgSrc] = useState(destination.imageUrl);
   const onPressIn = useCallback(() => {
     hapticLight();
     Animated.spring(scale, { toValue: 0.97, useNativeDriver: true, speed: 50, bounciness: 4 }).start();
@@ -143,6 +155,10 @@ function DestinationCardRow({ destination, onPress, colors }: DestinationCardRow
   const onPressOut = useCallback(() => {
     Animated.spring(scale, { toValue: 1, useNativeDriver: true, speed: 50, bounciness: 4 }).start();
   }, [scale]);
+  const onImageError = useCallback(() => {
+    console.log('[DiscoverRow] Image failed for:', destination.city, '- using fallback');
+    setImgSrc(DEFAULT_FALLBACK_IMAGE);
+  }, [destination.city]);
   return (
     <Animated.View style={{ transform: [{ scale }] }}>
       <Pressable
@@ -151,7 +167,7 @@ function DestinationCardRow({ destination, onPress, colors }: DestinationCardRow
         onPressIn={onPressIn}
         onPressOut={onPressOut}
       >
-        <Image source={{ uri: destination.imageUrl }} style={staticStyles.rowImage} defaultSource={{ uri: destination.imageUrl }} />
+        <Image source={{ uri: imgSrc }} style={staticStyles.rowImage} onError={onImageError} />
         <View style={staticStyles.rowContent}>
           <Text style={[staticStyles.rowCity, { color: colors.text }]}>{destination.city}</Text>
           <Text style={[staticStyles.rowCountry, { color: colors.textSecondary }]}>{destination.country}</Text>
@@ -162,6 +178,50 @@ function DestinationCardRow({ destination, onPress, colors }: DestinationCardRow
         </View>
         <View style={[staticStyles.rowAction, { backgroundColor: colors.inputBackground }]}>
           <Plane size={16} color={colors.text} />
+        </View>
+      </Pressable>
+    </Animated.View>
+  );
+}
+
+interface FilteredDestinationCardProps {
+  destination: DiscoverDestination;
+  onPress: () => void;
+}
+
+function FilteredDestinationCard({ destination, onPress }: FilteredDestinationCardProps) {
+  const scale = useRef(new Animated.Value(1)).current;
+  const [imgSrc, setImgSrc] = useState(destination.imageUrl);
+  const onPressIn = useCallback(() => {
+    hapticLight();
+    Animated.spring(scale, { toValue: 0.96, useNativeDriver: true, speed: 50, bounciness: 4 }).start();
+  }, [scale]);
+  const onPressOut = useCallback(() => {
+    Animated.spring(scale, { toValue: 1, useNativeDriver: true, speed: 50, bounciness: 4 }).start();
+  }, [scale]);
+  const onImageError = useCallback(() => {
+    console.log('[DiscoverFiltered] Image failed for:', destination.city, '- using fallback');
+    setImgSrc(DEFAULT_FALLBACK_IMAGE);
+  }, [destination.city]);
+  return (
+    <Animated.View style={[staticStyles.filteredCard, { transform: [{ scale }] }]}>
+      <Pressable style={staticStyles.filteredCardPressable} onPress={onPress} onPressIn={onPressIn} onPressOut={onPressOut}>
+        <Image source={{ uri: imgSrc }} style={staticStyles.filteredImage} onError={onImageError} />
+        <LinearGradient
+          colors={['transparent', 'rgba(0,0,0,0.15)', 'rgba(0,0,0,0.7)']}
+          locations={[0, 0.4, 1]}
+          style={StyleSheet.absoluteFillObject}
+        />
+        <View style={staticStyles.filteredContent}>
+          <View style={staticStyles.filteredBadge}>
+            <Star size={10} color="#FFD700" fill="#FFD700" />
+            <Text style={staticStyles.filteredBadgeText}>{(destination.popularityScore / 20).toFixed(1)}</Text>
+          </View>
+          <View style={staticStyles.filteredInfo}>
+            <Text style={staticStyles.filteredCity}>{destination.city}</Text>
+            <Text style={staticStyles.filteredCountry}>{destination.country}</Text>
+            <Text style={staticStyles.filteredPrice}>From ${destination.avgDailyCost}/day</Text>
+          </View>
         </View>
       </Pressable>
     </Animated.View>
@@ -491,30 +551,11 @@ export default function DiscoverScreen() {
             </View>
             <View style={staticStyles.filteredGrid}>
               {filteredDestinations.map((dest) => (
-                <TouchableOpacity 
-                  key={dest.id} 
-                  style={staticStyles.filteredCard}
+                <FilteredDestinationCard
+                  key={dest.id}
+                  destination={dest}
                   onPress={() => handleDestinationPress(dest)}
-                  activeOpacity={0.9}
-                >
-                  <Image source={{ uri: dest.imageUrl }} style={staticStyles.filteredImage} defaultSource={{ uri: dest.imageUrl }} />
-                  <LinearGradient
-                    colors={['transparent', 'rgba(0,0,0,0.15)', 'rgba(0,0,0,0.7)']}
-                    locations={[0, 0.4, 1]}
-                    style={StyleSheet.absoluteFillObject}
-                  />
-                  <View style={staticStyles.filteredContent}>
-                    <View style={staticStyles.filteredBadge}>
-                      <Star size={10} color="#FFD700" fill="#FFD700" />
-                      <Text style={staticStyles.filteredBadgeText}>{(dest.popularityScore / 20).toFixed(1)}</Text>
-                    </View>
-                    <View style={staticStyles.filteredInfo}>
-                      <Text style={staticStyles.filteredCity}>{dest.city}</Text>
-                      <Text style={staticStyles.filteredCountry}>{dest.country}</Text>
-                      <Text style={staticStyles.filteredPrice}>From ${dest.avgDailyCost}/day</Text>
-                    </View>
-                  </View>
-                </TouchableOpacity>
+                />
               ))}
             </View>
           </View>
@@ -868,6 +909,10 @@ const staticStyles = StyleSheet.create({
     shadowOpacity: 0.12,
     shadowRadius: 10,
     elevation: 5,
+  },
+  filteredCardPressable: {
+    width: '100%',
+    height: '100%',
   },
   filteredImage: {
     width: '100%',

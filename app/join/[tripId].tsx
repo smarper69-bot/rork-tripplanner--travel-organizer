@@ -12,22 +12,7 @@ import {
 import { useTripsStore } from '@/store/useTripsStore';
 import { mockTrips } from '@/mocks/trips';
 import { Trip } from '@/types/trip';
-
-const DESTINATION_IMAGES: Record<string, string> = {
-  'Tokyo': 'https://images.unsplash.com/photo-1540959733332-eab4deabeeaf?w=1200&q=80',
-  'Barcelona': 'https://images.unsplash.com/photo-1583422409516-2895a77efded?w=1200&q=80',
-  'Bali': 'https://images.unsplash.com/photo-1537996194471-e657df975ab4?w=1200&q=80',
-  'Paris': 'https://images.unsplash.com/photo-1502602898657-3e91760cbb34?w=1200&q=80',
-  'New York': 'https://images.unsplash.com/photo-1496442226666-8d4d0e62e6e9?w=1200&q=80',
-  'London': 'https://images.unsplash.com/photo-1513635269975-59663e0ac1ad?w=1200&q=80',
-  'Rome': 'https://images.unsplash.com/photo-1552832230-c0197dd311b5?w=1200&q=80',
-  'Sydney': 'https://images.unsplash.com/photo-1506973035872-a4ec16b8e8d9?w=1200&q=80',
-};
-
-function getDestinationImage(destination: string): string {
-  if (DESTINATION_IMAGES[destination]) return DESTINATION_IMAGES[destination];
-  return 'https://images.unsplash.com/photo-1488646953014-85cb44e25828?w=1200&q=80';
-}
+import { getDestinationImageHQ } from '@/utils/destinationImages';
 
 function formatDate(date: string) {
   return new Date(date).toLocaleDateString('en-US', {
@@ -146,7 +131,7 @@ export default function JoinTripByIdScreen() {
 
   const owner = trip.collaborators.find((c) => c.role === 'owner');
   const travelerCount = trip.collaborators.length;
-  const coverImage = getDestinationImage(trip.destination);
+  const coverImage = getDestinationImageHQ(trip.destination, trip.country);
   const tripDays = calculateDays(trip.startDate, trip.endDate);
 
   return (

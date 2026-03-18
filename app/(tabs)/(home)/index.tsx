@@ -9,7 +9,7 @@ import { useTripsStore, getUserTripCount } from '@/store/useTripsStore';
 import { useSubscriptionStore, FREE_TRIP_LIMIT } from '@/store/useSubscriptionStore';
 import { useUserName } from '@/hooks/useUserProfile';
 import { Trip } from '@/types/trip';
-import { getDestinationImage } from '@/utils/destinationImages';
+import { getDestinationImageWithConfidence } from '@/utils/destinationImages';
 import { hapticLight, hapticMedium } from '@/utils/haptics';
 import { ThemeColors } from '@/constants/themes';
 
@@ -242,7 +242,7 @@ export default function HomeScreen() {
             >
               <View style={s.mainCard}>
                 <Image
-                  source={{ uri: getDestinationImage(mainTrip.destination, mainTrip.id) }}
+                  source={{ uri: getDestinationImageWithConfidence(mainTrip.destination, mainTrip.country).url }}
                   style={s.mainCardImage}
                 />
                 <LinearGradient
@@ -290,7 +290,7 @@ export default function HomeScreen() {
                   >
                     <View style={s.otherCard}>
                       <Image
-                        source={{ uri: getDestinationImage(trip.destination, trip.id) }}
+                        source={{ uri: getDestinationImageWithConfidence(trip.destination, trip.country).url }}
                         style={s.otherCardImage}
                       />
                       <View style={s.otherCardContent}>

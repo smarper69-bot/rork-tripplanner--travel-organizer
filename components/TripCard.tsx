@@ -3,7 +3,7 @@ import { View, Text, StyleSheet, Image, Animated, Pressable } from 'react-native
 import { MapPin, Calendar, User } from 'lucide-react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Trip } from '@/types/trip';
-import { getDestinationImage, DEFAULT_FALLBACK_IMAGE } from '@/utils/destinationImages';
+import { getDestinationImageWithConfidence, DEFAULT_FALLBACK_IMAGE } from '@/utils/destinationImages';
 import { hapticLight } from '@/utils/haptics';
 import { DEMO_TRIP_ID } from '@/mocks/demoTrip';
 import { useThemeColors } from '@/hooks/useThemeColors';
@@ -48,7 +48,11 @@ export default function TripCard({ trip, onPress, variant = 'large' }: TripCardP
     }).start();
   }, [scaleAnim]);
 
-  const [imageUrl, setImageUrl] = React.useState(() => getDestinationImage(trip.destination, trip.id));
+  const [imageUrl, setImageUrl] = React.useState(() => {
+    const result = getDestinationImageWithConfidence(trip.destination, trip.country);
+    console.log('[TripCard] Image for', trip.destination, ':', result.confidence);
+    return result.url;
+  });
   const imageOpacity = useRef(new Animated.Value(0)).current;
   const isDemo = trip.id === DEMO_TRIP_ID;
 
