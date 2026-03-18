@@ -91,7 +91,7 @@ export const lightColors: ThemeColors = {
   iconDefault: '#6B7280',
   iconActive: '#111111',
 
-  tabInactive: '#9CA3AF',
+  tabInactive: '#6B7280',
   tabActiveBg: '#111111',
 
   badgeBg: 'rgba(255,255,255,0.92)',
@@ -157,7 +157,7 @@ export const darkColors: ThemeColors = {
   iconDefault: '#A1A1AA',
   iconActive: '#F5F5F5',
 
-  tabInactive: '#71717A',
+  tabInactive: '#A1A1AA',
   tabActiveBg: '#F5F5F5',
 
   badgeBg: 'rgba(255,255,255,0.15)',

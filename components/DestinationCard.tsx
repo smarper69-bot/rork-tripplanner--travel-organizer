@@ -1,10 +1,10 @@
-import React, { useRef, useCallback } from 'react';
-import { View, Text, StyleSheet, Pressable, Animated } from 'react-native';
+import React, { useRef, useCallback, useState } from 'react';
+import { View, Text, StyleSheet, Pressable, Animated, ImageErrorEventData, NativeSyntheticEvent } from 'react-native';
 import { Star, MapPin, Sun, Mountain, Snowflake, Store, Trees, Landmark, Palmtree } from 'lucide-react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useThemeColors } from '@/hooks/useThemeColors';
 import { Destination, DestinationIcon } from '@/types/trip';
-import { getDestinationImage } from '@/utils/destinationImages';
+import { getDestinationImage, DEFAULT_FALLBACK_IMAGE } from '@/utils/destinationImages';
 import { ThemeColors } from '@/constants/themes';
 
 interface DestinationCardProps {
@@ -32,7 +32,12 @@ export default function DestinationCard({ destination, onPress, variant = 'mediu
   const IconComponent = getIconComponent(destination.icon);
   const scaleAnim = useRef(new Animated.Value(1)).current;
   const imageOpacity = useRef(new Animated.Value(0)).current;
-  const imageUrl = getDestinationImage(destination.name);
+  const [imgSrc, setImgSrc] = useState<string>(getDestinationImage(destination.name));
+
+  const onImageError = useCallback((_e: NativeSyntheticEvent<ImageErrorEventData>) => {
+    console.log('[DestinationCard] Image failed for:', destination.name, '- swapping to fallback');
+    setImgSrc(DEFAULT_FALLBACK_IMAGE);
+  }, [destination.name]);
 
   const onPressIn = useCallback(() => {
     Animated.spring(scaleAnim, {
@@ -72,9 +77,10 @@ export default function DestinationCard({ destination, onPress, variant = 'mediu
           onPressOut={onPressOut}
         >
           <Animated.Image
-            source={{ uri: imageUrl }}
+            source={{ uri: imgSrc }}
             style={[staticStyles.largeImage, { opacity: imageOpacity }]}
             onLoad={onImageLoad}
+            onError={onImageError}
           />
           <LinearGradient
             colors={['transparent', 'rgba(0,0,0,0.1)', 'rgba(0,0,0,0.7)']}
@@ -107,9 +113,10 @@ export default function DestinationCard({ destination, onPress, variant = 'mediu
         >
           <View style={[staticStyles.smallImageWrap, { backgroundColor: colors.cardBg }]}>
             <Animated.Image
-              source={{ uri: imageUrl }}
+              source={{ uri: imgSrc }}
               style={[staticStyles.smallImage, { opacity: imageOpacity }]}
               onLoad={onImageLoad}
+              onError={onImageError}
             />
             <LinearGradient
               colors={['transparent', 'rgba(0,0,0,0.35)']}
@@ -135,9 +142,10 @@ export default function DestinationCard({ destination, onPress, variant = 'mediu
       >
         <View style={[staticStyles.imageContainer, { backgroundColor: colors.cardBg }]}>
           <Animated.Image
-            source={{ uri: imageUrl }}
+            source={{ uri: imgSrc }}
             style={[staticStyles.cardImage, { opacity: imageOpacity }]}
             onLoad={onImageLoad}
+            onError={onImageError}
           />
           <LinearGradient
             colors={['transparent', 'rgba(0,0,0,0.1)', 'rgba(0,0,0,0.55)']}
