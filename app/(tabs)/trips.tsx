@@ -109,7 +109,7 @@ export default function TripsScreen() {
           >
             <tab.icon
               size={16}
-              color={activeTab === tab.id ? '#FFFFFF' : colors.textMuted}
+              color={activeTab === tab.id ? '#FFFFFF' : colors.textSecondary}
             />
             <Text style={[s.tabText, activeTab === tab.id && s.tabTextActive]}>
               {tab.label}
@@ -240,7 +240,7 @@ const createStyles = (colors: ThemeColors) => StyleSheet.create({
     justifyContent: 'center',
     gap: 6,
     paddingVertical: 11,
-    backgroundColor: colors.surface,
+    backgroundColor: colors.surfaceElevated,
     borderRadius: 12,
   },
   tabActive: {
@@ -249,7 +249,7 @@ const createStyles = (colors: ThemeColors) => StyleSheet.create({
   tabText: {
     fontSize: 13,
     fontWeight: '600' as const,
-    color: colors.textMuted,
+    color: colors.textSecondary,
   },
   tabTextActive: {
     color: '#FFFFFF',

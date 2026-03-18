@@ -146,26 +146,26 @@ export const darkColors: ThemeColors = {
   inputBackground: '#252525',
 
   text: '#F5F5F5',
-  textSecondary: '#A1A1AA',
-  textMuted: '#71717A',
+  textSecondary: '#B0B0B8',
+  textMuted: '#8E8E99',
   textLight: '#FFFFFF',
   textOnPrimary: '#0F0F0F',
 
   border: '#2E2E2E',
   borderLight: '#252525',
 
-  iconDefault: '#A1A1AA',
+  iconDefault: '#B0B0B8',
   iconActive: '#F5F5F5',
 
-  tabInactive: '#A1A1AA',
+  tabInactive: '#B8B8C0',
   tabActiveBg: '#F5F5F5',
 
   badgeBg: 'rgba(255,255,255,0.15)',
   badgeText: '#F5F5F5',
 
-  chipBg: '#252525',
+  chipBg: '#2A2A2E',
   chipActiveBg: '#F5F5F5',
-  chipText: '#A1A1AA',
+  chipText: '#B0B0B8',
   chipActiveText: '#0F0F0F',
 
   success: '#34D399',
