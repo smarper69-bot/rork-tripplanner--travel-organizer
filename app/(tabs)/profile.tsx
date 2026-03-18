@@ -7,13 +7,14 @@ import {
   LogOut, ChevronRight, Moon, Globe, CreditCard, Crown,
   Sparkles, Briefcase, Users, BarChart3, Check, Navigation
 } from 'lucide-react-native';
-import Colors from '@/constants/colors';
+import { useThemeColors } from '@/hooks/useThemeColors';
 import { openComingSoon } from '@/utils/comingSoon';
 import { hapticLight } from '@/utils/haptics';
 import { useTripsStore, getUserTripCount } from '@/store/useTripsStore';
 import { usePreferencesStore, CurrencyOption, AppearanceOption } from '@/store/usePreferencesStore';
 import { useSubscriptionStore, FREE_TRIP_LIMIT, PLAN_FEATURES } from '@/store/useSubscriptionStore';
-
+import { useUserProfile } from '@/hooks/useUserProfile';
+import { ThemeColors } from '@/constants/themes';
 
 interface SettingsItemProps {
   icon: React.ReactNode;
@@ -24,12 +25,13 @@ interface SettingsItemProps {
   toggle?: boolean;
   toggleValue?: boolean;
   onToggle?: (value: boolean) => void;
+  colors: ThemeColors;
 }
 
-function SettingsItem({ icon, label, value, onPress, showChevron = true, toggle, toggleValue, onToggle }: SettingsItemProps) {
+function SettingsItem({ icon, label, value, onPress, showChevron = true, toggle, toggleValue, onToggle, colors }: SettingsItemProps) {
   return (
     <TouchableOpacity 
-      style={styles.settingsItem} 
+      style={[settingsStyles.settingsItem, { borderBottomColor: colors.borderLight }]}
       onPress={() => {
         hapticLight();
         onPress?.();
@@ -37,29 +39,64 @@ function SettingsItem({ icon, label, value, onPress, showChevron = true, toggle,
       disabled={toggle}
       activeOpacity={0.7}
     >
-      <View style={styles.settingsItemLeft}>
-        <View style={styles.settingsIconWrap}>
+      <View style={settingsStyles.settingsItemLeft}>
+        <View style={[settingsStyles.settingsIconWrap, { backgroundColor: colors.background }]}>
           {icon}
         </View>
-        <Text style={styles.settingsItemLabel}>{label}</Text>
+        <Text style={[settingsStyles.settingsItemLabel, { color: colors.text }]}>{label}</Text>
       </View>
-      <View style={styles.settingsItemRight}>
-        {value && <Text style={styles.settingsItemValue}>{value}</Text>}
+      <View style={settingsStyles.settingsItemRight}>
+        {value && <Text style={[settingsStyles.settingsItemValue, { color: colors.textMuted }]}>{value}</Text>}
         {toggle && onToggle && (
           <Switch
             value={toggleValue}
             onValueChange={onToggle}
-            trackColor={{ false: Colors.border, true: Colors.accent }}
-            thumbColor={Colors.textLight}
+            trackColor={{ false: colors.border, true: colors.accent }}
+            thumbColor="#FFFFFF"
           />
         )}
         {showChevron && !toggle && (
-          <ChevronRight size={18} color={Colors.textMuted} />
+          <ChevronRight size={18} color={colors.textMuted} />
         )}
       </View>
     </TouchableOpacity>
   );
 }
+
+const settingsStyles = StyleSheet.create({
+  settingsItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingVertical: 14,
+    paddingHorizontal: 16,
+    borderBottomWidth: StyleSheet.hairlineWidth,
+  },
+  settingsItemLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+  },
+  settingsIconWrap: {
+    width: 32,
+    height: 32,
+    borderRadius: 8,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  settingsItemLabel: {
+    fontSize: 15,
+    fontWeight: '500' as const,
+  },
+  settingsItemRight: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  settingsItemValue: {
+    fontSize: 13,
+  },
+});
 
 const premiumFeaturesList = [
   { icon: Briefcase, text: 'Unlimited trips' },
@@ -76,14 +113,15 @@ const APPEARANCE_OPTIONS: AppearanceOption[] = ['Light', 'Dark', 'System'];
 
 export default function ProfileScreen() {
   const router = useRouter();
+  const colors = useThemeColors();
   const plan = useSubscriptionStore((s) => s.plan);
   const isPro = plan === 'premium';
+  const userProfile = useUserProfile();
 
   const notifications = usePreferencesStore((s) => s.notifications);
   const offlineMode = usePreferencesStore((s) => s.offlineMode);
   const currency = usePreferencesStore((s) => s.currency);
   const appearance = usePreferencesStore((s) => s.appearance);
-  const profile = usePreferencesStore((s) => s.profile);
   const locationEnabled = usePreferencesStore((s) => s.locationEnabled);
   const setNotifications = usePreferencesStore((s) => s.setNotifications);
   const setLocationEnabled = usePreferencesStore((s) => s.setLocationEnabled);
@@ -139,203 +177,215 @@ export default function ProfileScreen() {
     return sum + Math.max(diff, 0);
   }, 0);
 
+  const s = createStyles(colors);
+
   return (
-    <SafeAreaView style={styles.container} edges={['top']}>
-      <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.scrollContent}>
-        <View style={styles.header}>
-          <Text style={styles.title}>Profile</Text>
+    <SafeAreaView style={s.container} edges={['top']}>
+      <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={s.scrollContent}>
+        <View style={s.header}>
+          <Text style={s.title}>Profile</Text>
         </View>
 
-        <View style={styles.profileCard}>
-          {profile.profileImage ? (
+        <View style={s.profileCard}>
+          {userProfile.profileImage ? (
             <Image
-              source={{ uri: profile.profileImage }}
-              style={styles.avatar}
+              source={{ uri: userProfile.profileImage }}
+              style={s.avatar}
             />
           ) : (
-            <View style={[styles.avatar, styles.avatarPlaceholder]}>
-              <User size={30} color={Colors.textMuted} />
+            <View style={[s.avatar, s.avatarPlaceholder]}>
+              <User size={30} color={colors.textMuted} />
             </View>
           )}
-          <View style={styles.profileInfo}>
-            <Text style={styles.profileName}>{profile.name || 'Traveler'}</Text>
-            <Text style={styles.profileEmail}>{profile.email || 'No email set'}</Text>
+          <View style={s.profileInfo}>
+            <Text style={s.profileName}>{userProfile.name}</Text>
+            <Text style={s.profileEmail}>{userProfile.email || 'No email set'}</Text>
           </View>
-          <TouchableOpacity style={styles.editButton} onPress={() => router.push('/personal-info')} activeOpacity={0.7}>
-            <Text style={styles.editButtonText}>Edit</Text>
+          <TouchableOpacity style={s.editButton} onPress={() => router.push('/personal-info')} activeOpacity={0.7}>
+            <Text style={s.editButtonText}>Edit</Text>
           </TouchableOpacity>
         </View>
 
-        <View style={styles.statsRow}>
-          <View style={styles.statItem}>
-            <Text style={styles.statValue}>{userTripCount}</Text>
-            <Text style={styles.statLabel}>{isPro ? 'Trips' : `/ ${FREE_TRIP_LIMIT} Trips`}</Text>
+        <View style={s.statsRow}>
+          <View style={s.statItem}>
+            <Text style={s.statValue}>{userTripCount}</Text>
+            <Text style={s.statLabel}>{isPro ? 'Trips' : `/ ${FREE_TRIP_LIMIT} Trips`}</Text>
           </View>
-          <View style={styles.statDivider} />
-          <View style={styles.statItem}>
-            <Text style={styles.statValue}>{countriesVisited}</Text>
-            <Text style={styles.statLabel}>Countries</Text>
+          <View style={s.statDivider} />
+          <View style={s.statItem}>
+            <Text style={s.statValue}>{countriesVisited}</Text>
+            <Text style={s.statLabel}>Countries</Text>
           </View>
-          <View style={styles.statDivider} />
-          <View style={styles.statItem}>
-            <Text style={styles.statValue}>{totalNights}</Text>
-            <Text style={styles.statLabel}>Nights</Text>
+          <View style={s.statDivider} />
+          <View style={s.statItem}>
+            <Text style={s.statValue}>{totalNights}</Text>
+            <Text style={s.statLabel}>Nights</Text>
           </View>
         </View>
 
         {!isPro && (
-          <View style={styles.proSection}>
-            <View style={styles.proCard}>
-              <View style={styles.proHeader}>
-                <View style={styles.proBadge}>
-                  <Crown size={20} color={Colors.textLight} />
+          <View style={s.proSection}>
+            <View style={s.proCard}>
+              <View style={s.proHeader}>
+                <View style={[s.proBadge, { backgroundColor: colors.accent }]}>
+                  <Crown size={20} color="#FFFFFF" />
                 </View>
-                <View style={styles.proTitleContainer}>
-                  <Text style={styles.proTitle}>TripNest Premium</Text>
-                  <Text style={styles.proSubtitle}>Plan together, use AI, and unlock unlimited trips</Text>
+                <View style={s.proTitleContainer}>
+                  <Text style={s.proTitle}>TripNest Premium</Text>
+                  <Text style={s.proSubtitle}>Plan together, use AI, and unlock unlimited trips</Text>
                 </View>
               </View>
 
-              <View style={styles.proFeatures}>
+              <View style={s.proFeatures}>
                 {premiumFeaturesList.map((feature, index) => (
-                  <View key={index} style={styles.proFeatureItem}>
-                    <View style={styles.proFeatureCheck}>
-                      <Check size={12} color={Colors.accent} />
+                  <View key={index} style={s.proFeatureItem}>
+                    <View style={s.proFeatureCheck}>
+                      <Check size={12} color={colors.accent} />
                     </View>
-                    <Text style={styles.proFeatureText}>{feature.text}</Text>
+                    <Text style={s.proFeatureText}>{feature.text}</Text>
                   </View>
                 ))}
               </View>
 
-              <View style={styles.pricingOptions}>
-                <TouchableOpacity style={styles.pricingCard} onPress={() => openComingSoon('TripNest Pro subscription')} activeOpacity={0.7}>
-                  <Text style={styles.pricingLabel}>Monthly</Text>
-                  <Text style={styles.pricingPrice}>$4.99</Text>
-                  <Text style={styles.pricingPeriod}>/month</Text>
+              <View style={s.pricingOptions}>
+                <TouchableOpacity style={s.pricingCard} onPress={() => openComingSoon('TripNest Pro subscription')} activeOpacity={0.7}>
+                  <Text style={s.pricingLabel}>Monthly</Text>
+                  <Text style={s.pricingPrice}>$4.99</Text>
+                  <Text style={s.pricingPeriod}>/month</Text>
                 </TouchableOpacity>
-                <TouchableOpacity style={[styles.pricingCard, styles.pricingCardHighlight]} onPress={() => openComingSoon('TripNest Pro subscription')} activeOpacity={0.7}>
-                  <View style={styles.bestValueBadge}>
-                    <Text style={styles.bestValueText}>Best Value</Text>
+                <TouchableOpacity style={[s.pricingCard, s.pricingCardHighlight]} onPress={() => openComingSoon('TripNest Pro subscription')} activeOpacity={0.7}>
+                  <View style={[s.bestValueBadge, { backgroundColor: colors.accent }]}>
+                    <Text style={s.bestValueText}>Best Value</Text>
                   </View>
-                  <Text style={styles.pricingLabel}>Annual</Text>
-                  <Text style={styles.pricingPrice}>$29.99</Text>
-                  <Text style={styles.pricingPeriod}>/year</Text>
-                  <Text style={styles.pricingSavings}>Save 50%</Text>
+                  <Text style={s.pricingLabel}>Annual</Text>
+                  <Text style={s.pricingPrice}>$29.99</Text>
+                  <Text style={s.pricingPeriod}>/year</Text>
+                  <Text style={[s.pricingSavings, { color: colors.accent }]}>Save 50%</Text>
                 </TouchableOpacity>
               </View>
 
-              <TouchableOpacity style={styles.upgradeButton} onPress={() => openComingSoon('TripNest Premium subscription')} activeOpacity={0.8}>
-                <Text style={styles.upgradeButtonText}>Upgrade to Premium</Text>
+              <TouchableOpacity style={[s.upgradeButton, { backgroundColor: colors.accent }]} onPress={() => openComingSoon('TripNest Premium subscription')} activeOpacity={0.8}>
+                <Text style={s.upgradeButtonText}>Upgrade to Premium</Text>
               </TouchableOpacity>
 
-              <Text style={styles.proDisclaimer}>
+              <Text style={s.proDisclaimer}>
                 Cancel anytime. 7-day free trial included.
               </Text>
 
-              <View style={styles.freeCompare}>
-                <Text style={styles.freeCompareTitle}>Your free plan includes:</Text>
+              <View style={s.freeCompare}>
+                <Text style={s.freeCompareTitle}>Your free plan includes:</Text>
                 {PLAN_FEATURES.free.features.map((f, i) => (
-                  <Text key={i} style={styles.freeCompareItem}>{`\u2022 ${f}`}</Text>
+                  <Text key={i} style={s.freeCompareItem}>{`\u2022 ${f}`}</Text>
                 ))}
               </View>
             </View>
           </View>
         )}
 
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Preferences</Text>
-          <View style={styles.settingsCard}>
+        <View style={s.section}>
+          <Text style={s.sectionTitle}>Preferences</Text>
+          <View style={s.settingsCard}>
             <SettingsItem
-              icon={<Bell size={18} color={Colors.accent} />}
+              icon={<Bell size={18} color={colors.accent} />}
               label="Notifications"
               toggle
               toggleValue={notifications}
               onToggle={(v) => void setNotifications(v)}
               showChevron={false}
+              colors={colors}
             />
             <SettingsItem
-              icon={<Navigation size={18} color={Colors.accent} />}
+              icon={<Navigation size={18} color={colors.accent} />}
               label="Location"
               toggle
               toggleValue={locationEnabled}
               onToggle={(v) => void setLocationEnabled(v)}
               showChevron={false}
+              colors={colors}
             />
             <SettingsItem
-              icon={<Download size={18} color={Colors.accent} />}
+              icon={<Download size={18} color={colors.accent} />}
               label="Offline Mode"
               toggle
               toggleValue={offlineMode}
               onToggle={(v) => void setOfflineMode(v)}
               showChevron={false}
+              colors={colors}
             />
             <SettingsItem
-              icon={<Globe size={18} color={Colors.accent} />}
+              icon={<Globe size={18} color={colors.accent} />}
               label="Currency"
               value={currency}
               onPress={handleCurrencySelect}
+              colors={colors}
             />
             <SettingsItem
-              icon={<Moon size={18} color={Colors.accent} />}
+              icon={<Moon size={18} color={colors.accent} />}
               label="Appearance"
               value={appearance}
               onPress={handleAppearanceSelect}
+              colors={colors}
             />
           </View>
         </View>
 
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Account</Text>
-          <View style={styles.settingsCard}>
+        <View style={s.section}>
+          <Text style={s.sectionTitle}>Account</Text>
+          <View style={s.settingsCard}>
             <SettingsItem
-              icon={<User size={18} color={Colors.textSecondary} />}
+              icon={<User size={18} color={colors.textSecondary} />}
               label="Personal Information"
               onPress={() => router.push('/personal-info')}
+              colors={colors}
             />
             <SettingsItem
-              icon={<CreditCard size={18} color={Colors.textSecondary} />}
+              icon={<CreditCard size={18} color={colors.textSecondary} />}
               label="Payment Methods"
               onPress={() => router.push('/payment-methods')}
+              colors={colors}
             />
             <SettingsItem
-              icon={<Shield size={18} color={Colors.textSecondary} />}
+              icon={<Shield size={18} color={colors.textSecondary} />}
               label="Privacy & Security"
               onPress={() => router.push('/privacy-security')}
+              colors={colors}
             />
           </View>
         </View>
 
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Support</Text>
-          <View style={styles.settingsCard}>
+        <View style={s.section}>
+          <Text style={s.sectionTitle}>Support</Text>
+          <View style={s.settingsCard}>
             <SettingsItem
-              icon={<HelpCircle size={18} color={Colors.textSecondary} />}
+              icon={<HelpCircle size={18} color={colors.textSecondary} />}
               label="Help Center"
               onPress={() => router.push('/help-center')}
+              colors={colors}
             />
             <SettingsItem
-              icon={<Settings size={18} color={Colors.textSecondary} />}
+              icon={<Settings size={18} color={colors.textSecondary} />}
               label="App Settings"
               onPress={() => router.push('/app-settings')}
+              colors={colors}
             />
           </View>
         </View>
 
-        <TouchableOpacity style={styles.logoutButton} onPress={handleSignOut} activeOpacity={0.7}>
-          <LogOut size={18} color={Colors.error} />
-          <Text style={styles.logoutText}>Sign Out</Text>
+        <TouchableOpacity style={s.logoutButton} onPress={handleSignOut} activeOpacity={0.7}>
+          <LogOut size={18} color={colors.error} />
+          <Text style={[s.logoutText, { color: colors.error }]}>Sign Out</Text>
         </TouchableOpacity>
 
-        <Text style={styles.version}>Version 1.0.0</Text>
+        <Text style={s.version}>Version 1.0.0</Text>
       </ScrollView>
     </SafeAreaView>
   );
 }
 
-const styles = StyleSheet.create({
+const createStyles = (colors: ThemeColors) => StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: Colors.background,
+    backgroundColor: colors.background,
   },
   scrollContent: {
     paddingBottom: 100,
@@ -348,7 +398,7 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 28,
     fontWeight: '800' as const,
-    color: Colors.text,
+    color: colors.text,
     letterSpacing: -0.3,
   },
   profileCard: {
@@ -356,7 +406,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginHorizontal: 24,
     padding: 18,
-    backgroundColor: Colors.surface,
+    backgroundColor: colors.surface,
     borderRadius: 18,
     marginBottom: 16,
     shadowColor: '#000',
@@ -372,7 +422,7 @@ const styles = StyleSheet.create({
     marginRight: 16,
   },
   avatarPlaceholder: {
-    backgroundColor: Colors.borderLight,
+    backgroundColor: colors.borderLight,
     justifyContent: 'center',
     alignItems: 'center',
   },
@@ -382,29 +432,29 @@ const styles = StyleSheet.create({
   profileName: {
     fontSize: 18,
     fontWeight: '700' as const,
-    color: Colors.text,
+    color: colors.text,
     marginBottom: 3,
   },
   profileEmail: {
     fontSize: 13,
-    color: Colors.textSecondary,
+    color: colors.textSecondary,
   },
   editButton: {
     paddingHorizontal: 16,
     paddingVertical: 8,
-    backgroundColor: Colors.accent + '15',
+    backgroundColor: colors.accent + '15',
     borderRadius: 10,
   },
   editButtonText: {
     fontSize: 13,
     fontWeight: '600' as const,
-    color: Colors.accent,
+    color: colors.accent,
   },
   statsRow: {
     flexDirection: 'row',
     marginHorizontal: 24,
     padding: 20,
-    backgroundColor: Colors.surface,
+    backgroundColor: colors.surface,
     borderRadius: 18,
     marginBottom: 28,
     shadowColor: '#000',
@@ -420,17 +470,17 @@ const styles = StyleSheet.create({
   statValue: {
     fontSize: 26,
     fontWeight: '800' as const,
-    color: Colors.text,
+    color: colors.text,
     marginBottom: 4,
   },
   statLabel: {
     fontSize: 12,
-    color: Colors.textSecondary,
+    color: colors.textSecondary,
     fontWeight: '500' as const,
   },
   statDivider: {
     width: 1,
-    backgroundColor: Colors.borderLight,
+    backgroundColor: colors.borderLight,
     marginVertical: 4,
   },
   proSection: {
@@ -438,11 +488,11 @@ const styles = StyleSheet.create({
     paddingHorizontal: 24,
   },
   proCard: {
-    backgroundColor: Colors.surface,
+    backgroundColor: colors.surface,
     borderRadius: 20,
     padding: 22,
     borderWidth: 1,
-    borderColor: Colors.accent + '25',
+    borderColor: colors.accent + '25',
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.05,
@@ -458,7 +508,6 @@ const styles = StyleSheet.create({
     width: 44,
     height: 44,
     borderRadius: 14,
-    backgroundColor: Colors.accent,
     justifyContent: 'center',
     alignItems: 'center',
     marginRight: 14,
@@ -469,11 +518,11 @@ const styles = StyleSheet.create({
   proTitle: {
     fontSize: 20,
     fontWeight: '700' as const,
-    color: Colors.text,
+    color: colors.text,
   },
   proSubtitle: {
     fontSize: 13,
-    color: Colors.textSecondary,
+    color: colors.textSecondary,
     marginTop: 1,
   },
   proFeatures: {
@@ -489,13 +538,13 @@ const styles = StyleSheet.create({
     width: 22,
     height: 22,
     borderRadius: 11,
-    backgroundColor: Colors.accent + '15',
+    backgroundColor: colors.accent + '15',
     justifyContent: 'center',
     alignItems: 'center',
   },
   proFeatureText: {
     fontSize: 14,
-    color: Colors.text,
+    color: colors.text,
   },
   pricingOptions: {
     flexDirection: 'row',
@@ -504,21 +553,20 @@ const styles = StyleSheet.create({
   },
   pricingCard: {
     flex: 1,
-    backgroundColor: Colors.background,
+    backgroundColor: colors.background,
     borderRadius: 14,
     padding: 16,
     alignItems: 'center',
     borderWidth: 2,
-    borderColor: Colors.borderLight,
+    borderColor: colors.borderLight,
   },
   pricingCardHighlight: {
-    borderColor: Colors.accent,
+    borderColor: colors.accent,
     position: 'relative',
   },
   bestValueBadge: {
     position: 'absolute',
     top: -10,
-    backgroundColor: Colors.accent,
     paddingHorizontal: 10,
     paddingVertical: 4,
     borderRadius: 10,
@@ -526,31 +574,29 @@ const styles = StyleSheet.create({
   bestValueText: {
     fontSize: 10,
     fontWeight: '700' as const,
-    color: Colors.textLight,
+    color: '#FFFFFF',
     textTransform: 'uppercase',
   },
   pricingLabel: {
     fontSize: 12,
-    color: Colors.textSecondary,
+    color: colors.textSecondary,
     marginBottom: 4,
   },
   pricingPrice: {
     fontSize: 24,
     fontWeight: '800' as const,
-    color: Colors.text,
+    color: colors.text,
   },
   pricingPeriod: {
     fontSize: 11,
-    color: Colors.textMuted,
+    color: colors.textMuted,
   },
   pricingSavings: {
     fontSize: 11,
     fontWeight: '700' as const,
-    color: Colors.accent,
     marginTop: 4,
   },
   upgradeButton: {
-    backgroundColor: Colors.accent,
     paddingVertical: 16,
     borderRadius: 14,
     alignItems: 'center',
@@ -559,28 +605,28 @@ const styles = StyleSheet.create({
   upgradeButtonText: {
     fontSize: 16,
     fontWeight: '700' as const,
-    color: Colors.textLight,
+    color: '#FFFFFF',
   },
   proDisclaimer: {
     fontSize: 11,
-    color: Colors.textMuted,
+    color: colors.textMuted,
     textAlign: 'center',
   },
   freeCompare: {
     marginTop: 16,
     paddingTop: 16,
     borderTopWidth: StyleSheet.hairlineWidth,
-    borderTopColor: Colors.borderLight,
+    borderTopColor: colors.borderLight,
   },
   freeCompareTitle: {
     fontSize: 12,
     fontWeight: '600' as const,
-    color: Colors.textSecondary,
+    color: colors.textSecondary,
     marginBottom: 6,
   },
   freeCompareItem: {
     fontSize: 12,
-    color: Colors.textMuted,
+    color: colors.textMuted,
     lineHeight: 20,
   },
   section: {
@@ -589,7 +635,7 @@ const styles = StyleSheet.create({
   sectionTitle: {
     fontSize: 13,
     fontWeight: '600' as const,
-    color: Colors.textMuted,
+    color: colors.textMuted,
     textTransform: 'uppercase',
     letterSpacing: 0.8,
     marginBottom: 10,
@@ -597,7 +643,7 @@ const styles = StyleSheet.create({
   },
   settingsCard: {
     marginHorizontal: 24,
-    backgroundColor: Colors.surface,
+    backgroundColor: colors.surface,
     borderRadius: 16,
     overflow: 'hidden',
     shadowColor: '#000',
@@ -606,42 +652,6 @@ const styles = StyleSheet.create({
     shadowRadius: 4,
     elevation: 1,
   },
-  settingsItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingVertical: 14,
-    paddingHorizontal: 16,
-    borderBottomWidth: StyleSheet.hairlineWidth,
-    borderBottomColor: Colors.borderLight,
-  },
-  settingsItemLeft: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 12,
-  },
-  settingsIconWrap: {
-    width: 32,
-    height: 32,
-    borderRadius: 8,
-    backgroundColor: Colors.background,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  settingsItemLabel: {
-    fontSize: 15,
-    color: Colors.text,
-    fontWeight: '500' as const,
-  },
-  settingsItemRight: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-  },
-  settingsItemValue: {
-    fontSize: 13,
-    color: Colors.textMuted,
-  },
   logoutButton: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -649,20 +659,19 @@ const styles = StyleSheet.create({
     gap: 8,
     marginHorizontal: 24,
     paddingVertical: 16,
-    backgroundColor: Colors.error + '08',
+    backgroundColor: colors.error + '08',
     borderRadius: 14,
     marginBottom: 16,
     borderWidth: 1,
-    borderColor: Colors.error + '15',
+    borderColor: colors.error + '15',
   },
   logoutText: {
     fontSize: 15,
     fontWeight: '600' as const,
-    color: Colors.error,
   },
   version: {
     fontSize: 12,
-    color: Colors.textMuted,
+    color: colors.textMuted,
     textAlign: 'center',
     marginBottom: 20,
   },

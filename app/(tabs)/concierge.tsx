@@ -10,6 +10,7 @@ import {
 } from 'lucide-react-native';
 import { z } from 'zod';
 import Colors from '@/constants/colors';
+import { useThemeColors } from '@/hooks/useThemeColors';
 import { useTripsStore } from '@/store/useTripsStore';
 import { generateObject } from '@rork-ai/toolkit-sdk';
 import { Trip } from '@/types/trip';
@@ -48,6 +49,7 @@ const itinerarySchema = z.object({
 });
 
 export default function ConciergeScreen() {
+  const colors = useThemeColors();
   const scrollViewRef = useRef<ScrollView>(null);
   const [selectedTripId, setSelectedTripId] = useState<string | null>(null);
   const [selectedInterests, setSelectedInterests] = useState<string[]>([]);
@@ -232,14 +234,14 @@ Available dates: ${tripDates.join(', ')}`;
   );
 
   return (
-    <SafeAreaView style={styles.container} edges={['top']}>
-      <View style={styles.header}>
-        <View style={styles.headerIcon}>
-          <Sparkles size={24} color={Colors.primary} />
+    <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]} edges={['top']}>
+      <View style={[styles.header, { borderBottomColor: colors.borderLight }]}>
+        <View style={[styles.headerIcon, { backgroundColor: colors.primary + '15' }]}>
+          <Sparkles size={24} color={colors.primary} />
         </View>
         <View style={styles.headerContent}>
-          <Text style={styles.title}>AI Concierge</Text>
-          <Text style={styles.subtitle}>Generate itineraries with AI</Text>
+          <Text style={[styles.title, { color: colors.text }]}>AI Concierge</Text>
+          <Text style={[styles.subtitle, { color: colors.textSecondary }]}>Generate itineraries with AI</Text>
         </View>
       </View>
 
@@ -255,10 +257,10 @@ Available dates: ${tripDates.join(', ')}`;
           showsVerticalScrollIndicator={false}
           onContentSizeChange={() => scrollViewRef.current?.scrollToEnd({ animated: true })}
         >
-          <View style={styles.configSection}>
-            <Text style={styles.configLabel}>Trip</Text>
+          <View style={[styles.configSection, { backgroundColor: colors.surface }]}>
+            <Text style={[styles.configLabel, { color: colors.textSecondary }]}>Trip</Text>
             <TouchableOpacity
-              style={styles.tripSelector}
+              style={[styles.tripSelector, { backgroundColor: colors.background }]}
               onPress={() => setShowTripPicker(true)}
               activeOpacity={0.7}
             >
@@ -266,7 +268,7 @@ Available dates: ${tripDates.join(', ')}`;
                 <View style={styles.tripSelectorContent}>
                   <MapPin size={16} color={Colors.primary} />
                   <View style={{ flex: 1 }}>
-                    <Text style={styles.tripSelectorName}>{selectedTrip.name}</Text>
+                    <Text style={[styles.tripSelectorName, { color: colors.text }]}>{selectedTrip.name}</Text>
                     <Text style={styles.tripSelectorMeta}>
                       {selectedTrip.destination}, {selectedTrip.country}
                     </Text>
@@ -275,10 +277,10 @@ Available dates: ${tripDates.join(', ')}`;
               ) : (
                 <Text style={styles.tripSelectorPlaceholder}>Select a trip...</Text>
               )}
-              <ChevronDown size={18} color={Colors.textMuted} />
+              <ChevronDown size={18} color={colors.textMuted} />
             </TouchableOpacity>
 
-            <Text style={styles.configLabel}>Interests (optional)</Text>
+            <Text style={[styles.configLabel, { color: colors.textSecondary }]}>Interests (optional)</Text>
             <View style={styles.interestsGrid}>
               {INTEREST_OPTIONS.map((opt) => {
                 const isActive = selectedInterests.includes(opt.id);
@@ -298,11 +300,11 @@ Available dates: ${tripDates.join(', ')}`;
               })}
             </View>
 
-            <Text style={styles.configLabel}>Additional notes (optional)</Text>
+            <Text style={[styles.configLabel, { color: colors.textSecondary }]}>Additional notes (optional)</Text>
             <TextInput
-              style={styles.notesInput}
+              style={[styles.notesInput, { backgroundColor: colors.background, color: colors.text }]}
               placeholder="e.g. we love street food, skip museums..."
-              placeholderTextColor={Colors.textMuted}
+              placeholderTextColor={colors.textMuted}
               value={freeformInput}
               onChangeText={setFreeformInput}
               multiline
@@ -311,7 +313,7 @@ Available dates: ${tripDates.join(', ')}`;
 
             <TouchableOpacity
               style={[
-                styles.generateButton,
+                styles.generateButton, { backgroundColor: colors.primary },
                 (!selectedTrip || isGenerating) && styles.generateButtonDisabled,
               ]}
               onPress={handleGenerate}

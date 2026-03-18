@@ -4,13 +4,14 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { Plus, Compass, Globe, MapPin, Calendar, ChevronRight, ArrowRight, Plane } from 'lucide-react-native';
-import Colors from '@/constants/colors';
+import { useThemeColors } from '@/hooks/useThemeColors';
 import { useTripsStore, getUserTripCount } from '@/store/useTripsStore';
 import { useSubscriptionStore, FREE_TRIP_LIMIT } from '@/store/useSubscriptionStore';
-import { useOnboardingStore } from '@/store/useOnboardingStore';
+import { useUserName } from '@/hooks/useUserProfile';
 import { Trip } from '@/types/trip';
 import { getDestinationImage } from '@/utils/destinationImages';
 import { hapticLight, hapticMedium } from '@/utils/haptics';
+import { ThemeColors } from '@/constants/themes';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 const CARD_WIDTH = SCREEN_WIDTH - 48;
@@ -78,8 +79,9 @@ function AnimatedPressable({ children, onPress, style, testID }: { children: Rea
 
 export default function HomeScreen() {
   const router = useRouter();
+  const colors = useThemeColors();
   const { trips } = useTripsStore();
-  const userName = useOnboardingStore((s) => s.userName);
+  const userName = useUserName();
   const plan = useSubscriptionStore((s) => s.plan);
   const userTripCount = getUserTripCount(trips);
   const remaining = plan === 'premium' ? Infinity : Math.max(0, FREE_TRIP_LIMIT - userTripCount);
@@ -123,55 +125,57 @@ export default function HomeScreen() {
     return `In ${days} days`;
   };
 
+  const s = createStyles(colors);
+
   return (
-    <SafeAreaView style={styles.container} edges={['top']}>
-      <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.scrollContent}>
-        <Animated.View style={[styles.header, { opacity: fadeAnim, transform: [{ translateY: slideAnim }] }]}>
-          <Text style={styles.greeting}>{getGreeting()}{userName ? `, ${userName}` : ''}</Text>
-          <Text style={styles.title}>Where to next?</Text>
+    <SafeAreaView style={s.container} edges={['top']}>
+      <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={s.scrollContent}>
+        <Animated.View style={[s.header, { opacity: fadeAnim, transform: [{ translateY: slideAnim }] }]}>
+          <Text style={s.greeting}>{getGreeting()}{userName && userName !== 'Traveler' ? `, ${userName}` : ''}</Text>
+          <Text style={s.title}>Where to next?</Text>
         </Animated.View>
 
         {showSoftLimit && (
           <Pressable
-            style={styles.tripLimitBanner}
+            style={s.tripLimitBanner}
             onPress={() => router.push('/profile' as any)}
           >
-            <Text style={styles.tripLimitText}>
+            <Text style={s.tripLimitText}>
               {remaining === 0
                 ? "You've used all free trips — upgrade for unlimited trips"
                 : `You have ${remaining} free trip left — upgrade anytime for unlimited trips`}
             </Text>
-            <Text style={styles.tripLimitAction}>View Premium</Text>
+            <Text style={s.tripLimitAction}>View Premium</Text>
           </Pressable>
         )}
 
-        <View style={styles.quickActions}>
+        <View style={s.quickActions}>
           {[
-            { key: 'create', label: 'New Trip', icon: Plus, bg: Colors.accent },
-            { key: 'explore', label: 'Explore', icon: Compass, bg: Colors.text },
-            { key: 'globe', label: 'Globe', icon: Globe, bg: '#374151' },
+            { key: 'create', label: 'New Trip', icon: Plus, bg: colors.accent },
+            { key: 'explore', label: 'Explore', icon: Compass, bg: colors.text },
+            { key: 'globe', label: 'Globe', icon: Globe, bg: colors.primaryLight },
           ].map((action) => (
             <AnimatedPressable
               key={action.key}
               onPress={() => router.push(action.key === 'create' ? '/create-trip' : action.key === 'explore' ? '/discover' : '/globe' as any)}
               testID={`quick-action-${action.key}`}
             >
-              <View style={[styles.quickActionCard, { backgroundColor: action.bg }]}>
+              <View style={[s.quickActionCard, { backgroundColor: action.bg }]}>
                 <action.icon size={20} color="#FFFFFF" />
-                <Text style={styles.quickActionLabel}>{action.label}</Text>
+                <Text style={s.quickActionLabel}>{action.label}</Text>
               </View>
             </AnimatedPressable>
           ))}
         </View>
 
-        <View style={styles.featuredSection}>
-          <View style={styles.sectionHeader}>
-            <Text style={styles.sectionTitle}>Featured</Text>
-            <View style={styles.featuredDots}>
+        <View style={s.featuredSection}>
+          <View style={s.sectionHeader}>
+            <Text style={s.sectionTitle}>Featured</Text>
+            <View style={s.featuredDots}>
               {FEATURED_DESTINATIONS.map((_, i) => (
                 <View
                   key={i}
-                  style={[styles.dot, i === featuredIndex && styles.dotActive]}
+                  style={[s.dot, i === featuredIndex && s.dotActive]}
                 />
               ))}
             </View>
@@ -188,35 +192,35 @@ export default function HomeScreen() {
             showsHorizontalScrollIndicator={false}
             onScroll={onCarouselScroll}
             scrollEventThrottle={16}
-            contentContainerStyle={styles.carouselContent}
+            contentContainerStyle={s.carouselContent}
             keyExtractor={(item) => item.id}
             renderItem={({ item }) => (
               <AnimatedPressable
                 onPress={() => router.push({ pathname: '/destination/[id]', params: { id: item.id } } as any)}
                 testID={`featured-card-${item.id}`}
               >
-                <View style={styles.featuredCard}>
+                <View style={s.featuredCard}>
                   <Image
                     source={{ uri: item.imageUrl }}
-                    style={styles.featuredBgImage}
+                    style={s.featuredBgImage}
                   />
                   <LinearGradient
                     colors={['transparent', 'rgba(0,0,0,0.08)', 'rgba(0,0,0,0.78)']}
                     locations={[0, 0.35, 1]}
-                    style={styles.featuredGradient}
+                    style={s.featuredGradient}
                   />
-                  <View style={styles.featuredContent}>
-                    <View style={styles.featuredTextBlock}>
-                      <Text style={styles.featuredCity}>{item.city}</Text>
-                      <Text style={styles.featuredCountry}>{item.country}</Text>
-                      <Text style={styles.featuredDescription} numberOfLines={2}>{item.description}</Text>
+                  <View style={s.featuredContent}>
+                    <View style={s.featuredTextBlock}>
+                      <Text style={s.featuredCity}>{item.city}</Text>
+                      <Text style={s.featuredCountry}>{item.country}</Text>
+                      <Text style={s.featuredDescription} numberOfLines={2}>{item.description}</Text>
                     </View>
                     <TouchableOpacity
-                      style={styles.planButton}
+                      style={[s.planButton, { backgroundColor: colors.accent }]}
                       activeOpacity={0.85}
                       onPress={() => router.push('/create-trip' as any)}
                     >
-                      <Text style={styles.planButtonText}>Plan this trip</Text>
+                      <Text style={s.planButtonText}>Plan this trip</Text>
                       <ArrowRight size={14} color="#FFF" />
                     </TouchableOpacity>
                   </View>
@@ -228,54 +232,54 @@ export default function HomeScreen() {
 
         {mainTrip ? (
           <>
-            <View style={styles.sectionHeader}>
-              <Text style={styles.sectionTitle}>Your next trip</Text>
+            <View style={s.sectionHeader}>
+              <Text style={s.sectionTitle}>Your next trip</Text>
             </View>
 
             <AnimatedPressable
               onPress={() => router.push(`/trip/${mainTrip.id}` as any)}
               testID="main-trip-card"
             >
-              <View style={styles.mainCard}>
+              <View style={s.mainCard}>
                 <Image
                   source={{ uri: getDestinationImage(mainTrip.destination, mainTrip.id) }}
-                  style={styles.mainCardImage}
+                  style={s.mainCardImage}
                 />
                 <LinearGradient
                   colors={['transparent', 'rgba(0,0,0,0.15)', 'rgba(0,0,0,0.8)']}
                   locations={[0, 0.35, 1]}
-                  style={styles.mainCardGradient}
+                  style={s.mainCardGradient}
                 />
-                <View style={styles.mainCardBadge}>
-                  <Text style={styles.mainCardBadgeText}>
+                <View style={s.mainCardBadge}>
+                  <Text style={s.mainCardBadgeText}>
                     {mainTrip.status === 'planning' ? 'Planning' : getDaysLabel(mainTrip)}
                   </Text>
                 </View>
-                <View style={styles.mainCardContent}>
-                  <Text style={styles.mainCardName} numberOfLines={1}>{mainTrip.name}</Text>
-                  <View style={styles.mainCardMeta}>
+                <View style={s.mainCardContent}>
+                  <Text style={s.mainCardName} numberOfLines={1}>{mainTrip.name}</Text>
+                  <View style={s.mainCardMeta}>
                     <MapPin size={13} color="rgba(255,255,255,0.8)" />
-                    <Text style={styles.mainCardLocation}>{mainTrip.destination}, {mainTrip.country}</Text>
+                    <Text style={s.mainCardLocation}>{mainTrip.destination}, {mainTrip.country}</Text>
                   </View>
-                  <View style={styles.mainCardMeta}>
+                  <View style={s.mainCardMeta}>
                     <Calendar size={12} color="rgba(255,255,255,0.7)" />
-                    <Text style={styles.mainCardDates}>
+                    <Text style={s.mainCardDates}>
                       {formatDate(mainTrip.startDate)} – {formatDate(mainTrip.endDate)}
                     </Text>
                   </View>
                 </View>
-                <View style={styles.mainCardArrow}>
+                <View style={s.mainCardArrow}>
                   <ChevronRight size={20} color="rgba(255,255,255,0.7)" />
                 </View>
               </View>
             </AnimatedPressable>
 
             {otherTrips.length > 0 && (
-              <View style={styles.otherSection}>
-                <View style={styles.sectionHeader}>
-                  <Text style={styles.sectionTitle}>Other trips</Text>
+              <View style={s.otherSection}>
+                <View style={s.sectionHeader}>
+                  <Text style={s.sectionTitle}>Other trips</Text>
                   <TouchableOpacity onPress={() => router.push('/trips' as any)}>
-                    <Text style={styles.seeAll}>See all</Text>
+                    <Text style={[s.seeAll, { color: colors.accent }]}>See all</Text>
                   </TouchableOpacity>
                 </View>
                 {otherTrips.map((trip) => (
@@ -284,18 +288,18 @@ export default function HomeScreen() {
                     onPress={() => router.push(`/trip/${trip.id}` as any)}
                     testID={`trip-card-${trip.id}`}
                   >
-                    <View style={styles.otherCard}>
+                    <View style={s.otherCard}>
                       <Image
                         source={{ uri: getDestinationImage(trip.destination, trip.id) }}
-                        style={styles.otherCardImage}
+                        style={s.otherCardImage}
                       />
-                      <View style={styles.otherCardContent}>
-                        <Text style={styles.otherCardName} numberOfLines={1}>{trip.name}</Text>
-                        <Text style={styles.otherCardSub}>
+                      <View style={s.otherCardContent}>
+                        <Text style={s.otherCardName} numberOfLines={1}>{trip.name}</Text>
+                        <Text style={s.otherCardSub}>
                           {trip.destination} · {formatDate(trip.startDate)}
                         </Text>
                       </View>
-                      <ChevronRight size={18} color={Colors.textMuted} />
+                      <ChevronRight size={18} color={colors.textMuted} />
                     </View>
                   </AnimatedPressable>
                 ))}
@@ -303,22 +307,22 @@ export default function HomeScreen() {
             )}
           </>
         ) : (
-          <View style={styles.emptyTripSection}>
-            <View style={styles.emptyTripCard}>
-              <View style={styles.emptyIllustration}>
-                <View style={styles.emptyGlobeRing}>
-                  <View style={styles.emptyGlobeInner}>
-                    <Plane size={28} color={Colors.accent} style={{ transform: [{ rotate: '-45deg' }] }} />
+          <View style={s.emptyTripSection}>
+            <View style={s.emptyTripCard}>
+              <View style={s.emptyIllustration}>
+                <View style={s.emptyGlobeRing}>
+                  <View style={[s.emptyGlobeInner, { backgroundColor: colors.accent + '20' }]}>
+                    <Plane size={28} color={colors.accent} style={{ transform: [{ rotate: '-45deg' }] }} />
                   </View>
                 </View>
-                <View style={styles.emptyDotLeft} />
-                <View style={styles.emptyDotRight} />
-                <View style={styles.emptyDotTop} />
+                <View style={s.emptyDotLeft} />
+                <View style={s.emptyDotRight} />
+                <View style={s.emptyDotTop} />
               </View>
-              <Text style={styles.emptyTripTitle}>Your next adventure starts here</Text>
-              <Text style={styles.emptyTripText}>Plan a trip, invite friends, and explore the world together.</Text>
+              <Text style={s.emptyTripTitle}>Your next adventure starts here</Text>
+              <Text style={s.emptyTripText}>Plan a trip, invite friends, and explore the world together.</Text>
               <TouchableOpacity
-                style={styles.createTripBtn}
+                style={[s.createTripBtn, { backgroundColor: colors.accent }]}
                 onPress={() => {
                   hapticMedium();
                   router.push('/create-trip' as any);
@@ -326,8 +330,8 @@ export default function HomeScreen() {
                 activeOpacity={0.8}
                 testID="create-first-trip-btn"
               >
-                <Plus size={18} color={Colors.textLight} />
-                <Text style={styles.createTripBtnText}>Create your first trip</Text>
+                <Plus size={18} color="#FFFFFF" />
+                <Text style={s.createTripBtnText}>Create your first trip</Text>
               </TouchableOpacity>
             </View>
           </View>
@@ -337,10 +341,10 @@ export default function HomeScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+const createStyles = (colors: ThemeColors) => StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: Colors.background,
+    backgroundColor: colors.background,
   },
   scrollContent: {
     paddingBottom: 120,
@@ -352,14 +356,14 @@ const styles = StyleSheet.create({
   },
   greeting: {
     fontSize: 14,
-    color: Colors.textSecondary,
+    color: colors.textSecondary,
     marginBottom: 4,
     letterSpacing: 0.2,
   },
   title: {
     fontSize: 28,
     fontWeight: '800' as const,
-    color: Colors.text,
+    color: colors.text,
     lineHeight: 34,
     letterSpacing: -0.3,
   },
@@ -396,7 +400,7 @@ const styles = StyleSheet.create({
   sectionTitle: {
     fontSize: 20,
     fontWeight: '700' as const,
-    color: Colors.text,
+    color: colors.text,
     letterSpacing: -0.2,
   },
   featuredDots: {
@@ -407,10 +411,10 @@ const styles = StyleSheet.create({
     width: 6,
     height: 6,
     borderRadius: 3,
-    backgroundColor: Colors.border,
+    backgroundColor: colors.border,
   },
   dotActive: {
-    backgroundColor: Colors.accent,
+    backgroundColor: colors.accent,
     width: 18,
   },
   carouselContent: {
@@ -473,7 +477,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     alignSelf: 'flex-start',
     gap: 6,
-    backgroundColor: Colors.accent,
     paddingHorizontal: 16,
     paddingVertical: 10,
     borderRadius: 12,
@@ -514,7 +517,7 @@ const styles = StyleSheet.create({
   mainCardBadgeText: {
     fontSize: 11,
     fontWeight: '700' as const,
-    color: Colors.text,
+    color: '#111',
   },
   mainCardContent: {
     position: 'absolute' as const,
@@ -558,13 +561,12 @@ const styles = StyleSheet.create({
   },
   seeAll: {
     fontSize: 14,
-    color: Colors.accent,
     fontWeight: '600' as const,
   },
   otherCard: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: Colors.surface,
+    backgroundColor: colors.surface,
     borderRadius: 14,
     padding: 10,
     marginBottom: 10,
@@ -587,18 +589,18 @@ const styles = StyleSheet.create({
   otherCardName: {
     fontSize: 15,
     fontWeight: '600' as const,
-    color: Colors.text,
+    color: colors.text,
     marginBottom: 3,
   },
   otherCardSub: {
     fontSize: 13,
-    color: Colors.textSecondary,
+    color: colors.textSecondary,
   },
   emptyTripSection: {
     paddingHorizontal: 24,
   },
   emptyTripCard: {
-    backgroundColor: Colors.surface,
+    backgroundColor: colors.surface,
     borderRadius: 20,
     paddingVertical: 44,
     paddingHorizontal: 32,
@@ -621,7 +623,7 @@ const styles = StyleSheet.create({
     height: 84,
     borderRadius: 42,
     borderWidth: 2,
-    borderColor: Colors.border,
+    borderColor: colors.border,
     borderStyle: 'dashed' as const,
     justifyContent: 'center',
     alignItems: 'center',
@@ -630,7 +632,6 @@ const styles = StyleSheet.create({
     width: 60,
     height: 60,
     borderRadius: 30,
-    backgroundColor: '#E0F7FA',
     justifyContent: 'center',
     alignItems: 'center',
   },
@@ -664,13 +665,13 @@ const styles = StyleSheet.create({
   emptyTripTitle: {
     fontSize: 19,
     fontWeight: '700' as const,
-    color: Colors.text,
+    color: colors.text,
     marginBottom: 8,
     textAlign: 'center' as const,
   },
   emptyTripText: {
     fontSize: 14,
-    color: Colors.textSecondary,
+    color: colors.textSecondary,
     textAlign: 'center' as const,
     lineHeight: 20,
     marginBottom: 8,
@@ -679,7 +680,6 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 8,
-    backgroundColor: Colors.accent,
     paddingHorizontal: 24,
     paddingVertical: 14,
     borderRadius: 12,
@@ -688,26 +688,26 @@ const styles = StyleSheet.create({
   createTripBtnText: {
     fontSize: 15,
     fontWeight: '600' as const,
-    color: Colors.textLight,
+    color: '#FFFFFF',
   },
   tripLimitBanner: {
     marginHorizontal: 24,
     marginBottom: 20,
-    backgroundColor: Colors.accent + '10',
+    backgroundColor: colors.accent + '10',
     borderRadius: 14,
     padding: 14,
     borderWidth: 1,
-    borderColor: Colors.accent + '20',
+    borderColor: colors.accent + '20',
   },
   tripLimitText: {
     fontSize: 13,
-    color: Colors.text,
+    color: colors.text,
     lineHeight: 18,
     marginBottom: 6,
   },
   tripLimitAction: {
     fontSize: 13,
     fontWeight: '600' as const,
-    color: Colors.accent,
+    color: colors.accent,
   },
 });

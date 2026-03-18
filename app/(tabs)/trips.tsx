@@ -3,11 +3,12 @@ import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Animated, Pressab
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { Plus, Plane, Clock, CheckCircle, MapPin, Compass } from 'lucide-react-native';
-import Colors from '@/constants/colors';
+import { useThemeColors } from '@/hooks/useThemeColors';
 import TripCard from '@/components/TripCard';
 import { useTripsStore, getUserTripCount } from '@/store/useTripsStore';
 import { useSubscriptionStore, FREE_TRIP_LIMIT } from '@/store/useSubscriptionStore';
 import { hapticLight, hapticMedium, hapticSelection } from '@/utils/haptics';
+import { ThemeColors } from '@/constants/themes';
 
 const tabs = [
   { id: 'upcoming', label: 'Upcoming', icon: Plane },
@@ -36,6 +37,7 @@ function AnimatedTripCard({ children, index }: { children: React.ReactNode; inde
 
 export default function TripsScreen() {
   const router = useRouter();
+  const colors = useThemeColors();
   const [activeTab, setActiveTab] = useState('upcoming');
   const { trips } = useTripsStore();
   const plan = useSubscriptionStore((s) => s.plan);
@@ -58,12 +60,14 @@ export default function TripsScreen() {
     Animated.spring(addBtnScale, { toValue: 1, useNativeDriver: true, speed: 50, bounciness: 4 }).start();
   }, [addBtnScale]);
 
+  const s = createStyles(colors);
+
   return (
-    <SafeAreaView style={styles.container} edges={['top']}>
-      <View style={styles.header}>
+    <SafeAreaView style={s.container} edges={['top']}>
+      <View style={s.header}>
         <View>
-          <Text style={styles.title}>My Trips</Text>
-          <Text style={styles.subtitle}>
+          <Text style={s.title}>My Trips</Text>
+          <Text style={s.subtitle}>
             {plan === 'free' ? `${userTripCount}/${FREE_TRIP_LIMIT} trips used` : `${userTripCount} trip${userTripCount !== 1 ? 's' : ''}`}
           </Text>
         </View>
@@ -86,17 +90,17 @@ export default function TripsScreen() {
           onPressIn={onAddPressIn}
           onPressOut={onAddPressOut}
         >
-          <Animated.View style={[styles.addButton, { transform: [{ scale: addBtnScale }] }]}>
-            <Plus size={22} color={Colors.textLight} />
+          <Animated.View style={[s.addButton, { transform: [{ scale: addBtnScale }] }]}>
+            <Plus size={22} color="#FFFFFF" />
           </Animated.View>
         </Pressable>
       </View>
 
-      <View style={styles.tabs}>
+      <View style={s.tabs}>
         {tabs.map((tab) => (
           <TouchableOpacity
             key={tab.id}
-            style={[styles.tab, activeTab === tab.id && styles.tabActive]}
+            style={[s.tab, activeTab === tab.id && s.tabActive]}
             onPress={() => {
               hapticSelection();
               setActiveTab(tab.id);
@@ -105,9 +109,9 @@ export default function TripsScreen() {
           >
             <tab.icon
               size={16}
-              color={activeTab === tab.id ? '#FFFFFF' : Colors.textMuted}
+              color={activeTab === tab.id ? '#FFFFFF' : colors.textMuted}
             />
-            <Text style={[styles.tabText, activeTab === tab.id && styles.tabTextActive]}>
+            <Text style={[s.tabText, activeTab === tab.id && s.tabTextActive]}>
               {tab.label}
             </Text>
           </TouchableOpacity>
@@ -116,14 +120,14 @@ export default function TripsScreen() {
 
       <ScrollView
         showsVerticalScrollIndicator={false}
-        contentContainerStyle={styles.content}
+        contentContainerStyle={s.content}
       >
         {plan === 'free' && userTripCount >= 2 && userTripCount < FREE_TRIP_LIMIT && (
-          <TouchableOpacity style={styles.softLimitBanner} onPress={() => router.push('/profile' as any)} activeOpacity={0.7}>
-            <Text style={styles.softLimitText}>
+          <TouchableOpacity style={s.softLimitBanner} onPress={() => router.push('/profile' as any)} activeOpacity={0.7}>
+            <Text style={s.softLimitText}>
               You have {FREE_TRIP_LIMIT - userTripCount} free trip{FREE_TRIP_LIMIT - userTripCount === 1 ? '' : 's'} left — upgrade anytime for unlimited trips
             </Text>
-            <Text style={styles.softLimitUpgrade}>Upgrade</Text>
+            <Text style={s.softLimitUpgrade}>Upgrade</Text>
           </TouchableOpacity>
         )}
         {filteredTrips.length > 0 ? (
@@ -136,22 +140,22 @@ export default function TripsScreen() {
             </AnimatedTripCard>
           ))
         ) : (
-          <View style={styles.emptyState}>
-            <View style={styles.emptyIllustration}>
-              <View style={styles.emptyMapCard}>
-                <MapPin size={20} color={Colors.accent} />
+          <View style={s.emptyState}>
+            <View style={s.emptyIllustration}>
+              <View style={s.emptyMapCard}>
+                <MapPin size={20} color={colors.accent} />
               </View>
-              <View style={styles.emptyCompassCard}>
+              <View style={s.emptyCompassCard}>
                 <Compass size={16} color="#F59E0B" />
               </View>
-              <View style={styles.emptyPlaneWrap}>
-                <Plane size={32} color={Colors.text} style={{ transform: [{ rotate: '-30deg' }] }} />
+              <View style={s.emptyPlaneWrap}>
+                <Plane size={32} color={colors.text} style={{ transform: [{ rotate: '-30deg' }] }} />
               </View>
             </View>
-            <Text style={styles.emptyTitle}>
+            <Text style={s.emptyTitle}>
               {activeTab === 'upcoming' ? 'No upcoming trips' : activeTab === 'planning' ? 'Nothing in the works yet' : 'No past trips'}
             </Text>
-            <Text style={styles.emptyText}>
+            <Text style={s.emptyText}>
               {activeTab === 'upcoming'
                 ? 'Your upcoming adventures will appear here.\nTime to plan something exciting!'
                 : activeTab === 'planning'
@@ -159,25 +163,25 @@ export default function TripsScreen() {
                 : 'Your travel memories will live here.\nEvery journey starts with a single step.'}
             </Text>
             <TouchableOpacity
-              style={styles.emptyButton}
+              style={s.emptyButton}
               onPress={() => {
                 hapticMedium();
                 router.push('/create-trip' as any);
               }}
               activeOpacity={0.8}
             >
-              <Plus size={18} color={Colors.textLight} />
-              <Text style={styles.emptyButtonText}>Create your first trip</Text>
+              <Plus size={18} color="#FFFFFF" />
+              <Text style={s.emptyButtonText}>Create your first trip</Text>
             </TouchableOpacity>
             <TouchableOpacity
-              style={styles.emptySecondaryButton}
+              style={s.emptySecondaryButton}
               onPress={() => {
                 hapticLight();
                 router.push('/discover' as any);
               }}
               activeOpacity={0.7}
             >
-              <Text style={styles.emptySecondaryText}>Explore destinations</Text>
+              <Text style={s.emptySecondaryText}>Explore destinations</Text>
             </TouchableOpacity>
           </View>
         )}
@@ -186,10 +190,10 @@ export default function TripsScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+const createStyles = (colors: ThemeColors) => StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: Colors.background,
+    backgroundColor: colors.background,
   },
   header: {
     flexDirection: 'row',
@@ -202,22 +206,22 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 28,
     fontWeight: '800' as const,
-    color: Colors.text,
+    color: colors.text,
     marginBottom: 4,
     letterSpacing: -0.3,
   },
   subtitle: {
     fontSize: 14,
-    color: Colors.textSecondary,
+    color: colors.textSecondary,
   },
   addButton: {
     width: 46,
     height: 46,
     borderRadius: 23,
-    backgroundColor: Colors.accent,
+    backgroundColor: colors.accent,
     justifyContent: 'center',
     alignItems: 'center',
-    shadowColor: Colors.accent,
+    shadowColor: colors.accent,
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.3,
     shadowRadius: 8,
@@ -236,16 +240,16 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     gap: 6,
     paddingVertical: 11,
-    backgroundColor: Colors.surface,
+    backgroundColor: colors.surface,
     borderRadius: 12,
   },
   tabActive: {
-    backgroundColor: Colors.text,
+    backgroundColor: colors.text,
   },
   tabText: {
     fontSize: 13,
     fontWeight: '600' as const,
-    color: Colors.textMuted,
+    color: colors.textMuted,
   },
   tabTextActive: {
     color: '#FFFFFF',
@@ -270,7 +274,7 @@ const styles = StyleSheet.create({
     width: 72,
     height: 72,
     borderRadius: 36,
-    backgroundColor: '#F3F4F6',
+    backgroundColor: colors.cardBg,
     justifyContent: 'center',
     alignItems: 'center',
   },
@@ -281,7 +285,7 @@ const styles = StyleSheet.create({
     width: 40,
     height: 40,
     borderRadius: 12,
-    backgroundColor: '#E0F7FA',
+    backgroundColor: colors.accent + '20',
     justifyContent: 'center',
     alignItems: 'center',
     shadowColor: '#000',
@@ -309,13 +313,13 @@ const styles = StyleSheet.create({
   emptyTitle: {
     fontSize: 20,
     fontWeight: '700' as const,
-    color: Colors.text,
+    color: colors.text,
     marginBottom: 10,
     textAlign: 'center' as const,
   },
   emptyText: {
     fontSize: 14,
-    color: Colors.textSecondary,
+    color: colors.textSecondary,
     textAlign: 'center' as const,
     lineHeight: 21,
     marginBottom: 28,
@@ -324,11 +328,11 @@ const styles = StyleSheet.create({
     flexDirection: 'row' as const,
     alignItems: 'center' as const,
     gap: 8,
-    backgroundColor: Colors.accent,
+    backgroundColor: colors.accent,
     paddingHorizontal: 28,
     paddingVertical: 15,
     borderRadius: 14,
-    shadowColor: Colors.accent,
+    shadowColor: colors.accent,
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.25,
     shadowRadius: 8,
@@ -337,7 +341,7 @@ const styles = StyleSheet.create({
   emptyButtonText: {
     fontSize: 15,
     fontWeight: '700' as const,
-    color: Colors.textLight,
+    color: '#FFFFFF',
   },
   emptySecondaryButton: {
     marginTop: 14,
@@ -347,12 +351,11 @@ const styles = StyleSheet.create({
   emptySecondaryText: {
     fontSize: 14,
     fontWeight: '600' as const,
-    color: Colors.accent,
+    color: colors.accent,
   },
   softLimitBanner: {
-    marginHorizontal: 24,
     marginBottom: 16,
-    backgroundColor: Colors.accent + '10',
+    backgroundColor: colors.accent + '10',
     borderRadius: 12,
     padding: 14,
     flexDirection: 'row' as const,
@@ -362,12 +365,12 @@ const styles = StyleSheet.create({
   softLimitText: {
     flex: 1,
     fontSize: 13,
-    color: Colors.text,
+    color: colors.text,
     lineHeight: 18,
   },
   softLimitUpgrade: {
     fontSize: 13,
     fontWeight: '600' as const,
-    color: Colors.accent,
+    color: colors.accent,
   },
 });

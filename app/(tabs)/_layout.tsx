@@ -1,17 +1,19 @@
 import { Tabs } from 'expo-router';
 import { Home, Compass, Briefcase, User, Sparkles, Globe } from 'lucide-react-native';
-import Colors from '@/constants/colors';
+import { useThemeColors } from '@/hooks/useThemeColors';
 import { hapticLight } from '@/utils/haptics';
 
 export default function TabLayout() {
+  const colors = useThemeColors();
+
   return (
     <Tabs
       screenOptions={{
-        tabBarActiveTintColor: Colors.accent,
-        tabBarInactiveTintColor: Colors.textMuted,
+        tabBarActiveTintColor: colors.accent,
+        tabBarInactiveTintColor: colors.textMuted,
         headerShown: false,
         tabBarStyle: {
-          backgroundColor: Colors.surface,
+          backgroundColor: colors.surface,
           borderTopWidth: 0,
           elevation: 12,
           shadowColor: '#000',
@@ -22,7 +24,7 @@ export default function TabLayout() {
         },
         tabBarLabelStyle: {
           fontSize: 10,
-          fontWeight: '600',
+          fontWeight: '600' as const,
           marginTop: 2,
           paddingBottom: 4,
         },
@@ -78,7 +80,6 @@ export default function TabLayout() {
           tabBarIcon: ({ color, size }) => <User size={size - 2} color={color} />,
         }}
       />
-
     </Tabs>
   );
 }

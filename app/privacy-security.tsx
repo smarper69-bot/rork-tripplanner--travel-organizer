@@ -4,9 +4,11 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { ArrowLeft, FileText, Shield, Trash2, ChevronRight } from 'lucide-react-native';
 import Colors from '@/constants/colors';
+import { useThemeColors } from '@/hooks/useThemeColors';
 
 export default function PrivacySecurityScreen() {
   const router = useRouter();
+  const colors = useThemeColors();
 
   const handleDeleteAccount = () => {
     Alert.alert(
@@ -26,29 +28,29 @@ export default function PrivacySecurityScreen() {
   };
 
   return (
-    <SafeAreaView style={styles.container} edges={['top']}>
+    <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]} edges={['top']}>
       <View style={styles.header}>
         <TouchableOpacity onPress={() => router.back()} style={styles.backButton} testID="back-button">
-          <ArrowLeft size={24} color={Colors.text} />
+          <ArrowLeft size={24} color={colors.text} />
         </TouchableOpacity>
-        <Text style={styles.title}>Privacy & Security</Text>
+        <Text style={[styles.title, { color: colors.text }]}>Privacy & Security</Text>
         <View style={styles.backButton} />
       </View>
 
       <ScrollView style={styles.content}>
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Legal</Text>
-          <View style={styles.card}>
+          <Text style={[styles.sectionTitle, { color: colors.textMuted }]}>Legal</Text>
+          <View style={[styles.card, { backgroundColor: colors.surface }]}>
             <TouchableOpacity
               style={styles.row}
               onPress={() => Alert.alert('Privacy Policy', 'We value your privacy. Your data is stored locally on your device and is not shared with third parties. We only collect anonymous usage data to improve the app experience.\n\nFor the full privacy policy, visit our website.')}
               testID="privacy-policy"
             >
               <View style={styles.rowLeft}>
-                <FileText size={20} color={Colors.textSecondary} />
-                <Text style={styles.rowLabel}>Privacy Policy</Text>
+                <FileText size={20} color={colors.textSecondary} />
+                <Text style={[styles.rowLabel, { color: colors.text }]}>Privacy Policy</Text>
               </View>
-              <ChevronRight size={20} color={Colors.textMuted} />
+              <ChevronRight size={20} color={colors.textMuted} />
             </TouchableOpacity>
 
             <TouchableOpacity
@@ -57,19 +59,19 @@ export default function PrivacySecurityScreen() {
               testID="terms-of-service"
             >
               <View style={styles.rowLeft}>
-                <Shield size={20} color={Colors.textSecondary} />
-                <Text style={styles.rowLabel}>Terms of Service</Text>
+                <Shield size={20} color={colors.textSecondary} />
+                <Text style={[styles.rowLabel, { color: colors.text }]}>Terms of Service</Text>
               </View>
-              <ChevronRight size={20} color={Colors.textMuted} />
+              <ChevronRight size={20} color={colors.textMuted} />
             </TouchableOpacity>
           </View>
         </View>
 
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Danger Zone</Text>
-          <View style={styles.card}>
+          <Text style={[styles.sectionTitle, { color: colors.textMuted }]}>Danger Zone</Text>
+          <View style={[styles.card, { backgroundColor: colors.surface }]}>
             <TouchableOpacity
-              style={styles.row}
+              style={[styles.row, { borderBottomColor: colors.borderLight }]}
               onPress={handleDeleteAccount}
               testID="delete-account"
             >
@@ -77,7 +79,7 @@ export default function PrivacySecurityScreen() {
                 <Trash2 size={20} color="#D32F2F" />
                 <Text style={styles.deleteLabel}>Delete Account</Text>
               </View>
-              <ChevronRight size={20} color={Colors.textMuted} />
+              <ChevronRight size={20} color={colors.textMuted} />
             </TouchableOpacity>
           </View>
           <Text style={styles.deleteHint}>

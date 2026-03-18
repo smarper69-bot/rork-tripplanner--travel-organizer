@@ -3,11 +3,13 @@ import { Stack, useRouter, useSegments } from "expo-router";
 import * as SplashScreen from "expo-splash-screen";
 import React, { useEffect } from "react";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
-import Colors from "@/constants/colors";
+import { useThemeColors } from "@/hooks/useThemeColors";
 import { useTripsStore } from "@/store/useTripsStore";
 import { useOnboardingStore } from "@/store/useOnboardingStore";
 import { usePreferencesStore } from "@/store/usePreferencesStore";
 import { useSubscriptionStore } from "@/store/useSubscriptionStore";
+import { StatusBar } from "expo-status-bar";
+import { useIsDark } from "@/hooks/useThemeColors";
 
 void SplashScreen.preventAutoHideAsync();
 
@@ -39,130 +41,136 @@ function useOnboardingRedirect() {
 
 function RootLayoutNav() {
   useOnboardingRedirect();
+  const colors = useThemeColors();
+  const isDark = useIsDark();
 
   return (
-    <Stack
-      screenOptions={{
-        headerBackTitle: "Back",
-        headerStyle: { backgroundColor: Colors.background },
-        headerShadowVisible: false,
-        headerTintColor: Colors.text,
-      }}
-    >
-      <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-      <Stack.Screen 
-        name="onboarding" 
-        options={{ 
-          headerShown: false,
-          gestureEnabled: false,
-          animation: 'fade',
-        }} 
-      />
-      <Stack.Screen 
-        name="create-trip" 
-        options={{ 
-          presentation: 'modal',
-          headerShown: false,
-        }} 
-      />
-      <Stack.Screen 
-        name="trip/[id]" 
-        options={{ 
-          headerShown: false,
-        }} 
-      />
-      <Stack.Screen 
-        name="budget/[id]" 
-        options={{ 
-          headerShown: false,
-        }} 
-      />
-      <Stack.Screen 
-        name="packing/[id]" 
-        options={{ 
-          headerShown: false,
-        }} 
-      />
-      <Stack.Screen 
-        name="booking" 
-        options={{ 
-          headerShown: false,
-        }} 
-      />
-      <Stack.Screen 
-        name="collaboration/[id]" 
-        options={{ 
-          headerShown: false,
-        }} 
-      />
-      <Stack.Screen 
-        name="hotels/[city]" 
-        options={{ 
-          headerShown: false,
-        }} 
-      />
-      <Stack.Screen 
-        name="destination/[id]" 
-        options={{ 
-          headerShown: false,
-        }} 
-      />
-      <Stack.Screen 
-        name="edit-trip" 
-        options={{ 
-          presentation: 'modal',
-          headerShown: false,
-        }} 
-      />
-      <Stack.Screen 
-        name="personal-info" 
-        options={{ 
-          headerShown: false,
-        }} 
-      />
-      <Stack.Screen 
-        name="payment-methods" 
-        options={{ 
-          headerShown: false,
-        }} 
-      />
-      <Stack.Screen 
-        name="privacy-security" 
-        options={{ 
-          headerShown: false,
-        }} 
-      />
-      <Stack.Screen 
-        name="help-center" 
-        options={{ 
-          headerShown: false,
-        }} 
-      />
-      <Stack.Screen 
-        name="app-settings" 
-        options={{ 
-          headerShown: false,
-        }} 
-      />
-      <Stack.Screen 
-        name="shared/[id]" 
-        options={{ 
-          headerShown: false,
-        }} 
-      />
-      <Stack.Screen 
-        name="invite/[id]" 
-        options={{ 
-          headerShown: false,
-        }} 
-      />
-      <Stack.Screen 
-        name="join/[tripId]" 
-        options={{ 
-          headerShown: false,
-        }} 
-      />
-    </Stack>
+    <>
+      <StatusBar style={isDark ? 'light' : 'dark'} />
+      <Stack
+        screenOptions={{
+          headerBackTitle: "Back",
+          headerStyle: { backgroundColor: colors.background },
+          headerShadowVisible: false,
+          headerTintColor: colors.text,
+          contentStyle: { backgroundColor: colors.background },
+        }}
+      >
+        <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+        <Stack.Screen 
+          name="onboarding" 
+          options={{ 
+            headerShown: false,
+            gestureEnabled: false,
+            animation: 'fade',
+          }} 
+        />
+        <Stack.Screen 
+          name="create-trip" 
+          options={{ 
+            presentation: 'modal',
+            headerShown: false,
+          }} 
+        />
+        <Stack.Screen 
+          name="trip/[id]" 
+          options={{ 
+            headerShown: false,
+          }} 
+        />
+        <Stack.Screen 
+          name="budget/[id]" 
+          options={{ 
+            headerShown: false,
+          }} 
+        />
+        <Stack.Screen 
+          name="packing/[id]" 
+          options={{ 
+            headerShown: false,
+          }} 
+        />
+        <Stack.Screen 
+          name="booking" 
+          options={{ 
+            headerShown: false,
+          }} 
+        />
+        <Stack.Screen 
+          name="collaboration/[id]" 
+          options={{ 
+            headerShown: false,
+          }} 
+        />
+        <Stack.Screen 
+          name="hotels/[city]" 
+          options={{ 
+            headerShown: false,
+          }} 
+        />
+        <Stack.Screen 
+          name="destination/[id]" 
+          options={{ 
+            headerShown: false,
+          }} 
+        />
+        <Stack.Screen 
+          name="edit-trip" 
+          options={{ 
+            presentation: 'modal',
+            headerShown: false,
+          }} 
+        />
+        <Stack.Screen 
+          name="personal-info" 
+          options={{ 
+            headerShown: false,
+          }} 
+        />
+        <Stack.Screen 
+          name="payment-methods" 
+          options={{ 
+            headerShown: false,
+          }} 
+        />
+        <Stack.Screen 
+          name="privacy-security" 
+          options={{ 
+            headerShown: false,
+          }} 
+        />
+        <Stack.Screen 
+          name="help-center" 
+          options={{ 
+            headerShown: false,
+          }} 
+        />
+        <Stack.Screen 
+          name="app-settings" 
+          options={{ 
+            headerShown: false,
+          }} 
+        />
+        <Stack.Screen 
+          name="shared/[id]" 
+          options={{ 
+            headerShown: false,
+          }} 
+        />
+        <Stack.Screen 
+          name="invite/[id]" 
+          options={{ 
+            headerShown: false,
+          }} 
+        />
+        <Stack.Screen 
+          name="join/[tripId]" 
+          options={{ 
+            headerShown: false,
+          }} 
+        />
+      </Stack>
+    </>
   );
 }
 

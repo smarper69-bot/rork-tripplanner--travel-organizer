@@ -4,6 +4,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { ArrowLeft, ChevronDown, ChevronUp, MessageCircle, HelpCircle } from 'lucide-react-native';
 import Colors from '@/constants/colors';
+import { useThemeColors } from '@/hooks/useThemeColors';
 
 const FAQ_ITEMS = [
   {
@@ -34,6 +35,7 @@ const FAQ_ITEMS = [
 
 export default function HelpCenterScreen() {
   const router = useRouter();
+  const colors = useThemeColors();
   const [expandedIndex, setExpandedIndex] = useState<number | null>(null);
 
   const toggleExpand = (index: number) => {
@@ -45,23 +47,23 @@ export default function HelpCenterScreen() {
   };
 
   return (
-    <SafeAreaView style={styles.container} edges={['top']}>
+    <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]} edges={['top']}>
       <View style={styles.header}>
         <TouchableOpacity onPress={() => router.back()} style={styles.backButton} testID="back-button">
-          <ArrowLeft size={24} color={Colors.text} />
+          <ArrowLeft size={24} color={colors.text} />
         </TouchableOpacity>
-        <Text style={styles.title}>Help Center</Text>
+        <Text style={[styles.title, { color: colors.text }]}>Help Center</Text>
         <View style={styles.backButton} />
       </View>
 
       <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
         <View style={styles.section}>
           <View style={styles.sectionHeader}>
-            <HelpCircle size={18} color={Colors.textSecondary} />
-            <Text style={styles.sectionTitle}>Frequently Asked Questions</Text>
+            <HelpCircle size={18} color={colors.textSecondary} />
+            <Text style={[styles.sectionTitle, { color: colors.text }]}>Frequently Asked Questions</Text>
           </View>
 
-          <View style={styles.faqList}>
+          <View style={[styles.faqList, { backgroundColor: colors.surface }]}>
             {FAQ_ITEMS.map((item, index) => (
               <TouchableOpacity
                 key={index}
@@ -71,15 +73,15 @@ export default function HelpCenterScreen() {
                 testID={`faq-item-${index}`}
               >
                 <View style={styles.faqHeader}>
-                  <Text style={styles.faqQuestion}>{item.question}</Text>
+                  <Text style={[styles.faqQuestion, { color: colors.text }]}>{item.question}</Text>
                   {expandedIndex === index ? (
-                    <ChevronUp size={18} color={Colors.textMuted} />
+                    <ChevronUp size={18} color={colors.textMuted} />
                   ) : (
-                    <ChevronDown size={18} color={Colors.textMuted} />
+                    <ChevronDown size={18} color={colors.textMuted} />
                   )}
                 </View>
                 {expandedIndex === index && (
-                  <Text style={styles.faqAnswer}>{item.answer}</Text>
+                  <Text style={[styles.faqAnswer, { color: colors.textSecondary }]}>{item.answer}</Text>
                 )}
               </TouchableOpacity>
             ))}
@@ -87,9 +89,9 @@ export default function HelpCenterScreen() {
         </View>
 
         <View style={styles.supportSection}>
-          <Text style={styles.supportTitle}>Still need help?</Text>
-          <Text style={styles.supportText}>Our support team is here to assist you.</Text>
-          <TouchableOpacity style={styles.supportButton} onPress={handleContactSupport} testID="contact-support">
+          <Text style={[styles.supportTitle, { color: colors.text }]}>Still need help?</Text>
+          <Text style={[styles.supportText, { color: colors.textSecondary }]}>Our support team is here to assist you.</Text>
+          <TouchableOpacity style={[styles.supportButton, { backgroundColor: colors.primary }]} onPress={handleContactSupport} testID="contact-support">
             <MessageCircle size={18} color={Colors.textLight} />
             <Text style={styles.supportButtonText}>Contact Support</Text>
           </TouchableOpacity>

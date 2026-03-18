@@ -5,11 +5,13 @@ import { useRouter } from 'expo-router';
 import { ArrowLeft, User, Mail, Camera } from 'lucide-react-native';
 import * as ImagePicker from 'expo-image-picker';
 import Colors from '@/constants/colors';
+import { useThemeColors } from '@/hooks/useThemeColors';
 import { usePreferencesStore } from '@/store/usePreferencesStore';
 import { useOnboardingStore } from '@/store/useOnboardingStore';
 
 export default function PersonalInfoScreen() {
   const router = useRouter();
+  const colors = useThemeColors();
   const profile = usePreferencesStore((s) => s.profile);
   const setProfile = usePreferencesStore((s) => s.setProfile);
 
@@ -68,16 +70,16 @@ export default function PersonalInfoScreen() {
   };
 
   return (
-    <SafeAreaView style={styles.container} edges={['top']}>
+    <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]} edges={['top']}>
       <KeyboardAvoidingView
         style={styles.flex}
         behavior={Platform.OS === 'ios' ? 'padding' : undefined}
       >
         <View style={styles.header}>
           <TouchableOpacity onPress={() => router.back()} style={styles.backButton} testID="back-button">
-            <ArrowLeft size={24} color={Colors.text} />
+            <ArrowLeft size={24} color={colors.text} />
           </TouchableOpacity>
-          <Text style={styles.title}>Personal Information</Text>
+          <Text style={[styles.title, { color: colors.text }]}>Personal Information</Text>
           <View style={styles.backButton} />
         </View>
 
@@ -87,44 +89,44 @@ export default function PersonalInfoScreen() {
               {localImage ? (
                 <Image source={{ uri: localImage }} style={styles.avatarImage} />
               ) : (
-                <View style={styles.avatarPlaceholder}>
-                  <User size={36} color={Colors.textMuted} />
+                <View style={[styles.avatarPlaceholder, { backgroundColor: colors.borderLight }]}>
+                  <User size={36} color={colors.textMuted} />
                 </View>
               )}
-              <View style={styles.cameraBadge}>
-                <Camera size={14} color={Colors.textLight} />
+              <View style={[styles.cameraBadge, { backgroundColor: colors.primary, borderColor: colors.background }]}>
+                <Camera size={14} color="#FFFFFF" />
               </View>
             </TouchableOpacity>
             <TouchableOpacity onPress={handleChangePhoto}>
-              <Text style={styles.changePhotoText}>Change Photo</Text>
+              <Text style={[styles.changePhotoText, { color: colors.primary }]}>Change Photo</Text>
             </TouchableOpacity>
           </View>
 
           <View style={styles.inputGroup}>
-            <Text style={styles.label}>Name</Text>
-            <View style={styles.inputRow}>
-              <User size={18} color={Colors.textMuted} />
+            <Text style={[styles.label, { color: colors.textSecondary }]}>Name</Text>
+            <View style={[styles.inputRow, { backgroundColor: colors.surface, borderColor: colors.borderLight }]}>
+              <User size={18} color={colors.textMuted} />
               <TextInput
-                style={styles.input}
+                style={[styles.input, { color: colors.text }]}
                 value={name}
                 onChangeText={setName}
                 placeholder="Your name"
-                placeholderTextColor={Colors.textMuted}
+                placeholderTextColor={colors.textMuted}
                 testID="name-input"
               />
             </View>
           </View>
 
           <View style={styles.inputGroup}>
-            <Text style={styles.label}>Email</Text>
-            <View style={styles.inputRow}>
-              <Mail size={18} color={Colors.textMuted} />
+            <Text style={[styles.label, { color: colors.textSecondary }]}>Email</Text>
+            <View style={[styles.inputRow, { backgroundColor: colors.surface, borderColor: colors.borderLight }]}>
+              <Mail size={18} color={colors.textMuted} />
               <TextInput
-                style={styles.input}
+                style={[styles.input, { color: colors.text }]}
                 value={email}
                 onChangeText={setEmail}
                 placeholder="Your email"
-                placeholderTextColor={Colors.textMuted}
+                placeholderTextColor={colors.textMuted}
                 keyboardType="email-address"
                 autoCapitalize="none"
                 testID="email-input"
@@ -134,7 +136,7 @@ export default function PersonalInfoScreen() {
         </View>
 
         <View style={styles.footer}>
-          <TouchableOpacity style={styles.saveButton} onPress={handleSave} testID="save-button">
+          <TouchableOpacity style={[styles.saveButton, { backgroundColor: colors.primary }]} onPress={handleSave} testID="save-button">
             <Text style={styles.saveButtonText}>Save Changes</Text>
           </TouchableOpacity>
         </View>

@@ -4,6 +4,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { ArrowLeft, Bell, Download, Globe, Moon, Navigation } from 'lucide-react-native';
 import Colors from '@/constants/colors';
+import { useThemeColors } from '@/hooks/useThemeColors';
 import { usePreferencesStore, CurrencyOption, AppearanceOption } from '@/store/usePreferencesStore';
 
 const CURRENCY_OPTIONS: CurrencyOption[] = ['USD', 'GBP', 'EUR'];
@@ -11,6 +12,7 @@ const APPEARANCE_OPTIONS: AppearanceOption[] = ['Light', 'Dark', 'System'];
 
 export default function AppSettingsScreen() {
   const router = useRouter();
+  const colors = useThemeColors();
   const notifications = usePreferencesStore((s) => s.notifications);
   const locationEnabled = usePreferencesStore((s) => s.locationEnabled);
   const offlineMode = usePreferencesStore((s) => s.offlineMode);
@@ -45,99 +47,99 @@ export default function AppSettingsScreen() {
   };
 
   return (
-    <SafeAreaView style={styles.container} edges={['top']}>
+    <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]} edges={['top']}>
       <View style={styles.header}>
         <TouchableOpacity onPress={() => router.back()} style={styles.backButton} testID="back-button">
-          <ArrowLeft size={24} color={Colors.text} />
+          <ArrowLeft size={24} color={colors.text} />
         </TouchableOpacity>
-        <Text style={styles.title}>App Settings</Text>
+        <Text style={[styles.title, { color: colors.text }]}>App Settings</Text>
         <View style={styles.backButton} />
       </View>
 
       <ScrollView style={styles.content}>
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Notifications</Text>
-          <View style={styles.card}>
-            <View style={styles.row}>
+          <Text style={[styles.sectionTitle, { color: colors.textMuted }]}>Notifications</Text>
+          <View style={[styles.card, { backgroundColor: colors.surface }]}>
+            <View style={[styles.row, { borderBottomColor: colors.borderLight }]}>
               <View style={styles.rowLeft}>
-                <Bell size={20} color={Colors.primary} />
+                <Bell size={20} color={colors.primary} />
                 <View>
-                  <Text style={styles.rowLabel}>Push Notifications</Text>
-                  <Text style={styles.rowHint}>Receive trip reminders and updates</Text>
+                  <Text style={[styles.rowLabel, { color: colors.text }]}>Push Notifications</Text>
+                  <Text style={[styles.rowHint, { color: colors.textMuted }]}>Receive trip reminders and updates</Text>
                 </View>
               </View>
               <Switch
                 value={notifications}
                 onValueChange={(v) => void setNotifications(v)}
-                trackColor={{ false: Colors.border, true: Colors.primary }}
-                thumbColor={Colors.textLight}
+                trackColor={{ false: colors.border, true: colors.primary }}
+                thumbColor="#FFFFFF"
               />
             </View>
           </View>
         </View>
 
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Location</Text>
-          <View style={styles.card}>
-            <View style={styles.row}>
+          <Text style={[styles.sectionTitle, { color: colors.textMuted }]}>Location</Text>
+          <View style={[styles.card, { backgroundColor: colors.surface }]}>
+            <View style={[styles.row, { borderBottomColor: colors.borderLight }]}>
               <View style={styles.rowLeft}>
-                <Navigation size={20} color={Colors.primary} />
+                <Navigation size={20} color={colors.primary} />
                 <View>
-                  <Text style={styles.rowLabel}>Location Access</Text>
-                  <Text style={styles.rowHint}>Nearby suggestions & trip tracking</Text>
+                  <Text style={[styles.rowLabel, { color: colors.text }]}>Location Access</Text>
+                  <Text style={[styles.rowHint, { color: colors.textMuted }]}>Nearby suggestions & trip tracking</Text>
                 </View>
               </View>
               <Switch
                 value={locationEnabled}
                 onValueChange={(v) => void setLocationEnabled(v)}
-                trackColor={{ false: Colors.border, true: Colors.primary }}
-                thumbColor={Colors.textLight}
+                trackColor={{ false: colors.border, true: colors.primary }}
+                thumbColor="#FFFFFF"
               />
             </View>
           </View>
         </View>
 
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Data</Text>
-          <View style={styles.card}>
-            <View style={styles.row}>
+          <Text style={[styles.sectionTitle, { color: colors.textMuted }]}>Data</Text>
+          <View style={[styles.card, { backgroundColor: colors.surface }]}>
+            <View style={[styles.row, { borderBottomColor: colors.borderLight }]}>
               <View style={styles.rowLeft}>
-                <Download size={20} color={Colors.primary} />
+                <Download size={20} color={colors.primary} />
                 <View>
-                  <Text style={styles.rowLabel}>Offline Mode</Text>
-                  <Text style={styles.rowHint}>Save trips for offline viewing</Text>
+                  <Text style={[styles.rowLabel, { color: colors.text }]}>Offline Mode</Text>
+                  <Text style={[styles.rowHint, { color: colors.textMuted }]}>Save trips for offline viewing</Text>
                 </View>
               </View>
               <Switch
                 value={offlineMode}
                 onValueChange={(v) => void setOfflineMode(v)}
-                trackColor={{ false: Colors.border, true: Colors.primary }}
-                thumbColor={Colors.textLight}
+                trackColor={{ false: colors.border, true: colors.primary }}
+                thumbColor="#FFFFFF"
               />
             </View>
           </View>
         </View>
 
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Display</Text>
-          <View style={styles.card}>
-            <TouchableOpacity style={styles.row} onPress={handleCurrencySelect} testID="currency-setting">
+          <Text style={[styles.sectionTitle, { color: colors.textMuted }]}>Display</Text>
+          <View style={[styles.card, { backgroundColor: colors.surface }]}>
+            <TouchableOpacity style={[styles.row, { borderBottomColor: colors.borderLight }]} onPress={handleCurrencySelect} testID="currency-setting">
               <View style={styles.rowLeft}>
-                <Globe size={20} color={Colors.primary} />
-                <Text style={styles.rowLabel}>Currency</Text>
+                <Globe size={20} color={colors.primary} />
+                <Text style={[styles.rowLabel, { color: colors.text }]}>Currency</Text>
               </View>
               <View style={styles.rowRight}>
-                <Text style={styles.rowValue}>{currency}</Text>
+                <Text style={[styles.rowValue, { color: colors.textMuted }]}>{currency}</Text>
               </View>
             </TouchableOpacity>
 
-            <TouchableOpacity style={styles.row} onPress={handleAppearanceSelect} testID="appearance-setting">
+            <TouchableOpacity style={[styles.row, { borderBottomColor: colors.borderLight }]} onPress={handleAppearanceSelect} testID="appearance-setting">
               <View style={styles.rowLeft}>
-                <Moon size={20} color={Colors.primary} />
-                <Text style={styles.rowLabel}>Appearance</Text>
+                <Moon size={20} color={colors.primary} />
+                <Text style={[styles.rowLabel, { color: colors.text }]}>Appearance</Text>
               </View>
               <View style={styles.rowRight}>
-                <Text style={styles.rowValue}>{appearance}</Text>
+                <Text style={[styles.rowValue, { color: colors.textMuted }]}>{appearance}</Text>
               </View>
             </TouchableOpacity>
           </View>

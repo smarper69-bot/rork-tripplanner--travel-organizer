@@ -5,6 +5,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { Search, SlidersHorizontal, TrendingUp, MapPin, Sun, Mountain, Utensils, Compass, ChevronRight, DollarSign, Calendar, Heart, Plane, Star } from 'lucide-react-native';
 import Colors from '@/constants/colors';
+import { useThemeColors } from '@/hooks/useThemeColors';
 import { openComingSoon } from '@/utils/comingSoon';
 import { hapticLight } from '@/utils/haptics';
 import { destinations, DiscoverDestination, TripType } from '@/mocks/destinations';
@@ -163,6 +164,7 @@ function DestinationCardRow({ destination, onPress }: DestinationCardRowProps) {
 
 export default function DiscoverScreen() {
   const router = useRouter();
+  const colors = useThemeColors();
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('all');
   const [selectedBudget, setSelectedBudget] = useState<string | null>(null);
@@ -260,28 +262,28 @@ export default function DiscoverScreen() {
   const currentMonthName = monthNames[currentMonth - 1];
 
   return (
-    <SafeAreaView style={styles.container} edges={['top']}>
+    <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]} edges={['top']}>
       <ScrollView 
         showsVerticalScrollIndicator={false}
         contentContainerStyle={styles.scrollContent}
       >
         <View style={styles.header}>
-          <Text style={styles.title}>Explore!</Text>
-          <Text style={styles.subtitle}>Destinations, flights & stays</Text>
+          <Text style={[styles.title, { color: colors.text }]}>Explore!</Text>
+          <Text style={[styles.subtitle, { color: colors.textSecondary }]}>Destinations, flights & stays</Text>
         </View>
 
         <View style={styles.searchSection}>
-          <View style={styles.searchBar}>
-            <Search size={18} color={Colors.textMuted} />
+          <View style={[styles.searchBar, { backgroundColor: colors.surface, borderColor: colors.border }]}>
+            <Search size={18} color={colors.textMuted} />
             <TextInput
-              style={styles.searchInput}
+              style={[styles.searchInput, { color: colors.text }]}
               placeholder="Where to next?"
-              placeholderTextColor={Colors.textMuted}
+              placeholderTextColor={colors.textMuted}
               value={searchQuery}
               onChangeText={setSearchQuery}
             />
-            <TouchableOpacity style={styles.filterIcon} onPress={() => openComingSoon('Filters')}>
-              <SlidersHorizontal size={18} color={Colors.text} />
+            <TouchableOpacity style={[styles.filterIcon, { backgroundColor: colors.background }]} onPress={() => openComingSoon('Filters')}>
+              <SlidersHorizontal size={18} color={colors.text} />
             </TouchableOpacity>
           </View>
         </View>

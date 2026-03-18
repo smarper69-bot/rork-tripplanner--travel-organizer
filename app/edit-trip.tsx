@@ -4,11 +4,13 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter, useLocalSearchParams, Stack } from 'expo-router';
 import { MapPin, Calendar, DollarSign, Users, X, Check } from 'lucide-react-native';
 import Colors from '@/constants/colors';
+import { useThemeColors } from '@/hooks/useThemeColors';
 import { useTripsStore } from '@/store/useTripsStore';
 import CalendarPicker from '@/components/CalendarPicker';
 
 export default function EditTripScreen() {
   const router = useRouter();
+  const colors = useThemeColors();
   const { id } = useLocalSearchParams<{ id: string }>();
 
   const trips = useTripsStore((s) => s.trips);
@@ -107,12 +109,12 @@ export default function EditTripScreen() {
   return (
     <>
       <Stack.Screen options={{ headerShown: false }} />
-      <SafeAreaView style={styles.container} edges={['top']}>
+      <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]} edges={['top']}>
         <View style={styles.header}>
           <TouchableOpacity style={styles.headerBtn} onPress={handleCancel}>
-            <X size={22} color={Colors.text} />
+            <X size={22} color={colors.text} />
           </TouchableOpacity>
-          <Text style={styles.headerTitle}>Edit Trip</Text>
+          <Text style={[styles.headerTitle, { color: colors.text }]}>Edit Trip</Text>
           <TouchableOpacity
             style={[styles.headerBtn, styles.saveHeaderBtn, !isValid && styles.saveHeaderBtnDisabled]}
             onPress={handleSave}

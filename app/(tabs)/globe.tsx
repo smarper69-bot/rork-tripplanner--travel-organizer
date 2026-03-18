@@ -25,6 +25,8 @@ import {
 } from 'lucide-react-native';
 import { Image as RNImage } from 'react-native';
 import { openComingSoon } from '@/utils/comingSoon';
+import { useThemeColors } from '@/hooks/useThemeColors';
+
 import { useTripsStore } from '@/store/useTripsStore';
 import {
   COUNTRY_PATHS,
@@ -239,6 +241,7 @@ function calculateNights(startDate: string, endDate: string): number {
 }
 
 export default function GlobeScreen() {
+  const colors = useThemeColors();
   const [expandedCountry, setExpandedCountry] = useState<string | null>(null);
   const [selectedDetail, setSelectedDetail] = useState<PlaceDetail | null>(null);
   const [modalVisible, setModalVisible] = useState(false);
@@ -373,15 +376,15 @@ export default function GlobeScreen() {
   }, []);
 
   return (
-    <SafeAreaView style={styles.container} edges={['top']}>
+    <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]} edges={['top']}>
       <ScrollView ref={scrollViewRef} showsVerticalScrollIndicator={false}>
         <View style={styles.header}>
-          <View style={styles.headerIcon}>
-            <Globe size={22} color="#fff" />
+          <View style={[styles.headerIcon, { backgroundColor: colors.text }]}>
+            <Globe size={22} color={colors.background} />
           </View>
           <View>
-            <Text style={styles.title}>Globe</Text>
-            <Text style={styles.subtitle}>Your travel footprint</Text>
+            <Text style={[styles.title, { color: colors.text }]}>Globe</Text>
+            <Text style={[styles.subtitle, { color: colors.textSecondary }]}>Your travel footprint</Text>
           </View>
         </View>
 
@@ -406,16 +409,16 @@ export default function GlobeScreen() {
           </ScrollView>
         </View>
 
-        <View style={styles.inTotalCard}>
-          <Text style={styles.inTotalHeader}>In Total</Text>
+        <View style={[styles.inTotalCard, { backgroundColor: colors.surface, borderColor: colors.border }]}>
+          <Text style={[styles.inTotalHeader, { color: colors.textMuted }]}>In Total</Text>
           <View style={styles.inTotalRow}>
             <View style={styles.inTotalItem}>
-              <Text style={styles.inTotalBigNumber}>{worldPercent}%</Text>
+              <Text style={[styles.inTotalBigNumber, { color: colors.text }]}>{worldPercent}%</Text>
               <Text style={styles.inTotalSmallLabel}>of the world</Text>
             </View>
             <View style={styles.inTotalDivider} />
             <View style={styles.inTotalItem}>
-              <Text style={styles.inTotalBigNumber}>{visitedCountries.length}</Text>
+              <Text style={[styles.inTotalBigNumber, { color: colors.text }]}>{visitedCountries.length}</Text>
               <Text style={styles.inTotalSmallLabel}>countries</Text>
             </View>
           </View>
@@ -423,18 +426,18 @@ export default function GlobeScreen() {
         </View>
 
         <View style={styles.statsSection}>
-          <Text style={styles.sectionTitle}>Travel Stats</Text>
+          <Text style={[styles.sectionTitle, { color: colors.text }]}>Travel Stats</Text>
           <View style={styles.statsGrid}>
-            <View style={styles.statCard}>
-              <Text style={styles.statValue}>{visitedCountries.length}</Text>
+            <View style={[styles.statCard, { backgroundColor: colors.surface, borderColor: colors.border }]}>
+              <Text style={[styles.statValue, { color: colors.text }]}>{visitedCountries.length}</Text>
               <Text style={styles.statLabel}>Countries</Text>
             </View>
-            <View style={styles.statCard}>
-              <Text style={styles.statValue}>{allTrips.length}</Text>
+            <View style={[styles.statCard, { backgroundColor: colors.surface, borderColor: colors.border }]}>
+              <Text style={[styles.statValue, { color: colors.text }]}>{allTrips.length}</Text>
               <Text style={styles.statLabel}>Trips</Text>
             </View>
-            <View style={styles.statCard}>
-              <Text style={styles.statValue}>{totalNightsTraveled}</Text>
+            <View style={[styles.statCard, { backgroundColor: colors.surface, borderColor: colors.border }]}>
+              <Text style={[styles.statValue, { color: colors.text }]}>{totalNightsTraveled}</Text>
               <Text style={styles.statLabel}>Nights</Text>
             </View>
           </View>
@@ -457,7 +460,7 @@ export default function GlobeScreen() {
             return (
               <View
                 key={group.country}
-                style={styles.countryAccordion}
+                style={[styles.countryAccordion, { backgroundColor: colors.surface, borderColor: colors.border }]}
                 onLayout={(e) => {
                   countryLayoutsRef.current[group.country] = e.nativeEvent.layout.y;
                 }}
@@ -467,11 +470,11 @@ export default function GlobeScreen() {
                   activeOpacity={0.7}
                   onPress={() => toggleCountry(group.country)}
                 >
-                  <View style={styles.countryFlag}>
-                    <MapPin size={16} color="#fff" />
+                  <View style={[styles.countryFlag, { backgroundColor: colors.text }]}>
+                    <MapPin size={16} color={colors.background} />
                   </View>
                   <View style={styles.countryInfo}>
-                    <Text style={styles.countryName}>{group.country}</Text>
+                    <Text style={[styles.countryName, { color: colors.text }]}>{group.country}</Text>
                     <Text style={styles.countryMeta}>
                       {group.totalTrips} {group.totalTrips === 1 ? 'trip' : 'trips'} · {group.totalNights} nights
                     </Text>

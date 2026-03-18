@@ -17,6 +17,8 @@ import {
 import * as ImagePicker from 'expo-image-picker';
 import * as Clipboard from 'expo-clipboard';
 import Colors from '@/constants/colors';
+import { useThemeColors } from '@/hooks/useThemeColors';
+import { useUserAvatar } from '@/hooks/useUserProfile';
 import { hapticHeavy, hapticSuccess, hapticSelection } from '@/utils/haptics';
 
 import CalendarPicker from '@/components/CalendarPicker';
@@ -38,6 +40,8 @@ const TABS: { id: TabType; label: string }[] = [
 export default function TripDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const router = useRouter();
+  const colors = useThemeColors();
+  const userAvatar = useUserAvatar();
   const [activeTab, setActiveTab] = useState<TabType>('overview');
   const scrollViewRef = useRef<ScrollView>(null);
   const tabScrollRef = useRef<ScrollView>(null);
@@ -680,7 +684,7 @@ export default function TripDetailScreen() {
   return (
     <>
       <Stack.Screen options={{ headerShown: false }} />
-      <View style={styles.container}>
+      <View style={[styles.container, { backgroundColor: colors.background }]}>
         <ScrollView showsVerticalScrollIndicator={false} ref={scrollViewRef}>
           <View style={[styles.heroContainer, { backgroundColor: trip.iconColor + '15' }]}>
             <View style={styles.heroIconContainer}>
@@ -693,11 +697,11 @@ export default function TripDetailScreen() {
                   style={styles.backButton}
                   onPress={() => router.back()}
                 >
-                  <ArrowLeft size={24} color={Colors.text} />
+                  <ArrowLeft size={24} color={colors.text} />
                 </TouchableOpacity>
                 <View style={styles.heroActions}>
                   <TouchableOpacity style={styles.actionButton} onPress={() => router.push({ pathname: '/edit-trip', params: { id: trip.id } } as any)}>
-                    <Edit3 size={18} color={Colors.text} />
+                    <Edit3 size={18} color={colors.text} />
                   </TouchableOpacity>
                   <TouchableOpacity style={styles.actionButton} onPress={() => {
                     setLinkCopied(false);
@@ -706,7 +710,7 @@ export default function TripDetailScreen() {
                     setInviteLink(link);
                     setShowInviteModal(true);
                   }}>
-                    <Share2 size={18} color={Colors.text} />
+                    <Share2 size={18} color={colors.text} />
                   </TouchableOpacity>
                   <TouchableOpacity style={styles.actionButton} onPress={handleDeleteTrip} testID="trip-detail-delete">
                     <Trash2 size={18} color="#EF4444" />
@@ -756,9 +760,17 @@ export default function TripDetailScreen() {
                   <Text style={styles.inviteSmallBtnText}>Invite</Text>
                 </TouchableOpacity>
               </View>
-              {trip.collaborators.map((collab) => (
+              {trip.collaborators.map((collab) => {
+                const collabAvatar = collab.id === 'self' && userAvatar ? userAvatar : collab.avatar;
+                return (
                 <View key={collab.id} style={styles.collabMemberRow}>
-                  <Image source={{ uri: collab.avatar }} style={styles.collabMemberAvatar} />
+                  {collabAvatar ? (
+                    <Image source={{ uri: collabAvatar }} style={styles.collabMemberAvatar} />
+                  ) : (
+                    <View style={[styles.collabMemberAvatar, { backgroundColor: colors.borderLight, justifyContent: 'center' as const, alignItems: 'center' as const }]}>
+                      <Users size={16} color={colors.textMuted} />
+                    </View>
+                  )}
                   <View style={styles.collabMemberInfo}>
                     <Text style={styles.collabMemberName}>{collab.name}</Text>
                     <View style={styles.collabRoleBadge}>
@@ -789,7 +801,8 @@ export default function TripDetailScreen() {
                     </TouchableOpacity>
                   )}
                 </View>
-              ))}
+                );
+              })}
               <TouchableOpacity
                 style={styles.collabGroupBtn}
                 onPress={() => router.push(`/collaboration/${trip.id}` as any)}

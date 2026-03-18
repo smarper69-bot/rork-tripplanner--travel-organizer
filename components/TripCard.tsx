@@ -1,12 +1,14 @@
 import React, { useRef, useCallback } from 'react';
 import { View, Text, StyleSheet, Image, Animated, Pressable } from 'react-native';
-import { MapPin, Calendar } from 'lucide-react-native';
+import { MapPin, Calendar, User } from 'lucide-react-native';
 import { LinearGradient } from 'expo-linear-gradient';
-import Colors from '@/constants/colors';
 import { Trip } from '@/types/trip';
 import { getDestinationImage, DEFAULT_FALLBACK_IMAGE } from '@/utils/destinationImages';
 import { hapticLight } from '@/utils/haptics';
 import { DEMO_TRIP_ID } from '@/mocks/demoTrip';
+import { useThemeColors } from '@/hooks/useThemeColors';
+import { useUserAvatar } from '@/hooks/useUserProfile';
+import { ThemeColors } from '@/constants/themes';
 
 interface TripCardProps {
   trip: Trip;
@@ -15,6 +17,8 @@ interface TripCardProps {
 }
 
 export default function TripCard({ trip, onPress, variant = 'large' }: TripCardProps) {
+  const colors = useThemeColors();
+  const userAvatar = useUserAvatar();
   const scaleAnim = useRef(new Animated.Value(1)).current;
 
   const daysUntil = Math.ceil(
@@ -49,13 +53,12 @@ export default function TripCard({ trip, onPress, variant = 'large' }: TripCardP
   const isDemo = trip.id === DEMO_TRIP_ID;
 
   const onImageLoad = useCallback(() => {
-    console.log('[TripCard] Image loaded for:', trip.destination, imageUrl);
     Animated.timing(imageOpacity, {
       toValue: 1,
       duration: 350,
       useNativeDriver: true,
     }).start();
-  }, [imageOpacity, trip.destination, imageUrl]);
+  }, [imageOpacity]);
 
   const onImageError = useCallback(() => {
     console.log('[TripCard] Image failed for:', trip.destination, '- switching to fallback');
@@ -73,29 +76,35 @@ export default function TripCard({ trip, onPress, variant = 'large' }: TripCardP
   };
 
   const badgeText = getBadgeText();
+  const s = createStyles(colors);
+
+  const getCollabAvatar = (collab: Trip['collaborators'][0]) => {
+    if (collab.id === 'self' && userAvatar) return userAvatar;
+    return collab.avatar;
+  };
 
   if (variant === 'compact') {
     return (
       <Animated.View style={{ transform: [{ scale: scaleAnim }] }}>
         <Pressable
-          style={styles.compactCard}
+          style={s.compactCard}
           onPress={onPress}
           onPressIn={onPressIn}
           onPressOut={onPressOut}
         >
           <Image
             source={{ uri: imageUrl }}
-            style={styles.compactImage}
+            style={s.compactImage}
             onLoad={onImageLoad}
             onError={onImageError}
           />
           <LinearGradient
             colors={['transparent', 'rgba(0,0,0,0.6)']}
-            style={styles.compactGradient}
+            style={s.compactGradient}
           />
-          <View style={styles.compactContent}>
-            <Text style={styles.compactTitle} numberOfLines={1}>{trip.destination}</Text>
-            <Text style={styles.compactCountry} numberOfLines={1}>{trip.country}</Text>
+          <View style={s.compactContent}>
+            <Text style={s.compactTitle} numberOfLines={1}>{trip.destination}</Text>
+            <Text style={s.compactCountry} numberOfLines={1}>{trip.country}</Text>
           </View>
         </Pressable>
       </Animated.View>
@@ -103,63 +112,73 @@ export default function TripCard({ trip, onPress, variant = 'large' }: TripCardP
   }
 
   return (
-    <Animated.View style={[styles.cardOuter, { transform: [{ scale: scaleAnim }] }]}>
+    <Animated.View style={[s.cardOuter, { transform: [{ scale: scaleAnim }] }]}>
       <Pressable
-        style={styles.card}
+        style={s.card}
         onPress={onPress}
         onPressIn={onPressIn}
         onPressOut={onPressOut}
       >
         <Image
           source={{ uri: imageUrl }}
-          style={styles.cardImage}
+          style={s.cardImage}
           onLoad={onImageLoad}
           onError={onImageError}
         />
         <LinearGradient
           colors={['transparent', 'rgba(0,0,0,0.15)', 'rgba(0,0,0,0.75)']}
           locations={[0, 0.4, 1]}
-          style={styles.cardGradient}
+          style={s.cardGradient}
         />
 
         {isDemo && (
-          <View style={styles.demoBadge}>
-            <Text style={styles.demoBadgeText}>DEMO</Text>
+          <View style={[s.demoBadge, { backgroundColor: colors.accent }]}>
+            <Text style={s.demoBadgeText}>DEMO</Text>
           </View>
         )}
 
         {badgeText && (
-          <View style={[styles.badge, isDemo && styles.badgeWithDemo]}>
-            <Text style={styles.badgeText}>{badgeText}</Text>
+          <View style={[s.badge, isDemo && s.badgeWithDemo]}>
+            <Text style={s.badgeText}>{badgeText}</Text>
           </View>
         )}
 
-        <View style={styles.cardContent}>
-          <Text style={styles.cardTitle}>{trip.name}</Text>
-          <View style={styles.cardLocationRow}>
+        <View style={s.cardContent}>
+          <Text style={s.cardTitle}>{trip.name}</Text>
+          <View style={s.cardLocationRow}>
             <MapPin size={13} color="rgba(255,255,255,0.8)" />
-            <Text style={styles.cardLocation}>{trip.destination}, {trip.country}</Text>
+            <Text style={s.cardLocation}>{trip.destination}, {trip.country}</Text>
           </View>
 
-          <View style={styles.cardFooter}>
-            <View style={styles.cardDateRow}>
+          <View style={s.cardFooter}>
+            <View style={s.cardDateRow}>
               <Calendar size={12} color="rgba(255,255,255,0.7)" />
-              <Text style={styles.cardDate}>
+              <Text style={s.cardDate}>
                 {formatDate(trip.startDate)} – {formatDate(trip.endDate)}
               </Text>
             </View>
 
-            <View style={styles.cardCollaborators}>
-              {trip.collaborators.slice(0, 3).map((collab, index) => (
-                <Image
-                  key={collab.id}
-                  source={{ uri: collab.avatar }}
-                  style={[styles.cardAvatar, { marginLeft: index > 0 ? -6 : 0 }]}
-                />
-              ))}
+            <View style={s.cardCollaborators}>
+              {trip.collaborators.slice(0, 3).map((collab, index) => {
+                const avatar = getCollabAvatar(collab);
+                return avatar ? (
+                  <Image
+                    key={collab.id}
+                    source={{ uri: avatar }}
+                    style={[s.cardAvatar, { marginLeft: index > 0 ? -6 : 0 }]}
+                  />
+                ) : (
+                  <View
+                    key={collab.id}
+                    style={[s.cardAvatarPlaceholder, { marginLeft: index > 0 ? -6 : 0 }]}
+                  >
+                    <User size={12} color="#999" />
+                  </View>
+                );
+              })}
               {trip.collaborators.length > 3 && (
-                <View style={[styles.cardAvatarMore, { marginLeft: -6 }]}>
-                  <Text style={styles.cardAvatarMoreText}>+{trip.collaborators.length - 3}</Text>
+                <View style={[s.cardAvatarMore, { marginLeft: -6 }]}>
+                  <Text style={s.cardAvatarMoreText}>+{trip.collaborators.length - 3}</Text>
                 </View>
               )}
             </View>
@@ -170,7 +189,7 @@ export default function TripCard({ trip, onPress, variant = 'large' }: TripCardP
   );
 }
 
-const styles = StyleSheet.create({
+const createStyles = (colors: ThemeColors) => StyleSheet.create({
   cardOuter: {
     marginBottom: 16,
     borderRadius: 16,
@@ -184,7 +203,7 @@ const styles = StyleSheet.create({
     height: 220,
     borderRadius: 16,
     overflow: 'hidden',
-    backgroundColor: Colors.surface,
+    backgroundColor: colors.surface,
   },
   cardImage: {
     ...StyleSheet.absoluteFillObject,
@@ -204,7 +223,7 @@ const styles = StyleSheet.create({
     borderRadius: 20,
   },
   badgeText: {
-    color: Colors.text,
+    color: '#111',
     fontSize: 11,
     fontWeight: '700' as const,
     letterSpacing: 0.2,
@@ -216,7 +235,6 @@ const styles = StyleSheet.create({
     position: 'absolute' as const,
     top: 14,
     right: 14,
-    backgroundColor: Colors.accent,
     paddingHorizontal: 10,
     paddingVertical: 5,
     borderRadius: 20,
@@ -280,6 +298,16 @@ const styles = StyleSheet.create({
     borderWidth: 2,
     borderColor: 'rgba(255,255,255,0.9)',
   },
+  cardAvatarPlaceholder: {
+    width: 26,
+    height: 26,
+    borderRadius: 13,
+    borderWidth: 2,
+    borderColor: 'rgba(255,255,255,0.9)',
+    backgroundColor: 'rgba(200,200,200,0.5)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
   cardAvatarMore: {
     width: 26,
     height: 26,
@@ -301,7 +329,7 @@ const styles = StyleSheet.create({
     borderRadius: 14,
     overflow: 'hidden',
     marginRight: 12,
-    backgroundColor: Colors.surface,
+    backgroundColor: colors.surface,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.08,
