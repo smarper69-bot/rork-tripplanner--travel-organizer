@@ -4,12 +4,12 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { Search, SlidersHorizontal, TrendingUp, MapPin, Sun, Mountain, Utensils, Compass, ChevronRight, DollarSign, Calendar, Heart, Plane, Star } from 'lucide-react-native';
-import Colors from '@/constants/colors';
 import { useThemeColors } from '@/hooks/useThemeColors';
 import { openComingSoon } from '@/utils/comingSoon';
 import { hapticLight } from '@/utils/haptics';
 import { destinations, DiscoverDestination, TripType } from '@/mocks/destinations';
 import { mockTrips } from '@/mocks/trips';
+import { ThemeColors } from '@/constants/themes';
 
 const categories = [
   { id: 'all', label: 'All', icon: Compass },
@@ -60,22 +60,22 @@ function DestinationCardCompact({ destination, onPress }: DestinationCardCompact
   }, [scale]);
   return (
     <Animated.View style={{ transform: [{ scale }] }}>
-      <Pressable style={styles.compactCard} onPress={onPress} onPressIn={onPressIn} onPressOut={onPressOut}>
-        <Image source={{ uri: destination.imageUrl }} style={styles.compactImage} />
+      <Pressable style={staticStyles.compactCard} onPress={onPress} onPressIn={onPressIn} onPressOut={onPressOut}>
+        <Image source={{ uri: destination.imageUrl }} style={staticStyles.compactImage} />
         <LinearGradient
           colors={['transparent', 'rgba(0,0,0,0.15)', 'rgba(0,0,0,0.7)']}
           locations={[0, 0.4, 1]}
           style={StyleSheet.absoluteFillObject}
         />
-        <View style={styles.compactContent}>
-          <View style={styles.compactBadge}>
+        <View style={staticStyles.compactContent}>
+          <View style={staticStyles.compactBadge}>
             <Star size={10} color="#FFD700" fill="#FFD700" />
-            <Text style={styles.compactBadgeText}>{(destination.popularityScore / 20).toFixed(1)}</Text>
+            <Text style={staticStyles.compactBadgeText}>{(destination.popularityScore / 20).toFixed(1)}</Text>
           </View>
-          <View style={styles.compactInfo}>
-            <Text style={styles.compactCity}>{destination.city}</Text>
-            <Text style={styles.compactCountry}>{destination.country}</Text>
-            <Text style={styles.compactPrice}>From ${destination.avgDailyCost}/day</Text>
+          <View style={staticStyles.compactInfo}>
+            <Text style={staticStyles.compactCity}>{destination.city}</Text>
+            <Text style={staticStyles.compactCountry}>{destination.country}</Text>
+            <Text style={staticStyles.compactPrice}>From ${destination.avgDailyCost}/day</Text>
           </View>
         </View>
       </Pressable>
@@ -99,27 +99,27 @@ function DestinationCardLarge({ destination, onPress }: DestinationCardLargeProp
   }, [scale]);
   return (
     <Animated.View style={{ transform: [{ scale }] }}>
-      <Pressable style={styles.largeCard} onPress={onPress} onPressIn={onPressIn} onPressOut={onPressOut}>
-        <Image source={{ uri: destination.imageUrl }} style={styles.largeImage} />
+      <Pressable style={staticStyles.largeCard} onPress={onPress} onPressIn={onPressIn} onPressOut={onPressOut}>
+        <Image source={{ uri: destination.imageUrl }} style={staticStyles.largeImage} />
         <LinearGradient
           colors={['rgba(0,0,0,0.05)', 'rgba(0,0,0,0.15)', 'rgba(0,0,0,0.75)']}
           locations={[0, 0.35, 1]}
           style={StyleSheet.absoluteFillObject}
         />
-        <View style={styles.largeContent}>
-          <View style={styles.largeBadgeRow}>
-            <View style={styles.largeBadge}>
+        <View style={staticStyles.largeContent}>
+          <View style={staticStyles.largeBadgeRow}>
+            <View style={staticStyles.largeBadge}>
               <TrendingUp size={12} color="#fff" />
-              <Text style={styles.largeBadgeText}>Trending</Text>
+              <Text style={staticStyles.largeBadgeText}>Trending</Text>
             </View>
           </View>
-          <View style={styles.largeInfo}>
-            <Text style={styles.largeCity}>{destination.city}</Text>
-            <Text style={styles.largeCountry}>{destination.country}</Text>
-            <View style={styles.largeMetaRow}>
-              <Text style={styles.largePrice}>From ${destination.avgDailyCost}/day</Text>
-              <View style={styles.largeDot} />
-              <Text style={styles.largeTags}>{destination.tripTypes.slice(0, 2).join(' · ')}</Text>
+          <View style={staticStyles.largeInfo}>
+            <Text style={staticStyles.largeCity}>{destination.city}</Text>
+            <Text style={staticStyles.largeCountry}>{destination.country}</Text>
+            <View style={staticStyles.largeMetaRow}>
+              <Text style={staticStyles.largePrice}>From ${destination.avgDailyCost}/day</Text>
+              <View style={staticStyles.largeDot} />
+              <Text style={staticStyles.largeTags}>{destination.tripTypes.slice(0, 2).join(' · ')}</Text>
             </View>
           </View>
         </View>
@@ -131,9 +131,10 @@ function DestinationCardLarge({ destination, onPress }: DestinationCardLargeProp
 interface DestinationCardRowProps {
   destination: DiscoverDestination;
   onPress: () => void;
+  colors: ThemeColors;
 }
 
-function DestinationCardRow({ destination, onPress }: DestinationCardRowProps) {
+function DestinationCardRow({ destination, onPress, colors }: DestinationCardRowProps) {
   const scale = useRef(new Animated.Value(1)).current;
   const onPressIn = useCallback(() => {
     hapticLight();
@@ -144,18 +145,23 @@ function DestinationCardRow({ destination, onPress }: DestinationCardRowProps) {
   }, [scale]);
   return (
     <Animated.View style={{ transform: [{ scale }] }}>
-      <Pressable style={styles.rowCard} onPress={onPress} onPressIn={onPressIn} onPressOut={onPressOut}>
-        <Image source={{ uri: destination.imageUrl }} style={styles.rowImage} />
-        <View style={styles.rowContent}>
-          <Text style={styles.rowCity}>{destination.city}</Text>
-          <Text style={styles.rowCountry}>{destination.country}</Text>
-          <View style={styles.rowMeta}>
-            <DollarSign size={12} color={Colors.textSecondary} />
-            <Text style={styles.rowPrice}>${destination.avgDailyCost}/day</Text>
+      <Pressable
+        style={[staticStyles.rowCard, { backgroundColor: colors.surface, borderColor: colors.border }]}
+        onPress={onPress}
+        onPressIn={onPressIn}
+        onPressOut={onPressOut}
+      >
+        <Image source={{ uri: destination.imageUrl }} style={staticStyles.rowImage} />
+        <View style={staticStyles.rowContent}>
+          <Text style={[staticStyles.rowCity, { color: colors.text }]}>{destination.city}</Text>
+          <Text style={[staticStyles.rowCountry, { color: colors.textSecondary }]}>{destination.country}</Text>
+          <View style={staticStyles.rowMeta}>
+            <DollarSign size={12} color={colors.textSecondary} />
+            <Text style={[staticStyles.rowPrice, { color: colors.textSecondary }]}>${destination.avgDailyCost}/day</Text>
           </View>
         </View>
-        <View style={styles.rowAction}>
-          <Plane size={16} color={Colors.primary} />
+        <View style={[staticStyles.rowAction, { backgroundColor: colors.inputBackground }]}>
+          <Plane size={16} color={colors.text} />
         </View>
       </Pressable>
     </Animated.View>
@@ -261,38 +267,40 @@ export default function DiscoverScreen() {
   const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
   const currentMonthName = monthNames[currentMonth - 1];
 
+  const s = createStyles(colors);
+
   return (
-    <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]} edges={['top']}>
+    <SafeAreaView style={s.container} edges={['top']}>
       <ScrollView 
         showsVerticalScrollIndicator={false}
-        contentContainerStyle={styles.scrollContent}
+        contentContainerStyle={staticStyles.scrollContent}
       >
-        <View style={styles.header}>
-          <Text style={[styles.title, { color: colors.text }]}>Explore!</Text>
-          <Text style={[styles.subtitle, { color: colors.textSecondary }]}>Destinations, flights & stays</Text>
+        <View style={staticStyles.header}>
+          <Text style={[staticStyles.title, { color: colors.text }]}>Explore!</Text>
+          <Text style={[staticStyles.subtitle, { color: colors.textSecondary }]}>Destinations, flights & stays</Text>
         </View>
 
-        <View style={styles.searchSection}>
-          <View style={[styles.searchBar, { backgroundColor: colors.surface, borderColor: colors.border }]}>
+        <View style={staticStyles.searchSection}>
+          <View style={[s.searchBar]}>
             <Search size={18} color={colors.textMuted} />
             <TextInput
-              style={[styles.searchInput, { color: colors.text }]}
+              style={[staticStyles.searchInput, { color: colors.text }]}
               placeholder="Where to next?"
               placeholderTextColor={colors.textMuted}
               value={searchQuery}
               onChangeText={setSearchQuery}
             />
-            <TouchableOpacity style={[styles.filterIcon, { backgroundColor: colors.background }]} onPress={() => openComingSoon('Filters')}>
+            <TouchableOpacity style={[s.filterIcon]} onPress={() => openComingSoon('Filters')}>
               <SlidersHorizontal size={18} color={colors.text} />
             </TouchableOpacity>
           </View>
         </View>
 
-        <View style={styles.categoriesSection}>
+        <View style={staticStyles.categoriesSection}>
           <ScrollView 
             horizontal 
             showsHorizontalScrollIndicator={false}
-            contentContainerStyle={styles.categoriesContainer}
+            contentContainerStyle={staticStyles.categoriesContainer}
           >
             {categories.map((cat) => {
               const isActive = selectedCategory === cat.id;
@@ -300,19 +308,16 @@ export default function DiscoverScreen() {
               return (
                 <TouchableOpacity
                   key={cat.id}
-                  style={[
-                    styles.categoryItem,
-                    isActive && styles.categoryItemActive,
-                  ]}
+                  style={staticStyles.categoryItem}
                   onPress={() => setSelectedCategory(cat.id)}
                 >
-                  <View style={[styles.categoryIcon, isActive && styles.categoryIconActive]}>
+                  <View style={[s.categoryIcon, isActive && s.categoryIconActive]}>
                     <IconComponent 
                       size={20} 
-                      color={isActive ? '#fff' : Colors.text} 
+                      color={isActive ? colors.chipActiveText : colors.iconDefault} 
                     />
                   </View>
-                  <Text style={[styles.categoryText, isActive && styles.categoryTextActive]}>
+                  <Text style={[s.categoryText, isActive && s.categoryTextActive]}>
                     {cat.label}
                   </Text>
                 </TouchableOpacity>
@@ -323,21 +328,21 @@ export default function DiscoverScreen() {
 
         {!showFilteredView && (
           <>
-            <View style={styles.section}>
-              <View style={styles.sectionHeader}>
-                <View style={styles.sectionTitleRow}>
-                  <TrendingUp size={18} color={Colors.primary} />
-                  <Text style={styles.sectionTitle}>Trending Now</Text>
+            <View style={staticStyles.section}>
+              <View style={staticStyles.sectionHeader}>
+                <View style={staticStyles.sectionTitleRow}>
+                  <TrendingUp size={18} color={colors.accent} />
+                  <Text style={[staticStyles.sectionTitleText, { color: colors.text }]}>Trending Now</Text>
                 </View>
-                <TouchableOpacity style={styles.seeAllButton} onPress={() => { setSelectedCategory('trending'); }}>
-                  <Text style={styles.seeAllText}>See all</Text>
-                  <ChevronRight size={16} color={Colors.textSecondary} />
+                <TouchableOpacity style={staticStyles.seeAllButton} onPress={() => { setSelectedCategory('trending'); }}>
+                  <Text style={[staticStyles.seeAllText, { color: colors.textSecondary }]}>See all</Text>
+                  <ChevronRight size={16} color={colors.textSecondary} />
                 </TouchableOpacity>
               </View>
               <ScrollView 
                 horizontal 
                 showsHorizontalScrollIndicator={false}
-                contentContainerStyle={styles.horizontalScroll}
+                contentContainerStyle={staticStyles.horizontalScroll}
               >
                 {trendingDestinations.slice(0, 3).map((dest) => (
                   <DestinationCardLarge
@@ -349,34 +354,34 @@ export default function DiscoverScreen() {
               </ScrollView>
             </View>
 
-            <View style={styles.section}>
-              <View style={styles.sectionHeader}>
-                <View style={styles.sectionTitleRow}>
+            <View style={staticStyles.section}>
+              <View style={staticStyles.sectionHeader}>
+                <View style={staticStyles.sectionTitleRow}>
                   <DollarSign size={18} color="#27AE60" />
-                  <Text style={styles.sectionTitle}>Budget-Friendly</Text>
+                  <Text style={[staticStyles.sectionTitleText, { color: colors.text }]}>Budget-Friendly</Text>
                 </View>
-                <TouchableOpacity style={styles.seeAllButton} onPress={() => openComingSoon('Budget-friendly destinations')}>
-                  <Text style={styles.seeAllText}>See all</Text>
-                  <ChevronRight size={16} color={Colors.textSecondary} />
+                <TouchableOpacity style={staticStyles.seeAllButton} onPress={() => openComingSoon('Budget-friendly destinations')}>
+                  <Text style={[staticStyles.seeAllText, { color: colors.textSecondary }]}>See all</Text>
+                  <ChevronRight size={16} color={colors.textSecondary} />
                 </TouchableOpacity>
               </View>
               <ScrollView 
                 horizontal 
                 showsHorizontalScrollIndicator={false}
-                contentContainerStyle={styles.budgetFilters}
+                contentContainerStyle={staticStyles.budgetFilters}
               >
                 {budgetRanges.map((range) => (
                   <TouchableOpacity
                     key={range.id}
                     style={[
-                      styles.budgetPill,
-                      selectedBudget === range.id && styles.budgetPillActive,
+                      s.budgetPill,
+                      selectedBudget === range.id && s.budgetPillActive,
                     ]}
                     onPress={() => setSelectedBudget(selectedBudget === range.id ? null : range.id)}
                   >
                     <Text style={[
-                      styles.budgetPillText,
-                      selectedBudget === range.id && styles.budgetPillTextActive,
+                      s.budgetPillText,
+                      selectedBudget === range.id && s.budgetPillTextActive,
                     ]}>
                       {range.label}
                     </Text>
@@ -386,7 +391,7 @@ export default function DiscoverScreen() {
               <ScrollView 
                 horizontal 
                 showsHorizontalScrollIndicator={false}
-                contentContainerStyle={styles.horizontalScroll}
+                contentContainerStyle={staticStyles.horizontalScroll}
               >
                 {budgetFriendly.map((dest) => (
                   <DestinationCardCompact
@@ -398,21 +403,21 @@ export default function DiscoverScreen() {
               </ScrollView>
             </View>
 
-            <View style={styles.section}>
-              <View style={styles.sectionHeader}>
-                <View style={styles.sectionTitleRow}>
+            <View style={staticStyles.section}>
+              <View style={staticStyles.sectionHeader}>
+                <View style={staticStyles.sectionTitleRow}>
                   <Calendar size={18} color="#E67E22" />
-                  <Text style={styles.sectionTitle}>Best in {currentMonthName}</Text>
+                  <Text style={[staticStyles.sectionTitleText, { color: colors.text }]}>Best in {currentMonthName}</Text>
                 </View>
-                <TouchableOpacity style={styles.seeAllButton} onPress={() => openComingSoon('Seasonal destinations')}>
-                  <Text style={styles.seeAllText}>See all</Text>
-                  <ChevronRight size={16} color={Colors.textSecondary} />
+                <TouchableOpacity style={staticStyles.seeAllButton} onPress={() => openComingSoon('Seasonal destinations')}>
+                  <Text style={[staticStyles.seeAllText, { color: colors.textSecondary }]}>See all</Text>
+                  <ChevronRight size={16} color={colors.textSecondary} />
                 </TouchableOpacity>
               </View>
               <ScrollView 
                 horizontal 
                 showsHorizontalScrollIndicator={false}
-                contentContainerStyle={styles.horizontalScroll}
+                contentContainerStyle={staticStyles.horizontalScroll}
               >
                 {bestThisMonth.map((dest) => (
                   <DestinationCardCompact
@@ -424,45 +429,46 @@ export default function DiscoverScreen() {
               </ScrollView>
             </View>
 
-            <View style={styles.section}>
-              <View style={styles.sectionHeader}>
-                <View style={styles.sectionTitleRow}>
+            <View style={staticStyles.section}>
+              <View style={staticStyles.sectionHeader}>
+                <View style={staticStyles.sectionTitleRow}>
                   <Heart size={18} color="#E74C3C" />
-                  <Text style={styles.sectionTitle}>Recommended for You</Text>
+                  <Text style={[staticStyles.sectionTitleText, { color: colors.text }]}>Recommended for You</Text>
                 </View>
-                <TouchableOpacity style={styles.seeAllButton} onPress={() => openComingSoon('Personalized recommendations')}>
-                  <Text style={styles.seeAllText}>See all</Text>
-                  <ChevronRight size={16} color={Colors.textSecondary} />
+                <TouchableOpacity style={staticStyles.seeAllButton} onPress={() => openComingSoon('Personalized recommendations')}>
+                  <Text style={[staticStyles.seeAllText, { color: colors.textSecondary }]}>See all</Text>
+                  <ChevronRight size={16} color={colors.textSecondary} />
                 </TouchableOpacity>
               </View>
-              <Text style={styles.sectionSubtitle}>Based on your travel history</Text>
-              <View style={styles.rowList}>
+              <Text style={[staticStyles.sectionSubtitle, { color: colors.textSecondary }]}>Based on your travel history</Text>
+              <View style={staticStyles.rowList}>
                 {recommendedForYou.slice(0, 4).map((dest) => (
                   <DestinationCardRow
                     key={dest.id}
                     destination={dest}
                     onPress={() => handleDestinationPress(dest)}
+                    colors={colors}
                   />
                 ))}
               </View>
             </View>
 
-            <View style={styles.section}>
-              <View style={styles.sectionHeader}>
-                <View style={styles.sectionTitleRow}>
+            <View style={staticStyles.section}>
+              <View style={staticStyles.sectionHeader}>
+                <View style={staticStyles.sectionTitleRow}>
                   <Plane size={18} color="#3498DB" />
-                  <Text style={styles.sectionTitle}>Weekend Getaways</Text>
+                  <Text style={[staticStyles.sectionTitleText, { color: colors.text }]}>Weekend Getaways</Text>
                 </View>
-                <TouchableOpacity style={styles.seeAllButton} onPress={() => openComingSoon('Weekend getaways')}>
-                  <Text style={styles.seeAllText}>See all</Text>
-                  <ChevronRight size={16} color={Colors.textSecondary} />
+                <TouchableOpacity style={staticStyles.seeAllButton} onPress={() => openComingSoon('Weekend getaways')}>
+                  <Text style={[staticStyles.seeAllText, { color: colors.textSecondary }]}>See all</Text>
+                  <ChevronRight size={16} color={colors.textSecondary} />
                 </TouchableOpacity>
               </View>
-              <Text style={styles.sectionSubtitle}>Quick escapes nearby</Text>
+              <Text style={[staticStyles.sectionSubtitle, { color: colors.textSecondary }]}>Quick escapes nearby</Text>
               <ScrollView 
                 horizontal 
                 showsHorizontalScrollIndicator={false}
-                contentContainerStyle={styles.horizontalScroll}
+                contentContainerStyle={staticStyles.horizontalScroll}
               >
                 {weekendGetaways.map((dest) => (
                   <DestinationCardCompact
@@ -477,35 +483,35 @@ export default function DiscoverScreen() {
         )}
 
         {showFilteredView && (
-          <View style={styles.section}>
-            <View style={styles.sectionHeader}>
-              <Text style={styles.sectionTitle}>
+          <View style={staticStyles.section}>
+            <View style={staticStyles.sectionHeader}>
+              <Text style={[staticStyles.sectionTitleText, { color: colors.text }]}>
                 {filteredDestinations.length} {selectedCategory !== 'all' && !searchQuery ? `${selectedCategory} ` : ''}destinations
               </Text>
             </View>
-            <View style={styles.filteredGrid}>
+            <View style={staticStyles.filteredGrid}>
               {filteredDestinations.map((dest) => (
                 <TouchableOpacity 
                   key={dest.id} 
-                  style={styles.filteredCard}
+                  style={staticStyles.filteredCard}
                   onPress={() => handleDestinationPress(dest)}
                   activeOpacity={0.9}
                 >
-                  <Image source={{ uri: dest.imageUrl }} style={styles.filteredImage} />
+                  <Image source={{ uri: dest.imageUrl }} style={staticStyles.filteredImage} />
                   <LinearGradient
                     colors={['transparent', 'rgba(0,0,0,0.15)', 'rgba(0,0,0,0.7)']}
                     locations={[0, 0.4, 1]}
                     style={StyleSheet.absoluteFillObject}
                   />
-                  <View style={styles.filteredContent}>
-                    <View style={styles.filteredBadge}>
+                  <View style={staticStyles.filteredContent}>
+                    <View style={staticStyles.filteredBadge}>
                       <Star size={10} color="#FFD700" fill="#FFD700" />
-                      <Text style={styles.filteredBadgeText}>{(dest.popularityScore / 20).toFixed(1)}</Text>
+                      <Text style={staticStyles.filteredBadgeText}>{(dest.popularityScore / 20).toFixed(1)}</Text>
                     </View>
-                    <View style={styles.filteredInfo}>
-                      <Text style={styles.filteredCity}>{dest.city}</Text>
-                      <Text style={styles.filteredCountry}>{dest.country}</Text>
-                      <Text style={styles.filteredPrice}>From ${dest.avgDailyCost}/day</Text>
+                    <View style={staticStyles.filteredInfo}>
+                      <Text style={staticStyles.filteredCity}>{dest.city}</Text>
+                      <Text style={staticStyles.filteredCountry}>{dest.country}</Text>
+                      <Text style={staticStyles.filteredPrice}>From ${dest.avgDailyCost}/day</Text>
                     </View>
                   </View>
                 </TouchableOpacity>
@@ -518,11 +524,77 @@ export default function DiscoverScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+const createStyles = (colors: ThemeColors) => StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: Colors.background,
+    backgroundColor: colors.background,
   },
+  searchBar: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: colors.surface,
+    paddingHorizontal: 16,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: colors.border,
+    height: 52,
+  },
+  filterIcon: {
+    width: 36,
+    height: 36,
+    borderRadius: 8,
+    backgroundColor: colors.inputBackground,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  categoryIcon: {
+    width: 52,
+    height: 52,
+    borderRadius: 26,
+    backgroundColor: colors.surface,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: 8,
+    borderWidth: 1,
+    borderColor: colors.border,
+  },
+  categoryIconActive: {
+    backgroundColor: colors.chipActiveBg,
+    borderColor: colors.chipActiveBg,
+  },
+  categoryText: {
+    fontSize: 12,
+    fontWeight: '500' as const,
+    color: colors.textSecondary,
+  },
+  categoryTextActive: {
+    color: colors.text,
+    fontWeight: '600' as const,
+  },
+  budgetPill: {
+    paddingHorizontal: 14,
+    paddingVertical: 8,
+    backgroundColor: colors.chipBg,
+    borderRadius: 20,
+    borderWidth: 1,
+    borderColor: colors.border,
+    marginRight: 8,
+  },
+  budgetPillActive: {
+    backgroundColor: colors.chipActiveBg,
+    borderColor: colors.chipActiveBg,
+  },
+  budgetPillText: {
+    fontSize: 13,
+    color: colors.chipText,
+    fontWeight: '500' as const,
+  },
+  budgetPillTextActive: {
+    color: colors.chipActiveText,
+  },
+});
+
+const staticStyles = StyleSheet.create({
   scrollContent: {
     paddingBottom: 100,
   },
@@ -534,41 +606,20 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 32,
     fontWeight: '700' as const,
-    color: Colors.text,
     letterSpacing: -0.5,
   },
   subtitle: {
     fontSize: 15,
-    color: Colors.textSecondary,
     marginTop: 4,
   },
   searchSection: {
     paddingHorizontal: 20,
     marginBottom: 20,
   },
-  searchBar: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: Colors.surface,
-    paddingHorizontal: 16,
-    borderRadius: 12,
-    borderWidth: 1,
-    borderColor: Colors.border,
-    height: 52,
-  },
   searchInput: {
     flex: 1,
     marginLeft: 12,
     fontSize: 16,
-    color: Colors.text,
-  },
-  filterIcon: {
-    width: 36,
-    height: 36,
-    borderRadius: 8,
-    backgroundColor: Colors.background,
-    justifyContent: 'center',
-    alignItems: 'center',
   },
   categoriesSection: {
     marginBottom: 24,
@@ -580,31 +631,6 @@ const styles = StyleSheet.create({
   categoryItem: {
     alignItems: 'center',
     marginRight: 16,
-  },
-  categoryItemActive: {},
-  categoryIcon: {
-    width: 52,
-    height: 52,
-    borderRadius: 26,
-    backgroundColor: Colors.surface,
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginBottom: 8,
-    borderWidth: 1,
-    borderColor: Colors.border,
-  },
-  categoryIconActive: {
-    backgroundColor: Colors.text,
-    borderColor: Colors.text,
-  },
-  categoryText: {
-    fontSize: 12,
-    fontWeight: '500' as const,
-    color: Colors.textSecondary,
-  },
-  categoryTextActive: {
-    color: Colors.text,
-    fontWeight: '600' as const,
   },
   section: {
     marginBottom: 28,
@@ -621,15 +647,13 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: 8,
   },
-  sectionTitle: {
+  sectionTitleText: {
     fontSize: 18,
     fontWeight: '700' as const,
-    color: Colors.text,
     letterSpacing: -0.3,
   },
   sectionSubtitle: {
     fontSize: 13,
-    color: Colors.textSecondary,
     paddingHorizontal: 20,
     marginBottom: 12,
     marginTop: -4,
@@ -641,7 +665,6 @@ const styles = StyleSheet.create({
   },
   seeAllText: {
     fontSize: 14,
-    color: Colors.textSecondary,
     fontWeight: '500' as const,
   },
   horizontalScroll: {
@@ -652,27 +675,6 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
     marginBottom: 16,
     gap: 8,
-  },
-  budgetPill: {
-    paddingHorizontal: 14,
-    paddingVertical: 8,
-    backgroundColor: Colors.surface,
-    borderRadius: 20,
-    borderWidth: 1,
-    borderColor: Colors.border,
-    marginRight: 8,
-  },
-  budgetPillActive: {
-    backgroundColor: Colors.text,
-    borderColor: Colors.text,
-  },
-  budgetPillText: {
-    fontSize: 13,
-    color: Colors.textSecondary,
-    fontWeight: '500' as const,
-  },
-  budgetPillTextActive: {
-    color: '#fff',
   },
   largeCard: {
     width: 280,
@@ -690,7 +692,6 @@ const styles = StyleSheet.create({
     width: '100%',
     height: '100%',
   },
-
   largeContent: {
     ...StyleSheet.absoluteFillObject,
     padding: 16,
@@ -765,7 +766,6 @@ const styles = StyleSheet.create({
     width: '100%',
     height: '100%',
   },
-
   compactContent: {
     ...StyleSheet.absoluteFillObject,
     padding: 12,
@@ -809,13 +809,11 @@ const styles = StyleSheet.create({
   rowCard: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: Colors.surface,
     borderRadius: 14,
     padding: 12,
     marginHorizontal: 20,
     marginBottom: 10,
     borderWidth: 1,
-    borderColor: Colors.border,
   },
   rowImage: {
     width: 64,
@@ -829,12 +827,10 @@ const styles = StyleSheet.create({
   rowCity: {
     fontSize: 16,
     fontWeight: '600' as const,
-    color: Colors.text,
     marginBottom: 2,
   },
   rowCountry: {
     fontSize: 13,
-    color: Colors.textSecondary,
     marginBottom: 4,
   },
   rowMeta: {
@@ -844,18 +840,15 @@ const styles = StyleSheet.create({
   },
   rowPrice: {
     fontSize: 12,
-    color: Colors.textSecondary,
   },
   rowAction: {
     width: 40,
     height: 40,
     borderRadius: 20,
-    backgroundColor: Colors.background,
     justifyContent: 'center',
     alignItems: 'center',
   },
   rowList: {},
-  searchResults: {},
   filteredGrid: {
     flexDirection: 'row',
     flexWrap: 'wrap',
@@ -877,7 +870,6 @@ const styles = StyleSheet.create({
     width: '100%',
     height: '100%',
   },
-
   filteredContent: {
     ...StyleSheet.absoluteFillObject,
     padding: 12,

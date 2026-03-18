@@ -3,8 +3,8 @@ import { View, Text, StyleSheet, TouchableOpacity, ScrollView, Alert } from 'rea
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { ArrowLeft, ChevronDown, ChevronUp, MessageCircle, HelpCircle } from 'lucide-react-native';
-import Colors from '@/constants/colors';
 import { useThemeColors } from '@/hooks/useThemeColors';
+import { ThemeColors } from '@/constants/themes';
 
 const FAQ_ITEMS = [
   {
@@ -46,8 +46,10 @@ export default function HelpCenterScreen() {
     Alert.alert('Contact Support', 'Support is coming soon. In the meantime, please check the FAQ above for answers to common questions.');
   };
 
+  const styles = createStyles(colors);
+
   return (
-    <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]} edges={['top']}>
+    <SafeAreaView style={styles.container} edges={['top']}>
       <View style={styles.header}>
         <TouchableOpacity onPress={() => router.back()} style={styles.backButton} testID="back-button">
           <ArrowLeft size={24} color={colors.text} />
@@ -92,7 +94,7 @@ export default function HelpCenterScreen() {
           <Text style={[styles.supportTitle, { color: colors.text }]}>Still need help?</Text>
           <Text style={[styles.supportText, { color: colors.textSecondary }]}>Our support team is here to assist you.</Text>
           <TouchableOpacity style={[styles.supportButton, { backgroundColor: colors.primary }]} onPress={handleContactSupport} testID="contact-support">
-            <MessageCircle size={18} color={Colors.textLight} />
+            <MessageCircle size={18} color={colors.textLight} />
             <Text style={styles.supportButtonText}>Contact Support</Text>
           </TouchableOpacity>
         </View>
@@ -101,10 +103,10 @@ export default function HelpCenterScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+const createStyles = (colors: ThemeColors) => StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: Colors.background,
+    backgroundColor: colors.background,
   },
   header: {
     flexDirection: 'row',
@@ -122,7 +124,7 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 18,
     fontWeight: '600' as const,
-    color: Colors.text,
+    color: colors.text,
   },
   content: {
     flex: 1,
@@ -141,11 +143,11 @@ const styles = StyleSheet.create({
   sectionTitle: {
     fontSize: 16,
     fontWeight: '600' as const,
-    color: Colors.text,
+    color: colors.text,
   },
   faqList: {
     marginHorizontal: 20,
-    backgroundColor: Colors.surface,
+    backgroundColor: colors.surface,
     borderRadius: 16,
     overflow: 'hidden',
   },
@@ -153,7 +155,7 @@ const styles = StyleSheet.create({
     paddingVertical: 14,
     paddingHorizontal: 16,
     borderBottomWidth: 1,
-    borderBottomColor: Colors.borderLight,
+    borderBottomColor: colors.borderLight,
   },
   faqHeader: {
     flexDirection: 'row',
@@ -163,13 +165,13 @@ const styles = StyleSheet.create({
   faqQuestion: {
     fontSize: 15,
     fontWeight: '500' as const,
-    color: Colors.text,
+    color: colors.text,
     flex: 1,
     marginRight: 12,
   },
   faqAnswer: {
     fontSize: 14,
-    color: Colors.textSecondary,
+    color: colors.textSecondary,
     lineHeight: 21,
     marginTop: 10,
   },
@@ -181,19 +183,19 @@ const styles = StyleSheet.create({
   supportTitle: {
     fontSize: 18,
     fontWeight: '600' as const,
-    color: Colors.text,
+    color: colors.text,
     marginBottom: 6,
   },
   supportText: {
     fontSize: 14,
-    color: Colors.textSecondary,
+    color: colors.textSecondary,
     marginBottom: 20,
   },
   supportButton: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 8,
-    backgroundColor: Colors.primary,
+    backgroundColor: colors.primary,
     paddingVertical: 14,
     paddingHorizontal: 28,
     borderRadius: 14,
@@ -201,6 +203,6 @@ const styles = StyleSheet.create({
   supportButtonText: {
     fontSize: 15,
     fontWeight: '600' as const,
-    color: Colors.textLight,
+    color: colors.textLight,
   },
 });

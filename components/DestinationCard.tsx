@@ -2,9 +2,10 @@ import React, { useRef, useCallback } from 'react';
 import { View, Text, StyleSheet, Pressable, Animated } from 'react-native';
 import { Star, MapPin, Sun, Mountain, Snowflake, Store, Trees, Landmark, Palmtree } from 'lucide-react-native';
 import { LinearGradient } from 'expo-linear-gradient';
-import Colors from '@/constants/colors';
+import { useThemeColors } from '@/hooks/useThemeColors';
 import { Destination, DestinationIcon } from '@/types/trip';
 import { getDestinationImage } from '@/utils/destinationImages';
+import { ThemeColors } from '@/constants/themes';
 
 interface DestinationCardProps {
   destination: Destination;
@@ -27,6 +28,7 @@ const getIconComponent = (iconName: DestinationIcon) => {
 };
 
 export default function DestinationCard({ destination, onPress, variant = 'medium' }: DestinationCardProps) {
+  const colors = useThemeColors();
   const IconComponent = getIconComponent(destination.icon);
   const scaleAnim = useRef(new Animated.Value(1)).current;
   const imageOpacity = useRef(new Animated.Value(0)).current;
@@ -58,18 +60,20 @@ export default function DestinationCard({ destination, onPress, variant = 'mediu
     }).start();
   }, [imageOpacity]);
 
+  const s = createStyles(colors);
+
   if (variant === 'large') {
     return (
       <Animated.View style={{ transform: [{ scale: scaleAnim }] }}>
         <Pressable
-          style={styles.largeCard}
+          style={[staticStyles.largeCard, { backgroundColor: colors.cardBg }]}
           onPress={onPress}
           onPressIn={onPressIn}
           onPressOut={onPressOut}
         >
           <Animated.Image
             source={{ uri: imageUrl }}
-            style={[styles.largeImage, { opacity: imageOpacity }]}
+            style={[staticStyles.largeImage, { opacity: imageOpacity }]}
             onLoad={onImageLoad}
           />
           <LinearGradient
@@ -77,14 +81,14 @@ export default function DestinationCard({ destination, onPress, variant = 'mediu
             locations={[0, 0.4, 1]}
             style={StyleSheet.absoluteFillObject}
           />
-          <View style={styles.largeContent}>
-            <View style={styles.ratingBadge}>
+          <View style={staticStyles.largeContent}>
+            <View style={staticStyles.ratingBadge}>
               <Star size={12} color="#FFD700" fill="#FFD700" />
-              <Text style={styles.ratingText}>{destination.rating}</Text>
+              <Text style={staticStyles.ratingText}>{destination.rating}</Text>
             </View>
-            <View style={styles.largeInfo}>
-              <Text style={styles.largeName}>{destination.name}</Text>
-              <Text style={styles.largeCountry}>{destination.country}</Text>
+            <View style={staticStyles.largeInfo}>
+              <Text style={staticStyles.largeName}>{destination.name}</Text>
+              <Text style={staticStyles.largeCountry}>{destination.country}</Text>
             </View>
           </View>
         </Pressable>
@@ -96,15 +100,15 @@ export default function DestinationCard({ destination, onPress, variant = 'mediu
     return (
       <Animated.View style={{ transform: [{ scale: scaleAnim }] }}>
         <Pressable
-          style={styles.smallCard}
+          style={staticStyles.smallCard}
           onPress={onPress}
           onPressIn={onPressIn}
           onPressOut={onPressOut}
         >
-          <View style={styles.smallImageWrap}>
+          <View style={[staticStyles.smallImageWrap, { backgroundColor: colors.cardBg }]}>
             <Animated.Image
               source={{ uri: imageUrl }}
-              style={[styles.smallImage, { opacity: imageOpacity }]}
+              style={[staticStyles.smallImage, { opacity: imageOpacity }]}
               onLoad={onImageLoad}
             />
             <LinearGradient
@@ -112,9 +116,9 @@ export default function DestinationCard({ destination, onPress, variant = 'mediu
               style={StyleSheet.absoluteFillObject}
             />
           </View>
-          <View style={styles.smallContent}>
-            <Text style={styles.smallName} numberOfLines={1}>{destination.name}</Text>
-            <Text style={styles.smallCountry}>{destination.country}</Text>
+          <View style={staticStyles.smallContent}>
+            <Text style={[staticStyles.smallName, { color: colors.text }]} numberOfLines={1}>{destination.name}</Text>
+            <Text style={[staticStyles.smallCountry, { color: colors.textSecondary }]}>{destination.country}</Text>
           </View>
         </Pressable>
       </Animated.View>
@@ -122,17 +126,17 @@ export default function DestinationCard({ destination, onPress, variant = 'mediu
   }
 
   return (
-    <Animated.View style={[styles.cardOuter, { transform: [{ scale: scaleAnim }] }]}>
+    <Animated.View style={[staticStyles.cardOuter, { transform: [{ scale: scaleAnim }] }]}>
       <Pressable
-        style={styles.card}
+        style={[staticStyles.card, { backgroundColor: colors.surface }]}
         onPress={onPress}
         onPressIn={onPressIn}
         onPressOut={onPressOut}
       >
-        <View style={styles.imageContainer}>
+        <View style={[staticStyles.imageContainer, { backgroundColor: colors.cardBg }]}>
           <Animated.Image
             source={{ uri: imageUrl }}
-            style={[styles.cardImage, { opacity: imageOpacity }]}
+            style={[staticStyles.cardImage, { opacity: imageOpacity }]}
             onLoad={onImageLoad}
           />
           <LinearGradient
@@ -140,38 +144,38 @@ export default function DestinationCard({ destination, onPress, variant = 'mediu
             locations={[0, 0.5, 1]}
             style={StyleSheet.absoluteFillObject}
           />
-          <View style={styles.imageOverlay}>
-            <View style={styles.iconBubble}>
+          <View style={staticStyles.imageOverlay}>
+            <View style={staticStyles.iconBubble}>
               <IconComponent size={18} color="#FFFFFF" />
             </View>
           </View>
         </View>
-        <View style={styles.content}>
-          <View style={styles.header}>
-            <View style={styles.headerLeft}>
-              <Text style={styles.name}>{destination.name}</Text>
-              <View style={styles.locationRow}>
-                <MapPin size={12} color={Colors.textSecondary} />
-                <Text style={styles.country}>{destination.country}</Text>
+        <View style={staticStyles.content}>
+          <View style={staticStyles.headerRow}>
+            <View style={staticStyles.headerLeft}>
+              <Text style={[staticStyles.name, { color: colors.text }]}>{destination.name}</Text>
+              <View style={staticStyles.locationRow}>
+                <MapPin size={12} color={colors.textSecondary} />
+                <Text style={[staticStyles.country, { color: colors.textSecondary }]}>{destination.country}</Text>
               </View>
             </View>
-            <View style={styles.rating}>
+            <View style={[s.rating]}>
               <Star size={14} color="#FFD700" fill="#FFD700" />
-              <Text style={styles.ratingValue}>{destination.rating}</Text>
+              <Text style={[staticStyles.ratingValue, { color: colors.text }]}>{destination.rating}</Text>
             </View>
           </View>
-          <Text style={styles.description} numberOfLines={2}>{destination.description}</Text>
-          <View style={styles.tags}>
+          <Text style={[staticStyles.description, { color: colors.textSecondary }]} numberOfLines={2}>{destination.description}</Text>
+          <View style={staticStyles.tags}>
             {destination.tags.slice(0, 3).map((tag, index) => (
-              <View key={index} style={styles.tag}>
-                <Text style={styles.tagText}>{tag}</Text>
+              <View key={index} style={[s.tag]}>
+                <Text style={[staticStyles.tagText, { color: colors.textSecondary }]}>{tag}</Text>
               </View>
             ))}
           </View>
-          <View style={styles.meta}>
-            <Text style={styles.metaText}>{destination.averageBudget}</Text>
-            <Text style={styles.metaDot}>•</Text>
-            <Text style={styles.metaText}>{destination.bestTime}</Text>
+          <View style={staticStyles.meta}>
+            <Text style={[staticStyles.metaText, { color: colors.textMuted }]}>{destination.averageBudget}</Text>
+            <Text style={[staticStyles.metaDot, { color: colors.textMuted }]}>•</Text>
+            <Text style={[staticStyles.metaText, { color: colors.textMuted }]}>{destination.bestTime}</Text>
           </View>
         </View>
       </Pressable>
@@ -179,7 +183,25 @@ export default function DestinationCard({ destination, onPress, variant = 'mediu
   );
 }
 
-const styles = StyleSheet.create({
+const createStyles = (colors: ThemeColors) => StyleSheet.create({
+  rating: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    backgroundColor: colors.inputBackground,
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 12,
+  },
+  tag: {
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: 12,
+    backgroundColor: colors.cardBg,
+  },
+});
+
+const staticStyles = StyleSheet.create({
   cardOuter: {
     marginBottom: 16,
     borderRadius: 20,
@@ -190,14 +212,12 @@ const styles = StyleSheet.create({
     elevation: 4,
   },
   card: {
-    backgroundColor: Colors.surface,
     borderRadius: 20,
     overflow: 'hidden',
   },
   imageContainer: {
     width: '100%',
     height: 160,
-    backgroundColor: Colors.cardBg,
   },
   cardImage: {
     ...StyleSheet.absoluteFillObject,
@@ -220,7 +240,7 @@ const styles = StyleSheet.create({
   content: {
     padding: 16,
   },
-  header: {
+  headerRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'flex-start',
@@ -232,7 +252,6 @@ const styles = StyleSheet.create({
   name: {
     fontSize: 18,
     fontWeight: '700' as const,
-    color: Colors.text,
     marginBottom: 2,
   },
   locationRow: {
@@ -242,25 +261,13 @@ const styles = StyleSheet.create({
   },
   country: {
     fontSize: 13,
-    color: Colors.textSecondary,
-  },
-  rating: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 4,
-    backgroundColor: Colors.background,
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-    borderRadius: 12,
   },
   ratingValue: {
     fontSize: 13,
     fontWeight: '600' as const,
-    color: Colors.text,
   },
   description: {
     fontSize: 13,
-    color: Colors.textSecondary,
     lineHeight: 20,
     marginBottom: 12,
   },
@@ -269,16 +276,9 @@ const styles = StyleSheet.create({
     gap: 8,
     marginBottom: 12,
   },
-  tag: {
-    paddingHorizontal: 10,
-    paddingVertical: 4,
-    borderRadius: 12,
-    backgroundColor: Colors.cardBg,
-  },
   tagText: {
     fontSize: 12,
     fontWeight: '500' as const,
-    color: Colors.textSecondary,
   },
   meta: {
     flexDirection: 'row',
@@ -286,11 +286,9 @@ const styles = StyleSheet.create({
   },
   metaText: {
     fontSize: 12,
-    color: Colors.textMuted,
   },
   metaDot: {
     fontSize: 12,
-    color: Colors.textMuted,
     marginHorizontal: 8,
   },
   largeCard: {
@@ -299,7 +297,6 @@ const styles = StyleSheet.create({
     borderRadius: 20,
     overflow: 'hidden',
     marginRight: 16,
-    backgroundColor: Colors.cardBg,
   },
   largeImage: {
     ...StyleSheet.absoluteFillObject,
@@ -328,7 +325,7 @@ const styles = StyleSheet.create({
   ratingText: {
     fontSize: 12,
     fontWeight: '600' as const,
-    color: Colors.text,
+    color: '#111',
   },
   largeInfo: {},
   largeName: {
@@ -357,7 +354,6 @@ const styles = StyleSheet.create({
     borderRadius: 16,
     overflow: 'hidden',
     marginBottom: 8,
-    backgroundColor: Colors.cardBg,
   },
   smallImage: {
     width: '100%',
@@ -367,11 +363,9 @@ const styles = StyleSheet.create({
   smallName: {
     fontSize: 14,
     fontWeight: '600' as const,
-    color: Colors.text,
     marginBottom: 2,
   },
   smallCountry: {
     fontSize: 12,
-    color: Colors.textSecondary,
   },
 });

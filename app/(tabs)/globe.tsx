@@ -25,7 +25,8 @@ import {
 } from 'lucide-react-native';
 import { Image as RNImage } from 'react-native';
 import { openComingSoon } from '@/utils/comingSoon';
-import { useThemeColors } from '@/hooks/useThemeColors';
+import { useThemeColors, useIsDark } from '@/hooks/useThemeColors';
+import { ThemeColors } from '@/constants/themes';
 
 import { useTripsStore } from '@/store/useTripsStore';
 import {
@@ -82,10 +83,12 @@ function TripMemoryModal({
   visible,
   detail,
   onClose,
+  colors,
 }: {
   visible: boolean;
   detail: PlaceDetail | null;
   onClose: () => void;
+  colors: ThemeColors;
 }) {
   if (!detail) return null;
 
@@ -98,55 +101,55 @@ function TripMemoryModal({
       presentationStyle="pageSheet"
       onRequestClose={onClose}
     >
-      <SafeAreaView style={styles.modalContainer} edges={['top']}>
-        <View style={styles.modalHeader}>
-          <View style={styles.modalHeaderContent}>
-            <Text style={styles.modalTitle}>{detail.name}</Text>
-            <Text style={styles.modalSubtitle}>{detail.country}</Text>
+      <SafeAreaView style={[staticStyles.modalContainer, { backgroundColor: colors.background }]} edges={['top']}>
+        <View style={[staticStyles.modalHeader, { borderBottomColor: colors.borderLight }]}>
+          <View style={staticStyles.modalHeaderContent}>
+            <Text style={[staticStyles.modalTitle, { color: colors.text }]}>{detail.name}</Text>
+            <Text style={[staticStyles.modalSubtitle, { color: colors.textSecondary }]}>{detail.country}</Text>
           </View>
-          <TouchableOpacity onPress={onClose} style={styles.closeButton}>
-            <X size={22} color="#1a1a1a" />
+          <TouchableOpacity onPress={onClose} style={[staticStyles.closeButton, { backgroundColor: colors.inputBackground }]}>
+            <X size={22} color={colors.text} />
           </TouchableOpacity>
         </View>
 
-        <ScrollView style={styles.modalBody} showsVerticalScrollIndicator={false}>
-          <View style={styles.modalInfoCard}>
-            <Text style={styles.modalTripName}>{detail.tripName}</Text>
-            <View style={styles.modalInfoRow}>
-              <Calendar size={16} color="#888" />
-              <Text style={styles.modalInfoText}>{detail.dateVisited}</Text>
+        <ScrollView style={staticStyles.modalBody} showsVerticalScrollIndicator={false}>
+          <View style={[staticStyles.modalInfoCard, { backgroundColor: colors.surface }]}>
+            <Text style={[staticStyles.modalTripName, { color: colors.text }]}>{detail.tripName}</Text>
+            <View style={staticStyles.modalInfoRow}>
+              <Calendar size={16} color={colors.textMuted} />
+              <Text style={[staticStyles.modalInfoText, { color: colors.textSecondary }]}>{detail.dateVisited}</Text>
             </View>
-            <View style={styles.modalInfoRow}>
-              <Moon size={16} color="#888" />
-              <Text style={styles.modalInfoText}>{detail.totalNights} nights</Text>
+            <View style={staticStyles.modalInfoRow}>
+              <Moon size={16} color={colors.textMuted} />
+              <Text style={[staticStyles.modalInfoText, { color: colors.textSecondary }]}>{detail.totalNights} nights</Text>
             </View>
             {detail.hotels.length > 0 && (
-              <View style={styles.modalInfoRow}>
-                <MapPin size={16} color="#888" />
-                <Text style={styles.modalInfoText}>{detail.hotels.join(', ')}</Text>
+              <View style={staticStyles.modalInfoRow}>
+                <MapPin size={16} color={colors.textMuted} />
+                <Text style={[staticStyles.modalInfoText, { color: colors.textSecondary }]}>{detail.hotels.join(', ')}</Text>
               </View>
             )}
           </View>
 
-          <View style={styles.mediaSection}>
-            <Text style={styles.mediaSectionTitle}>Photos & Videos</Text>
-            <View style={styles.mediaGrid}>
+          <View style={staticStyles.mediaSection}>
+            <Text style={[staticStyles.mediaSectionTitle, { color: colors.text }]}>Photos & Videos</Text>
+            <View style={staticStyles.mediaGrid}>
               {placeholderPhotos.map((_, index) => (
-                <View key={index} style={styles.mediaPlaceholder}>
-                  <Image size={20} color="#555" />
+                <View key={index} style={[staticStyles.mediaPlaceholder, { backgroundColor: colors.cardBg, borderColor: colors.border }]}>
+                  <Image size={20} color={colors.textMuted} />
                 </View>
               ))}
             </View>
           </View>
 
-          <View style={styles.modalActions}>
-            <TouchableOpacity style={styles.addMediaBtn} activeOpacity={0.8} onPress={() => openComingSoon('Adding photos from Globe')}>
-              <ImagePlus size={18} color="#fff" />
-              <Text style={styles.addMediaText}>Add photos/videos</Text>
+          <View style={staticStyles.modalActions}>
+            <TouchableOpacity style={[staticStyles.addMediaBtn, { backgroundColor: colors.text }]} activeOpacity={0.8} onPress={() => openComingSoon('Adding photos from Globe')}>
+              <ImagePlus size={18} color={colors.background} />
+              <Text style={[staticStyles.addMediaText, { color: colors.background }]}>Add photos/videos</Text>
             </TouchableOpacity>
-            <TouchableOpacity style={styles.importBtn} disabled activeOpacity={1}>
-              <Camera size={18} color="#777" />
-              <Text style={styles.importBtnText}>Import from Photos (Coming soon)</Text>
+            <TouchableOpacity style={[staticStyles.importBtn, { backgroundColor: colors.cardBg }]} disabled activeOpacity={1}>
+              <Camera size={18} color={colors.textMuted} />
+              <Text style={[staticStyles.importBtnText, { color: colors.textMuted }]}>Import from Photos (Coming soon)</Text>
             </TouchableOpacity>
           </View>
 
@@ -157,17 +160,14 @@ function TripMemoryModal({
   );
 }
 
-const VISITED_FILL = '#ffffff';
-const UNVISITED_FILL = '#2a2a2a';
-const BORDER_COLOR = '#444444';
-const DOT_COLOR = '#ffffff';
-
 function WorldMapSvg({
   visitedCodes,
   onCountryPress,
+  isDark,
 }: {
   visitedCodes: string[];
   onCountryPress?: (code: string) => void;
+  isDark: boolean;
 }) {
   const visitedSet = useMemo(() => new Set(visitedCodes), [visitedCodes]);
 
@@ -176,8 +176,13 @@ function WorldMapSvg({
     [visitedSet],
   );
 
+  const visitedFill = isDark ? '#ffffff' : '#ffffff';
+  const unvisitedFill = isDark ? '#2a2a2a' : '#2a2a2a';
+  const borderColor = isDark ? '#444444' : '#444444';
+  const dotColor = '#ffffff';
+
   return (
-    <View style={styles.svgContainer}>
+    <View style={staticStyles.svgContainer}>
       <Svg
         width={MAP_SVG_WIDTH}
         height={MAP_SVG_HEIGHT}
@@ -192,8 +197,8 @@ function WorldMapSvg({
             <Path
               key={country.id}
               d={country.d}
-              fill={visited ? VISITED_FILL : UNVISITED_FILL}
-              stroke={BORDER_COLOR}
+              fill={visited ? visitedFill : unvisitedFill}
+              stroke={borderColor}
               strokeWidth={0.8}
               strokeLinejoin="round"
               onPress={
@@ -208,7 +213,7 @@ function WorldMapSvg({
         {activeDots.map((dot) => (
           <G key={`${dot.code}-${dot.label}`}>
             <Circle cx={dot.x} cy={dot.y} r={8} fill="rgba(255,255,255,0.15)" />
-            <Circle cx={dot.x} cy={dot.y} r={4} fill={DOT_COLOR} />
+            <Circle cx={dot.x} cy={dot.y} r={4} fill={dotColor} />
             <SvgText
               x={dot.x + 12}
               y={dot.y + 4}
@@ -242,6 +247,7 @@ function calculateNights(startDate: string, endDate: string): number {
 
 export default function GlobeScreen() {
   const colors = useThemeColors();
+  const isDark = useIsDark();
   const [expandedCountry, setExpandedCountry] = useState<string | null>(null);
   const [selectedDetail, setSelectedDetail] = useState<PlaceDetail | null>(null);
   const [modalVisible, setModalVisible] = useState(false);
@@ -375,81 +381,81 @@ export default function GlobeScreen() {
     setSelectedDetail(null);
   }, []);
 
+  const s = createStyles(colors);
+
   return (
-    <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]} edges={['top']}>
+    <SafeAreaView style={[staticStyles.containerBase, { backgroundColor: colors.background }]} edges={['top']}>
       <ScrollView ref={scrollViewRef} showsVerticalScrollIndicator={false}>
-        <View style={styles.header}>
-          <View style={[styles.headerIcon, { backgroundColor: colors.text }]}>
+        <View style={staticStyles.header}>
+          <View style={[staticStyles.headerIcon, { backgroundColor: colors.text }]}>
             <Globe size={22} color={colors.background} />
           </View>
           <View>
-            <Text style={[styles.title, { color: colors.text }]}>Globe</Text>
-            <Text style={[styles.subtitle, { color: colors.textSecondary }]}>Your travel footprint</Text>
+            <Text style={[staticStyles.titleText, { color: colors.text }]}>Globe</Text>
+            <Text style={[staticStyles.subtitleText, { color: colors.textSecondary }]}>Your travel footprint</Text>
           </View>
         </View>
 
-        <View style={styles.mapCard}>
-          <WorldMapSvg visitedCodes={visitedCodes} onCountryPress={handleCountryPress} />
+        <View style={staticStyles.mapCard}>
+          <WorldMapSvg visitedCodes={visitedCodes} onCountryPress={handleCountryPress} isDark={isDark} />
 
           <ScrollView
             horizontal
             showsHorizontalScrollIndicator={false}
-            contentContainerStyle={styles.chipsRow}
+            contentContainerStyle={staticStyles.chipsRow}
           >
             {visitedCountries.map((c) => (
               <TouchableOpacity
                 key={c}
-                style={styles.countryChip}
+                style={staticStyles.countryChip}
                 activeOpacity={0.7}
                 onPress={() => handleChipPress(c)}
               >
-                <Text style={styles.countryChipText}>{c}</Text>
+                <Text style={staticStyles.countryChipText}>{c}</Text>
               </TouchableOpacity>
             ))}
           </ScrollView>
         </View>
 
-        <View style={[styles.inTotalCard, { backgroundColor: colors.surface, borderColor: colors.border }]}>
-          <Text style={[styles.inTotalHeader, { color: colors.textMuted }]}>In Total</Text>
-          <View style={styles.inTotalRow}>
-            <View style={styles.inTotalItem}>
-              <Text style={[styles.inTotalBigNumber, { color: colors.text }]}>{worldPercent}%</Text>
-              <Text style={styles.inTotalSmallLabel}>of the world</Text>
+        <View style={[s.inTotalCard]}>
+          <Text style={[staticStyles.inTotalHeaderText, { color: colors.textMuted }]}>In Total</Text>
+          <View style={staticStyles.inTotalRow}>
+            <View style={staticStyles.inTotalItem}>
+              <Text style={[staticStyles.inTotalBigNumber, { color: colors.text }]}>{worldPercent}%</Text>
+              <Text style={[staticStyles.inTotalSmallLabel, { color: colors.textSecondary }]}>of the world</Text>
             </View>
-            <View style={styles.inTotalDivider} />
-            <View style={styles.inTotalItem}>
-              <Text style={[styles.inTotalBigNumber, { color: colors.text }]}>{visitedCountries.length}</Text>
-              <Text style={styles.inTotalSmallLabel}>countries</Text>
+            <View style={[staticStyles.inTotalDivider, { backgroundColor: colors.borderLight }]} />
+            <View style={staticStyles.inTotalItem}>
+              <Text style={[staticStyles.inTotalBigNumber, { color: colors.text }]}>{visitedCountries.length}</Text>
+              <Text style={[staticStyles.inTotalSmallLabel, { color: colors.textSecondary }]}>countries</Text>
             </View>
           </View>
-          <Text style={styles.inTotalFootnote}>Out of {TOTAL_COUNTRIES_WORLD} UN Countries</Text>
+          <Text style={[staticStyles.inTotalFootnote, { color: colors.textMuted }]}>Out of {TOTAL_COUNTRIES_WORLD} UN Countries</Text>
         </View>
 
-        <View style={styles.statsSection}>
-          <Text style={[styles.sectionTitle, { color: colors.text }]}>Travel Stats</Text>
-          <View style={styles.statsGrid}>
-            <View style={[styles.statCard, { backgroundColor: colors.surface, borderColor: colors.border }]}>
-              <Text style={[styles.statValue, { color: colors.text }]}>{visitedCountries.length}</Text>
-              <Text style={styles.statLabel}>Countries</Text>
-            </View>
-            <View style={[styles.statCard, { backgroundColor: colors.surface, borderColor: colors.border }]}>
-              <Text style={[styles.statValue, { color: colors.text }]}>{allTrips.length}</Text>
-              <Text style={styles.statLabel}>Trips</Text>
-            </View>
-            <View style={[styles.statCard, { backgroundColor: colors.surface, borderColor: colors.border }]}>
-              <Text style={[styles.statValue, { color: colors.text }]}>{totalNightsTraveled}</Text>
-              <Text style={styles.statLabel}>Nights</Text>
-            </View>
+        <View style={staticStyles.statsSection}>
+          <Text style={[staticStyles.sectionTitleText, { color: colors.text }]}>Travel Stats</Text>
+          <View style={staticStyles.statsGrid}>
+            {[
+              { value: visitedCountries.length, label: 'Countries' },
+              { value: allTrips.length, label: 'Trips' },
+              { value: totalNightsTraveled, label: 'Nights' },
+            ].map((stat) => (
+              <View key={stat.label} style={[s.statCard]}>
+                <Text style={[staticStyles.statValueText, { color: colors.text }]}>{stat.value}</Text>
+                <Text style={[staticStyles.statLabelText, { color: colors.textSecondary }]}>{stat.label}</Text>
+              </View>
+            ))}
           </View>
         </View>
 
-        <View style={styles.memoriesSection}>
-          <Text style={styles.sectionTitle}>Memories</Text>
+        <View style={staticStyles.memoriesSection}>
+          <Text style={[staticStyles.sectionTitleText, { color: colors.text }]}>Memories</Text>
 
           {countryGroups.length === 0 && (
-            <View style={styles.emptyMemories}>
-              <Plane size={32} color="#bbb" />
-              <Text style={styles.emptyMemoriesText}>Complete a trip to see your memories here</Text>
+            <View style={staticStyles.emptyMemories}>
+              <Plane size={32} color={colors.textMuted} />
+              <Text style={[staticStyles.emptyMemoriesText, { color: colors.textMuted }]}>Complete a trip to see your memories here</Text>
             </View>
           )}
 
@@ -460,63 +466,63 @@ export default function GlobeScreen() {
             return (
               <View
                 key={group.country}
-                style={[styles.countryAccordion, { backgroundColor: colors.surface, borderColor: colors.border }]}
+                style={[s.countryAccordion]}
                 onLayout={(e) => {
                   countryLayoutsRef.current[group.country] = e.nativeEvent.layout.y;
                 }}
               >
                 <TouchableOpacity
-                  style={styles.countryRow}
+                  style={staticStyles.countryRow}
                   activeOpacity={0.7}
                   onPress={() => toggleCountry(group.country)}
                 >
-                  <View style={[styles.countryFlag, { backgroundColor: colors.text }]}>
+                  <View style={[staticStyles.countryFlag, { backgroundColor: colors.text }]}>
                     <MapPin size={16} color={colors.background} />
                   </View>
-                  <View style={styles.countryInfo}>
-                    <Text style={[styles.countryName, { color: colors.text }]}>{group.country}</Text>
-                    <Text style={styles.countryMeta}>
+                  <View style={staticStyles.countryInfo}>
+                    <Text style={[staticStyles.countryNameText, { color: colors.text }]}>{group.country}</Text>
+                    <Text style={[staticStyles.countryMeta, { color: colors.textSecondary }]}>
                       {group.totalTrips} {group.totalTrips === 1 ? 'trip' : 'trips'} · {group.totalNights} nights
                     </Text>
                   </View>
 
                   {isExpanded ? (
-                    <ChevronDown size={20} color="#888" />
+                    <ChevronDown size={20} color={colors.textMuted} />
                   ) : (
-                    <ChevronRight size={20} color="#888" />
+                    <ChevronRight size={20} color={colors.textMuted} />
                   )}
                 </TouchableOpacity>
 
                 {isExpanded && (
-                  <View style={styles.tripsList}>
+                  <View style={[staticStyles.tripsList, { borderTopColor: colors.borderLight }]}>
                     {memories.map((memory) => (
                       <TouchableOpacity
                         key={memory.id}
-                        style={styles.tripMemoryCard}
+                        style={[staticStyles.tripMemoryCard, { borderBottomColor: colors.borderLight }]}
                         activeOpacity={0.7}
                         onPress={() => openTripMemory(memory)}
                       >
-                        <View style={styles.tripMemoryLeft}>
-                          <View style={styles.tripIconCircle}>
-                            <Plane size={14} color="#fff" />
+                        <View style={staticStyles.tripMemoryLeft}>
+                          <View style={[staticStyles.tripIconCircle, { backgroundColor: colors.surfaceElevated }]}>
+                            <Plane size={14} color={colors.text} />
                           </View>
-                          <View style={styles.tripMemoryInfo}>
-                            <Text style={styles.tripMemoryTitle}>{memory.name}</Text>
-                            <Text style={styles.tripMemoryCity}>{memory.city}</Text>
-                            <Text style={styles.tripMemoryDates}>
+                          <View style={staticStyles.tripMemoryInfo}>
+                            <Text style={[staticStyles.tripMemoryTitle, { color: colors.text }]}>{memory.name}</Text>
+                            <Text style={[staticStyles.tripMemoryCity, { color: colors.textSecondary }]}>{memory.city}</Text>
+                            <Text style={[staticStyles.tripMemoryDates, { color: colors.textMuted }]}>
                               {formatDateRange(memory.startDate, memory.endDate)}
                             </Text>
                           </View>
                         </View>
-                        <View style={styles.tripMemoryRight}>
+                        <View style={staticStyles.tripMemoryRight}>
                           {memory.memoryThumbnails.length > 0 && (
-                            <View style={styles.miniPhotoRow}>
+                            <View style={staticStyles.miniPhotoRow}>
                               {memory.memoryThumbnails.map((uri, i) => (
-                                <RNImage key={i} source={{ uri }} style={styles.miniPhotoImage} />
+                                <RNImage key={i} source={{ uri }} style={staticStyles.miniPhotoImage} />
                               ))}
                             </View>
                           )}
-                          <ChevronRight size={16} color="#aaa" />
+                          <ChevronRight size={16} color={colors.textMuted} />
                         </View>
                       </TouchableOpacity>
                     ))}
@@ -527,22 +533,52 @@ export default function GlobeScreen() {
           })}
         </View>
 
-        <View style={styles.bottomPadding} />
+        <View style={staticStyles.bottomPadding} />
       </ScrollView>
 
       <TripMemoryModal
         visible={modalVisible}
         detail={selectedDetail}
         onClose={closeModal}
+        colors={colors}
       />
     </SafeAreaView>
   );
 }
 
-const styles = StyleSheet.create({
-  container: {
+const createStyles = (colors: ThemeColors) => StyleSheet.create({
+  inTotalCard: {
+    marginHorizontal: 20,
+    marginBottom: 24,
+    backgroundColor: colors.surface,
+    borderRadius: 18,
+    padding: 20,
+    borderWidth: 1,
+    borderColor: colors.border,
+  },
+  statCard: {
     flex: 1,
-    backgroundColor: '#f5f5f5',
+    backgroundColor: colors.surface,
+    padding: 14,
+    borderRadius: 14,
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: colors.border,
+  },
+  countryAccordion: {
+    marginHorizontal: 20,
+    marginBottom: 8,
+    backgroundColor: colors.surface,
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: colors.border,
+    overflow: 'hidden',
+  },
+});
+
+const staticStyles = StyleSheet.create({
+  containerBase: {
+    flex: 1,
   },
   header: {
     flexDirection: 'row',
@@ -556,18 +592,15 @@ const styles = StyleSheet.create({
     width: 44,
     height: 44,
     borderRadius: 22,
-    backgroundColor: '#1a1a1a',
     justifyContent: 'center',
     alignItems: 'center',
   },
-  title: {
+  titleText: {
     fontSize: 24,
     fontWeight: '700' as const,
-    color: '#1a1a1a',
   },
-  subtitle: {
+  subtitleText: {
     fontSize: 14,
-    color: '#888',
   },
   mapCard: {
     marginHorizontal: 20,
@@ -601,19 +634,9 @@ const styles = StyleSheet.create({
     fontWeight: '600' as const,
     color: '#ccc',
   },
-  inTotalCard: {
-    marginHorizontal: 20,
-    marginBottom: 24,
-    backgroundColor: '#fff',
-    borderRadius: 18,
-    padding: 20,
-    borderWidth: 1,
-    borderColor: '#eee',
-  },
-  inTotalHeader: {
+  inTotalHeaderText: {
     fontSize: 13,
     fontWeight: '600' as const,
-    color: '#aaa',
     textTransform: 'uppercase' as const,
     letterSpacing: 1,
     marginBottom: 14,
@@ -631,31 +654,26 @@ const styles = StyleSheet.create({
   inTotalBigNumber: {
     fontSize: 36,
     fontWeight: '800' as const,
-    color: '#1a1a1a',
   },
   inTotalSmallLabel: {
     fontSize: 13,
-    color: '#888',
     marginTop: 2,
   },
   inTotalDivider: {
     width: 1,
     height: 40,
-    backgroundColor: '#e8e8e8',
   },
   inTotalFootnote: {
     fontSize: 12,
-    color: '#bbb',
     textAlign: 'center',
     marginTop: 14,
   },
   statsSection: {
     marginBottom: 24,
   },
-  sectionTitle: {
+  sectionTitleText: {
     fontSize: 18,
     fontWeight: '700' as const,
-    color: '#1a1a1a',
     marginBottom: 14,
     paddingHorizontal: 20,
   },
@@ -664,37 +682,17 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
     gap: 10,
   },
-  statCard: {
-    flex: 1,
-    backgroundColor: '#fff',
-    padding: 14,
-    borderRadius: 14,
-    alignItems: 'center',
-    borderWidth: 1,
-    borderColor: '#eee',
-  },
-  statValue: {
+  statValueText: {
     fontSize: 22,
     fontWeight: '700' as const,
-    color: '#1a1a1a',
     marginBottom: 2,
   },
-  statLabel: {
+  statLabelText: {
     fontSize: 11,
-    color: '#888',
     fontWeight: '500' as const,
   },
   memoriesSection: {
     marginBottom: 20,
-  },
-  countryAccordion: {
-    marginHorizontal: 20,
-    marginBottom: 8,
-    backgroundColor: '#fff',
-    borderRadius: 16,
-    borderWidth: 1,
-    borderColor: '#eee',
-    overflow: 'hidden',
   },
   countryRow: {
     flexDirection: 'row',
@@ -706,38 +704,22 @@ const styles = StyleSheet.create({
     width: 36,
     height: 36,
     borderRadius: 18,
-    backgroundColor: '#1a1a1a',
     justifyContent: 'center',
     alignItems: 'center',
   },
   countryInfo: {
     flex: 1,
   },
-  countryName: {
+  countryNameText: {
     fontSize: 16,
     fontWeight: '600' as const,
-    color: '#1a1a1a',
   },
   countryMeta: {
     fontSize: 12,
-    color: '#888',
     marginTop: 2,
-  },
-  photoStrip: {
-    flexDirection: 'row',
-    gap: 3,
-  },
-  photoStripThumb: {
-    width: 24,
-    height: 24,
-    borderRadius: 4,
-    backgroundColor: '#f0f0f0',
-    justifyContent: 'center',
-    alignItems: 'center',
   },
   tripsList: {
     borderTopWidth: 1,
-    borderTopColor: '#f0f0f0',
     paddingHorizontal: 14,
     paddingBottom: 10,
   },
@@ -747,7 +729,6 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     paddingVertical: 12,
     borderBottomWidth: 1,
-    borderBottomColor: '#f5f5f5',
   },
   tripMemoryLeft: {
     flexDirection: 'row',
@@ -759,7 +740,6 @@ const styles = StyleSheet.create({
     width: 30,
     height: 30,
     borderRadius: 15,
-    backgroundColor: '#333',
     justifyContent: 'center',
     alignItems: 'center',
   },
@@ -769,16 +749,13 @@ const styles = StyleSheet.create({
   tripMemoryTitle: {
     fontSize: 14,
     fontWeight: '600' as const,
-    color: '#1a1a1a',
   },
   tripMemoryCity: {
     fontSize: 12,
-    color: '#666',
     marginTop: 1,
   },
   tripMemoryDates: {
     fontSize: 11,
-    color: '#aaa',
     marginTop: 2,
   },
   tripMemoryRight: {
@@ -790,20 +767,16 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     gap: 3,
   },
-  miniPhoto: {
+  miniPhotoImage: {
     width: 20,
     height: 20,
     borderRadius: 4,
-    backgroundColor: '#f0f0f0',
-    justifyContent: 'center',
-    alignItems: 'center',
   },
   bottomPadding: {
     height: 100,
   },
   modalContainer: {
     flex: 1,
-    backgroundColor: '#fff',
   },
   modalHeader: {
     flexDirection: 'row',
@@ -812,7 +785,6 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
     paddingVertical: 16,
     borderBottomWidth: 1,
-    borderBottomColor: '#f0f0f0',
   },
   modalHeaderContent: {
     flex: 1,
@@ -820,18 +792,15 @@ const styles = StyleSheet.create({
   modalTitle: {
     fontSize: 22,
     fontWeight: '700' as const,
-    color: '#1a1a1a',
   },
   modalSubtitle: {
     fontSize: 14,
-    color: '#888',
     marginTop: 2,
   },
   closeButton: {
     width: 36,
     height: 36,
     borderRadius: 18,
-    backgroundColor: '#f0f0f0',
     justifyContent: 'center',
     alignItems: 'center',
   },
@@ -841,14 +810,12 @@ const styles = StyleSheet.create({
   modalInfoCard: {
     margin: 20,
     padding: 16,
-    backgroundColor: '#f8f8f8',
     borderRadius: 14,
     gap: 10,
   },
   modalTripName: {
     fontSize: 17,
     fontWeight: '700' as const,
-    color: '#1a1a1a',
     marginBottom: 4,
   },
   modalInfoRow: {
@@ -858,7 +825,6 @@ const styles = StyleSheet.create({
   },
   modalInfoText: {
     fontSize: 14,
-    color: '#555',
   },
   mediaSection: {
     paddingHorizontal: 20,
@@ -867,7 +833,6 @@ const styles = StyleSheet.create({
   mediaSectionTitle: {
     fontSize: 17,
     fontWeight: '600' as const,
-    color: '#1a1a1a',
     marginBottom: 12,
   },
   mediaGrid: {
@@ -878,13 +843,11 @@ const styles = StyleSheet.create({
   mediaPlaceholder: {
     width: (width - 56) / 3,
     height: (width - 56) / 3,
-    backgroundColor: '#f0f0f0',
     borderRadius: 10,
     justifyContent: 'center',
     alignItems: 'center',
     borderWidth: 1,
-    borderColor: '#e8e8e8',
-    borderStyle: 'dashed',
+    borderStyle: 'dashed' as const,
   },
   modalActions: {
     padding: 20,
@@ -896,28 +859,24 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     gap: 8,
-    backgroundColor: '#1a1a1a',
     paddingVertical: 14,
     borderRadius: 12,
   },
   addMediaText: {
     fontSize: 15,
     fontWeight: '600' as const,
-    color: '#fff',
   },
   importBtn: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
     gap: 8,
-    backgroundColor: '#f5f5f5',
     paddingVertical: 14,
     borderRadius: 12,
   },
   importBtnText: {
     fontSize: 14,
     fontWeight: '500' as const,
-    color: '#aaa',
   },
   emptyMemories: {
     alignItems: 'center',
@@ -927,12 +886,6 @@ const styles = StyleSheet.create({
   },
   emptyMemoriesText: {
     fontSize: 14,
-    color: '#aaa',
     textAlign: 'center',
-  },
-  miniPhotoImage: {
-    width: 20,
-    height: 20,
-    borderRadius: 4,
   },
 });

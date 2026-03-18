@@ -11,19 +11,41 @@ export interface ThemeColors {
   surface: string;
   surfaceElevated: string;
   cardBg: string;
+  inputBackground: string;
 
   text: string;
   textSecondary: string;
   textMuted: string;
   textLight: string;
+  textOnPrimary: string;
 
   border: string;
   borderLight: string;
 
+  iconDefault: string;
+  iconActive: string;
+
+  tabInactive: string;
+  tabActiveBg: string;
+
+  badgeBg: string;
+  badgeText: string;
+
+  chipBg: string;
+  chipActiveBg: string;
+  chipText: string;
+  chipActiveText: string;
+
   success: string;
+  successBg: string;
   warning: string;
+  warningBg: string;
   error: string;
+  errorBg: string;
   info: string;
+
+  overlay: string;
+  overlayLight: string;
 
   categoryColors: {
     flights: string;
@@ -55,19 +77,41 @@ export const lightColors: ThemeColors = {
   surface: '#FFFFFF',
   surfaceElevated: '#FFFFFF',
   cardBg: '#F2F2F2',
+  inputBackground: '#F3F4F6',
 
   text: '#111111',
   textSecondary: '#6B7280',
   textMuted: '#9CA3AF',
   textLight: '#FFFFFF',
+  textOnPrimary: '#FFFFFF',
 
   border: '#E5E7EB',
   borderLight: '#F3F4F6',
 
+  iconDefault: '#6B7280',
+  iconActive: '#111111',
+
+  tabInactive: '#9CA3AF',
+  tabActiveBg: '#111111',
+
+  badgeBg: 'rgba(255,255,255,0.92)',
+  badgeText: '#111111',
+
+  chipBg: '#FFFFFF',
+  chipActiveBg: '#111111',
+  chipText: '#6B7280',
+  chipActiveText: '#FFFFFF',
+
   success: '#059669',
+  successBg: '#D1FAE5',
   warning: '#D97706',
+  warningBg: '#FEF3C7',
   error: '#EF4444',
+  errorBg: '#FEE2E2',
   info: '#0891B2',
+
+  overlay: 'rgba(0,0,0,0.45)',
+  overlayLight: 'rgba(0,0,0,0.08)',
 
   categoryColors: {
     flights: '#0891B2',
@@ -97,21 +141,43 @@ export const darkColors: ThemeColors = {
 
   background: '#0F0F0F',
   surface: '#1A1A1A',
-  surfaceElevated: '#222222',
+  surfaceElevated: '#252525',
   cardBg: '#1E1E1E',
+  inputBackground: '#252525',
 
   text: '#F5F5F5',
-  textSecondary: '#9CA3AF',
-  textMuted: '#6B7280',
+  textSecondary: '#A1A1AA',
+  textMuted: '#71717A',
   textLight: '#FFFFFF',
+  textOnPrimary: '#0F0F0F',
 
-  border: '#2A2A2A',
-  borderLight: '#222222',
+  border: '#2E2E2E',
+  borderLight: '#252525',
+
+  iconDefault: '#A1A1AA',
+  iconActive: '#F5F5F5',
+
+  tabInactive: '#71717A',
+  tabActiveBg: '#F5F5F5',
+
+  badgeBg: 'rgba(255,255,255,0.15)',
+  badgeText: '#F5F5F5',
+
+  chipBg: '#252525',
+  chipActiveBg: '#F5F5F5',
+  chipText: '#A1A1AA',
+  chipActiveText: '#0F0F0F',
 
   success: '#34D399',
+  successBg: '#064E3B',
   warning: '#FBBF24',
+  warningBg: '#78350F',
   error: '#F87171',
+  errorBg: '#7F1D1D',
   info: '#22D3EE',
+
+  overlay: 'rgba(0,0,0,0.6)',
+  overlayLight: 'rgba(255,255,255,0.06)',
 
   categoryColors: {
     flights: '#22D3EE',

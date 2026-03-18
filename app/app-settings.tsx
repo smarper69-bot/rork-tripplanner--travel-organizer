@@ -3,8 +3,8 @@ import { View, Text, StyleSheet, TouchableOpacity, ScrollView, Switch, Alert } f
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { ArrowLeft, Bell, Download, Globe, Moon, Navigation } from 'lucide-react-native';
-import Colors from '@/constants/colors';
 import { useThemeColors } from '@/hooks/useThemeColors';
+import { ThemeColors } from '@/constants/themes';
 import { usePreferencesStore, CurrencyOption, AppearanceOption } from '@/store/usePreferencesStore';
 
 const CURRENCY_OPTIONS: CurrencyOption[] = ['USD', 'GBP', 'EUR'];
@@ -46,8 +46,10 @@ export default function AppSettingsScreen() {
     );
   };
 
+  const styles = createStyles(colors);
+
   return (
-    <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]} edges={['top']}>
+    <SafeAreaView style={styles.container} edges={['top']}>
       <View style={styles.header}>
         <TouchableOpacity onPress={() => router.back()} style={styles.backButton} testID="back-button">
           <ArrowLeft size={24} color={colors.text} />
@@ -149,10 +151,10 @@ export default function AppSettingsScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+const createStyles = (colors: ThemeColors) => StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: Colors.background,
+    backgroundColor: colors.background,
   },
   header: {
     flexDirection: 'row',
@@ -170,7 +172,7 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 18,
     fontWeight: '600' as const,
-    color: Colors.text,
+    color: colors.text,
   },
   content: {
     flex: 1,
@@ -182,7 +184,7 @@ const styles = StyleSheet.create({
   sectionTitle: {
     fontSize: 14,
     fontWeight: '600' as const,
-    color: Colors.textMuted,
+    color: colors.textMuted,
     textTransform: 'uppercase' as const,
     letterSpacing: 0.5,
     marginBottom: 12,
@@ -190,7 +192,7 @@ const styles = StyleSheet.create({
   },
   card: {
     marginHorizontal: 20,
-    backgroundColor: Colors.surface,
+    backgroundColor: colors.surface,
     borderRadius: 16,
     overflow: 'hidden',
   },
@@ -201,7 +203,7 @@ const styles = StyleSheet.create({
     paddingVertical: 14,
     paddingHorizontal: 16,
     borderBottomWidth: 1,
-    borderBottomColor: Colors.borderLight,
+    borderBottomColor: colors.borderLight,
   },
   rowLeft: {
     flexDirection: 'row',
@@ -215,15 +217,15 @@ const styles = StyleSheet.create({
   },
   rowLabel: {
     fontSize: 15,
-    color: Colors.text,
+    color: colors.text,
   },
   rowHint: {
     fontSize: 12,
-    color: Colors.textMuted,
+    color: colors.textMuted,
     marginTop: 2,
   },
   rowValue: {
     fontSize: 14,
-    color: Colors.textMuted,
+    color: colors.textMuted,
   },
 });

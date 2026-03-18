@@ -16,7 +16,6 @@ import {
 } from 'lucide-react-native';
 import * as ImagePicker from 'expo-image-picker';
 import * as Clipboard from 'expo-clipboard';
-import Colors from '@/constants/colors';
 import { useThemeColors } from '@/hooks/useThemeColors';
 import { useUserAvatar } from '@/hooks/useUserProfile';
 import { hapticHeavy, hapticSuccess, hapticSelection } from '@/utils/haptics';
@@ -60,6 +59,8 @@ export default function TripDetailScreen() {
   const deleteStay = useTripsStore((s) => s.deleteStay);
   const addMemory = useTripsStore((s) => s.addMemory);
   const deleteMemory = useTripsStore((s) => s.deleteMemory);
+
+  const styles = createTripStyles(colors);
 
   const trip = useMemo(() => trips.find((t) => t.id === id), [trips, id]);
   const itineraryItems = useMemo(() => allItineraryItems.filter((i) => i.tripId === id), [allItineraryItems, id]);
@@ -145,10 +146,10 @@ export default function TripDetailScreen() {
   const getStatusColor = (status: string) => {
     switch (status) {
       case 'planning': return '#6B7280';
-      case 'upcoming': return Colors.accent;
+      case 'upcoming': return colors.accent;
       case 'ongoing': return '#059669';
       case 'completed': return '#7C3AED';
-      default: return Colors.textSecondary;
+      default: return colors.textSecondary;
     }
   };
 
@@ -295,19 +296,19 @@ export default function TripDetailScreen() {
         <Text style={styles.overviewCardTitle}>Trip Summary</Text>
         <View style={styles.overviewStats}>
           <View style={styles.overviewStatItem}>
-            <Clock size={18} color={Colors.textSecondary} />
+            <Clock size={18} color={colors.textSecondary} />
             <Text style={styles.overviewStatValue}>{tripDays} days</Text>
             <Text style={styles.overviewStatLabel}>{tripNights} nights</Text>
           </View>
           <View style={styles.overviewStatDivider} />
           <View style={styles.overviewStatItem}>
-            <DollarSign size={18} color={Colors.textSecondary} />
+            <DollarSign size={18} color={colors.textSecondary} />
             <Text style={styles.overviewStatValue}>${trip.totalBudget.toLocaleString()}</Text>
             <Text style={styles.overviewStatLabel}>Total budget</Text>
           </View>
           <View style={styles.overviewStatDivider} />
           <View style={styles.overviewStatItem}>
-            <Users size={18} color={Colors.textSecondary} />
+            <Users size={18} color={colors.textSecondary} />
             <Text style={styles.overviewStatValue}>{trip.collaborators.length}</Text>
             <Text style={styles.overviewStatLabel}>Travelers</Text>
           </View>
@@ -344,7 +345,7 @@ export default function TripDetailScreen() {
             <Text style={styles.bookingCtaTitle}>Find Hotels</Text>
             <Text style={styles.bookingCtaSub}>{trip.destination}</Text>
           </View>
-          <ExternalLink size={16} color={Colors.textMuted} />
+          <ExternalLink size={16} color={colors.textMuted} />
         </TouchableOpacity>
         <TouchableOpacity
           style={styles.bookingCtaRow}
@@ -358,7 +359,7 @@ export default function TripDetailScreen() {
             <Text style={styles.bookingCtaTitle}>Find Flights</Text>
             <Text style={styles.bookingCtaSub}>{trip.destination}</Text>
           </View>
-          <ExternalLink size={16} color={Colors.textMuted} />
+          <ExternalLink size={16} color={colors.textMuted} />
         </TouchableOpacity>
         <Text style={styles.bookingDisclaimer}>Opens partner site. We may earn a commission.</Text>
       </View>
@@ -424,7 +425,7 @@ export default function TripDetailScreen() {
                     {item.time ? (
                       <Text style={styles.itineraryItemTime}>{item.time}</Text>
                     ) : (
-                      <Clock size={14} color={Colors.textMuted} />
+                      <Clock size={14} color={colors.textMuted} />
                     )}
                   </View>
                   <View style={styles.itineraryItemContent}>
@@ -444,7 +445,7 @@ export default function TripDetailScreen() {
             </View>
           ))}
           <TouchableOpacity style={styles.addItemButton} onPress={() => setShowItineraryForm(true)}>
-            <Plus size={18} color={Colors.primary} />
+            <Plus size={18} color={colors.accent} />
             <Text style={styles.addItemText}>Add Activity</Text>
           </TouchableOpacity>
         </>
@@ -452,7 +453,7 @@ export default function TripDetailScreen() {
         <View style={styles.emptyState}>
           <View style={styles.emptyIconComposed}>
             <View style={styles.emptyIconCircle}>
-              <Calendar size={28} color={Colors.accent} />
+              <Calendar size={28} color={colors.accent} />
             </View>
             <View style={[styles.emptyIconAccent, { backgroundColor: '#FEF3C7', top: 2, right: -4 }]}>
               <Clock size={12} color="#D97706" />
@@ -464,7 +465,7 @@ export default function TripDetailScreen() {
             hapticSelection();
             setShowItineraryForm(true);
           }}>
-            <Plus size={18} color={Colors.textLight} />
+            <Plus size={18} color={colors.textLight} />
             <Text style={styles.emptyButtonText}>Add first activity</Text>
           </TouchableOpacity>
         </View>
@@ -505,7 +506,7 @@ export default function TripDetailScreen() {
               setShowBudgetEdit(true);
             }}
           >
-            <Edit3 size={18} color={Colors.primary} />
+            <Edit3 size={18} color={colors.accent} />
             <Text style={styles.addItemText}>Update Budget</Text>
           </TouchableOpacity>
         </>
@@ -530,7 +531,7 @@ export default function TripDetailScreen() {
               setShowBudgetEdit(true);
             }}
           >
-            <Plus size={18} color={Colors.textLight} />
+            <Plus size={18} color={colors.textLight} />
             <Text style={styles.emptyButtonText}>Set Budget</Text>
           </TouchableOpacity>
         </View>
@@ -552,7 +553,7 @@ export default function TripDetailScreen() {
           <Text style={styles.bookingCtaTitle}>Search Hotels</Text>
           <Text style={styles.bookingCtaSub}>Find stays in {trip.destination}</Text>
         </View>
-        <ExternalLink size={16} color={Colors.textMuted} />
+        <ExternalLink size={16} color={colors.textMuted} />
       </TouchableOpacity>
 
       {tripStays.length > 0 ? (
@@ -561,7 +562,7 @@ export default function TripDetailScreen() {
             <View key={stay.id} style={styles.stayCard}>
               <View style={styles.stayHeader}>
                 <View style={styles.stayIconContainer}>
-                  <Hotel size={22} color={Colors.primary} />
+                  <Hotel size={22} color={colors.accent} />
                 </View>
                 <View style={styles.stayInfo}>
                   <Text style={styles.stayName}>{stay.name}</Text>
@@ -590,7 +591,7 @@ export default function TripDetailScreen() {
           ))}
 
           <TouchableOpacity style={styles.addItemButton} onPress={() => setShowStayForm(true)}>
-            <Plus size={18} color={Colors.primary} />
+            <Plus size={18} color={colors.accent} />
             <Text style={styles.addItemText}>Add Another Stay</Text>
           </TouchableOpacity>
         </>
@@ -610,7 +611,7 @@ export default function TripDetailScreen() {
             hapticSelection();
             setShowStayForm(true);
           }}>
-            <Plus size={18} color={Colors.textLight} />
+            <Plus size={18} color={colors.textLight} />
             <Text style={styles.emptyButtonText}>Add Stay</Text>
           </TouchableOpacity>
         </View>
@@ -641,7 +642,7 @@ export default function TripDetailScreen() {
           </View>
 
           <TouchableOpacity style={styles.addItemButton} onPress={handleAddMemory}>
-            <Camera size={18} color={Colors.primary} />
+            <Camera size={18} color={colors.accent} />
             <Text style={styles.addItemText}>Add Photos</Text>
           </TouchableOpacity>
           <Text style={styles.hintText}>Long press a photo to delete</Text>
@@ -662,7 +663,7 @@ export default function TripDetailScreen() {
             hapticSelection();
             void handleAddMemory();
           }}>
-            <Camera size={18} color={Colors.textLight} />
+            <Camera size={18} color={colors.textLight} />
             <Text style={styles.emptyButtonText}>Add Photos</Text>
           </TouchableOpacity>
         </View>
@@ -727,13 +728,13 @@ export default function TripDetailScreen() {
                 </View>
                 <Text style={styles.heroTitle}>{trip.name}</Text>
                 <View style={styles.heroLocation}>
-                  <MapPin size={16} color={Colors.textSecondary} />
+                  <MapPin size={16} color={colors.textSecondary} />
                   <Text style={styles.heroLocationText}>
                     {trip.destination}, {trip.country}
                   </Text>
                 </View>
                 <View style={styles.heroDate}>
-                  <Calendar size={14} color={Colors.textSecondary} />
+                  <Calendar size={14} color={colors.textSecondary} />
                   <Text style={styles.heroDateText}>
                     {formatDate(trip.startDate)} - {formatDate(trip.endDate)}
                   </Text>
@@ -807,7 +808,7 @@ export default function TripDetailScreen() {
                 style={styles.collabGroupBtn}
                 onPress={() => router.push(`/collaboration/${trip.id}` as any)}
               >
-                <Users size={16} color={Colors.primary} />
+                <Users size={16} color={colors.accent} />
                 <Text style={styles.collabGroupBtnText}>Group Planning</Text>
               </TouchableOpacity>
             </View>
@@ -846,33 +847,33 @@ export default function TripDetailScreen() {
             <View style={styles.modalHeader}>
               <Text style={styles.modalTitle}>Add Activity</Text>
               <TouchableOpacity onPress={() => setShowItineraryForm(false)} style={styles.modalCloseBtn}>
-                <X size={20} color={Colors.textSecondary} />
+                <X size={20} color={colors.textSecondary} />
               </TouchableOpacity>
             </View>
             <TextInput
               style={styles.formInput}
               placeholder="Activity title"
-              placeholderTextColor={Colors.textMuted}
+              placeholderTextColor={colors.textMuted}
               value={itineraryTitle}
               onChangeText={setItineraryTitle}
             />
             <TouchableOpacity style={styles.formDateBtn} onPress={() => setShowItineraryCalendar(true)}>
-              <Calendar size={18} color={Colors.textSecondary} />
-              <Text style={[styles.formDateText, !itineraryDate && { color: Colors.textMuted }]}>
+              <Calendar size={18} color={colors.textSecondary} />
+              <Text style={[styles.formDateText, !itineraryDate && { color: colors.textMuted }]}>
                 {itineraryDate ? formatDate(itineraryDate) : 'Select date'}
               </Text>
             </TouchableOpacity>
             <TextInput
               style={styles.formInput}
               placeholder="Time (e.g. 09:00)"
-              placeholderTextColor={Colors.textMuted}
+              placeholderTextColor={colors.textMuted}
               value={itineraryTime}
               onChangeText={setItineraryTime}
             />
             <TextInput
               style={[styles.formInput, { height: 80, textAlignVertical: 'top' as const }]}
               placeholder="Notes (optional)"
-              placeholderTextColor={Colors.textMuted}
+              placeholderTextColor={colors.textMuted}
               value={itineraryNotes}
               onChangeText={setItineraryNotes}
               multiline
@@ -890,32 +891,32 @@ export default function TripDetailScreen() {
             <View style={styles.modalHeader}>
               <Text style={styles.modalTitle}>Add Stay</Text>
               <TouchableOpacity onPress={() => setShowStayForm(false)} style={styles.modalCloseBtn}>
-                <X size={20} color={Colors.textSecondary} />
+                <X size={20} color={colors.textSecondary} />
               </TouchableOpacity>
             </View>
             <TextInput
               style={styles.formInput}
               placeholder="Hotel / accommodation name"
-              placeholderTextColor={Colors.textMuted}
+              placeholderTextColor={colors.textMuted}
               value={stayName}
               onChangeText={setStayName}
             />
             <TextInput
               style={styles.formInput}
               placeholder="Address (optional)"
-              placeholderTextColor={Colors.textMuted}
+              placeholderTextColor={colors.textMuted}
               value={stayAddress}
               onChangeText={setStayAddress}
             />
             <TouchableOpacity style={styles.formDateBtn} onPress={() => setShowStayCheckInCalendar(true)}>
-              <Calendar size={18} color={Colors.textSecondary} />
-              <Text style={[styles.formDateText, !stayCheckIn && { color: Colors.textMuted }]}>
+              <Calendar size={18} color={colors.textSecondary} />
+              <Text style={[styles.formDateText, !stayCheckIn && { color: colors.textMuted }]}>
                 {stayCheckIn ? `Check-in: ${formatDate(stayCheckIn)}` : 'Select check-in date'}
               </Text>
             </TouchableOpacity>
             <TouchableOpacity style={styles.formDateBtn} onPress={() => setShowStayCheckOutCalendar(true)}>
-              <Calendar size={18} color={Colors.textSecondary} />
-              <Text style={[styles.formDateText, !stayCheckOut && { color: Colors.textMuted }]}>
+              <Calendar size={18} color={colors.textSecondary} />
+              <Text style={[styles.formDateText, !stayCheckOut && { color: colors.textMuted }]}>
                 {stayCheckOut ? `Check-out: ${formatDate(stayCheckOut)}` : 'Select check-out date'}
               </Text>
             </TouchableOpacity>
@@ -932,14 +933,14 @@ export default function TripDetailScreen() {
             <View style={styles.modalHeader}>
               <Text style={styles.modalTitle}>Update Budget</Text>
               <TouchableOpacity onPress={() => setShowBudgetEdit(false)} style={styles.modalCloseBtn}>
-                <X size={20} color={Colors.textSecondary} />
+                <X size={20} color={colors.textSecondary} />
               </TouchableOpacity>
             </View>
             <Text style={styles.formLabel}>Total Budget ($)</Text>
             <TextInput
               style={styles.formInput}
               placeholder="e.g. 5000"
-              placeholderTextColor={Colors.textMuted}
+              placeholderTextColor={colors.textMuted}
               value={budgetTotalInput}
               onChangeText={setBudgetTotalInput}
               keyboardType="numeric"
@@ -948,7 +949,7 @@ export default function TripDetailScreen() {
             <TextInput
               style={styles.formInput}
               placeholder="e.g. 1200"
-              placeholderTextColor={Colors.textMuted}
+              placeholderTextColor={colors.textMuted}
               value={budgetSpentInput}
               onChangeText={setBudgetSpentInput}
               keyboardType="numeric"
@@ -966,7 +967,7 @@ export default function TripDetailScreen() {
             <View style={styles.modalHeader}>
               <Text style={styles.modalTitle}>Invite Travelers</Text>
               <TouchableOpacity onPress={() => setShowInviteModal(false)} style={styles.modalCloseBtn}>
-                <X size={20} color={Colors.textSecondary} />
+                <X size={20} color={colors.textSecondary} />
               </TouchableOpacity>
             </View>
 
@@ -975,7 +976,7 @@ export default function TripDetailScreen() {
             </Text>
 
             <View style={styles.shareLinkContainer}>
-              <Link2 size={18} color={Colors.primary} />
+              <Link2 size={18} color={colors.accent} />
               <Text style={styles.shareLinkText} numberOfLines={1}>
                 {(inviteLink || trip.inviteLink || `https://tripla.app/join/${trip.id}`).replace('https://', '')}
               </Text>
@@ -1023,7 +1024,7 @@ export default function TripDetailScreen() {
                   }
                 }}
               >
-                <Share2 size={20} color={Colors.primary} />
+                <Share2 size={20} color={colors.accent} />
                 <Text style={styles.shareActionTextOutline}>Share</Text>
               </TouchableOpacity>
             </View>
@@ -1070,20 +1071,20 @@ export default function TripDetailScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+const createTripStyles = (colors: any) => StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: Colors.background,
+    backgroundColor: colors.background,
   },
   notFound: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: Colors.background,
+    backgroundColor: colors.background,
   },
   notFoundText: {
     fontSize: 16,
-    color: Colors.textSecondary,
+    color: colors.textSecondary,
   },
   heroContainer: {
     height: 320,
@@ -1159,7 +1160,7 @@ const styles = StyleSheet.create({
   heroTitle: {
     fontSize: 28,
     fontWeight: '800' as const,
-    color: Colors.text,
+    color: colors.text,
     marginBottom: 6,
     letterSpacing: -0.3,
   },
@@ -1171,7 +1172,7 @@ const styles = StyleSheet.create({
   },
   heroLocationText: {
     fontSize: 15,
-    color: Colors.textSecondary,
+    color: colors.textSecondary,
   },
   heroDate: {
     flexDirection: 'row',
@@ -1180,14 +1181,14 @@ const styles = StyleSheet.create({
   },
   heroDateText: {
     fontSize: 13,
-    color: Colors.textSecondary,
+    color: colors.textSecondary,
   },
   content: {
     padding: 22,
     paddingBottom: 40,
   },
   collaboratorsFullSection: {
-    backgroundColor: Colors.surface,
+    backgroundColor: colors.surface,
     borderRadius: 18,
     padding: 18,
     marginBottom: 20,
@@ -1206,7 +1207,7 @@ const styles = StyleSheet.create({
   collabHeaderTitle: {
     fontSize: 15,
     fontWeight: '600' as const,
-    color: Colors.text,
+    color: colors.text,
   },
   inviteSmallBtn: {
     flexDirection: 'row',
@@ -1214,7 +1215,7 @@ const styles = StyleSheet.create({
     gap: 5,
     paddingHorizontal: 12,
     paddingVertical: 7,
-    backgroundColor: Colors.accent,
+    backgroundColor: colors.accent,
     borderRadius: 10,
   },
   inviteSmallBtnText: {
@@ -1227,14 +1228,14 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingVertical: 8,
     borderBottomWidth: 1,
-    borderBottomColor: Colors.borderLight,
+    borderBottomColor: colors.borderLight,
   },
   collabMemberAvatar: {
     width: 38,
     height: 38,
     borderRadius: 19,
     marginRight: 12,
-    backgroundColor: Colors.borderLight,
+    backgroundColor: colors.borderLight,
   },
   collabMemberInfo: {
     flex: 1,
@@ -1242,7 +1243,7 @@ const styles = StyleSheet.create({
   collabMemberName: {
     fontSize: 15,
     fontWeight: '500' as const,
-    color: Colors.text,
+    color: colors.text,
   },
   collabRoleBadge: {
     flexDirection: 'row',
@@ -1252,7 +1253,7 @@ const styles = StyleSheet.create({
   },
   collabRoleText: {
     fontSize: 12,
-    color: Colors.textMuted,
+    color: colors.textMuted,
   },
   collabRemoveBtn: {
     width: 32,
@@ -1269,13 +1270,13 @@ const styles = StyleSheet.create({
     gap: 8,
     paddingVertical: 12,
     marginTop: 12,
-    backgroundColor: Colors.background,
+    backgroundColor: colors.background,
     borderRadius: 10,
   },
   collabGroupBtnText: {
     fontSize: 14,
     fontWeight: '500' as const,
-    color: Colors.accent,
+    color: colors.accent,
   },
   tabsContainer: {
     marginBottom: 20,
@@ -1286,25 +1287,25 @@ const styles = StyleSheet.create({
   tab: {
     paddingHorizontal: 16,
     paddingVertical: 10,
-    backgroundColor: Colors.surface,
+    backgroundColor: colors.surface,
     borderRadius: 10,
   },
   tabActive: {
-    backgroundColor: Colors.accent,
+    backgroundColor: colors.accent,
   },
   tabText: {
     fontSize: 14,
     fontWeight: '500' as const,
-    color: Colors.textSecondary,
+    color: colors.textSecondary,
   },
   tabTextActive: {
-    color: Colors.textLight,
+    color: colors.textLight,
   },
   tabContent: {},
   tabContentInner: {},
   
   overviewCard: {
-    backgroundColor: Colors.surface,
+    backgroundColor: colors.surface,
     borderRadius: 18,
     padding: 18,
     marginBottom: 16,
@@ -1317,7 +1318,7 @@ const styles = StyleSheet.create({
   overviewCardTitle: {
     fontSize: 15,
     fontWeight: '600' as const,
-    color: Colors.text,
+    color: colors.text,
     marginBottom: 14,
   },
   overviewStats: {
@@ -1331,18 +1332,18 @@ const styles = StyleSheet.create({
   overviewStatValue: {
     fontSize: 18,
     fontWeight: '700' as const,
-    color: Colors.text,
+    color: colors.text,
     marginTop: 6,
   },
   overviewStatLabel: {
     fontSize: 12,
-    color: Colors.textMuted,
+    color: colors.textMuted,
     marginTop: 2,
   },
   overviewStatDivider: {
     width: 1,
     height: 40,
-    backgroundColor: Colors.borderLight,
+    backgroundColor: colors.borderLight,
   },
   budgetSummaryRow: {
     flexDirection: 'row',
@@ -1353,31 +1354,31 @@ const styles = StyleSheet.create({
   budgetSummarySpent: {
     fontSize: 22,
     fontWeight: '700' as const,
-    color: Colors.text,
+    color: colors.text,
   },
   budgetSummaryOf: {
     fontSize: 14,
-    color: Colors.textMuted,
+    color: colors.textMuted,
   },
   budgetBarBg: {
     height: 8,
-    backgroundColor: Colors.borderLight,
+    backgroundColor: colors.borderLight,
     borderRadius: 4,
     marginBottom: 8,
   },
   budgetBarFill: {
     height: '100%',
-    backgroundColor: Colors.accent,
+    backgroundColor: colors.accent,
     borderRadius: 4,
   },
   budgetRemaining: {
     fontSize: 13,
-    color: Colors.textMuted,
+    color: colors.textMuted,
   },
   sectionTitle: {
     fontSize: 16,
     fontWeight: '600' as const,
-    color: Colors.text,
+    color: colors.text,
     marginBottom: 12,
     marginTop: 8,
   },
@@ -1388,7 +1389,7 @@ const styles = StyleSheet.create({
   },
   quickActionCard: {
     width: (SCREEN_WIDTH - 52) / 2,
-    backgroundColor: Colors.surface,
+    backgroundColor: colors.surface,
     borderRadius: 14,
     padding: 16,
     alignItems: 'center',
@@ -1409,7 +1410,7 @@ const styles = StyleSheet.create({
   quickActionLabel: {
     fontSize: 13,
     fontWeight: '500' as const,
-    color: Colors.text,
+    color: colors.text,
   },
   
   itineraryDayGroup: {
@@ -1424,16 +1425,16 @@ const styles = StyleSheet.create({
   itineraryDayLabel: {
     fontSize: 15,
     fontWeight: '700' as const,
-    color: Colors.text,
+    color: colors.text,
   },
   itineraryDayDate: {
     fontSize: 13,
-    color: Colors.textSecondary,
+    color: colors.textSecondary,
   },
   itineraryItemCard: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: Colors.surface,
+    backgroundColor: colors.surface,
     borderRadius: 12,
     padding: 14,
     marginBottom: 8,
@@ -1446,7 +1447,7 @@ const styles = StyleSheet.create({
   itineraryItemTime: {
     fontSize: 13,
     fontWeight: '600' as const,
-    color: Colors.accent,
+    color: colors.accent,
   },
   itineraryItemContent: {
     flex: 1,
@@ -1454,11 +1455,11 @@ const styles = StyleSheet.create({
   itineraryItemTitle: {
     fontSize: 15,
     fontWeight: '500' as const,
-    color: Colors.text,
+    color: colors.text,
   },
   itineraryItemNotes: {
     fontSize: 13,
-    color: Colors.textSecondary,
+    color: colors.textSecondary,
     marginTop: 2,
   },
   deleteItemBtn: {
@@ -1474,7 +1475,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingVertical: 48,
     paddingHorizontal: 24,
-    backgroundColor: Colors.surface,
+    backgroundColor: colors.surface,
     borderRadius: 20,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 1 },
@@ -1485,14 +1486,14 @@ const styles = StyleSheet.create({
   emptyTitle: {
     fontSize: 18,
     fontWeight: '700' as const,
-    color: Colors.text,
+    color: colors.text,
     marginTop: 6,
     marginBottom: 8,
     textAlign: 'center' as const,
   },
   emptyText: {
     fontSize: 14,
-    color: Colors.textSecondary,
+    color: colors.textSecondary,
     marginBottom: 24,
     textAlign: 'center' as const,
     lineHeight: 20,
@@ -1504,9 +1505,9 @@ const styles = StyleSheet.create({
     gap: 8,
     paddingHorizontal: 24,
     paddingVertical: 14,
-    backgroundColor: Colors.accent,
+    backgroundColor: colors.accent,
     borderRadius: 14,
-    shadowColor: Colors.accent,
+    shadowColor: colors.accent,
     shadowOffset: { width: 0, height: 3 },
     shadowOpacity: 0.2,
     shadowRadius: 6,
@@ -1515,7 +1516,7 @@ const styles = StyleSheet.create({
   emptyButtonText: {
     fontSize: 15,
     fontWeight: '700' as const,
-    color: Colors.textLight,
+    color: colors.textLight,
   },
   addItemButton: {
     flexDirection: 'row',
@@ -1523,27 +1524,27 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     gap: 6,
     paddingVertical: 14,
-    backgroundColor: Colors.surface,
+    backgroundColor: colors.surface,
     borderRadius: 12,
     borderWidth: 1,
-    borderColor: Colors.borderLight,
+    borderColor: colors.borderLight,
     borderStyle: 'dashed',
     marginTop: 8,
   },
   addItemText: {
     fontSize: 14,
     fontWeight: '500' as const,
-    color: Colors.accent,
+    color: colors.accent,
   },
   hintText: {
     fontSize: 12,
-    color: Colors.textMuted,
+    color: colors.textMuted,
     textAlign: 'center',
     marginTop: 8,
   },
   
   budgetOverviewCard: {
-    backgroundColor: Colors.surface,
+    backgroundColor: colors.surface,
     borderRadius: 16,
     padding: 18,
     marginBottom: 12,
@@ -1556,36 +1557,36 @@ const styles = StyleSheet.create({
   },
   budgetTotalLabel: {
     fontSize: 13,
-    color: Colors.textMuted,
+    color: colors.textMuted,
     marginBottom: 4,
   },
   budgetTotalValue: {
     fontSize: 26,
     fontWeight: '700' as const,
-    color: Colors.text,
+    color: colors.text,
   },
   budgetHeaderRight: {
     alignItems: 'flex-end',
   },
   budgetSpentLabel: {
     fontSize: 12,
-    color: Colors.textMuted,
+    color: colors.textMuted,
     marginBottom: 2,
   },
   budgetSpentValue: {
     fontSize: 18,
     fontWeight: '600' as const,
-    color: Colors.accent,
+    color: colors.accent,
   },
   budgetBarBgLarge: {
     height: 10,
-    backgroundColor: Colors.borderLight,
+    backgroundColor: colors.borderLight,
     borderRadius: 5,
     marginBottom: 10,
   },
   budgetBarFillLarge: {
     height: '100%',
-    backgroundColor: Colors.accent,
+    backgroundColor: colors.accent,
     borderRadius: 5,
   },
   budgetFooterRow: {
@@ -1594,16 +1595,16 @@ const styles = StyleSheet.create({
   },
   budgetRemainingLarge: {
     fontSize: 13,
-    color: Colors.textSecondary,
+    color: colors.textSecondary,
   },
   budgetPercentage: {
     fontSize: 13,
     fontWeight: '500' as const,
-    color: Colors.textMuted,
+    color: colors.textMuted,
   },
   
   stayCard: {
-    backgroundColor: Colors.surface,
+    backgroundColor: colors.surface,
     borderRadius: 16,
     padding: 16,
     marginBottom: 12,
@@ -1617,7 +1618,7 @@ const styles = StyleSheet.create({
     width: 44,
     height: 44,
     borderRadius: 12,
-    backgroundColor: Colors.accent + '15',
+    backgroundColor: colors.accent + '15',
     justifyContent: 'center',
     alignItems: 'center',
     marginRight: 12,
@@ -1628,16 +1629,16 @@ const styles = StyleSheet.create({
   stayName: {
     fontSize: 16,
     fontWeight: '600' as const,
-    color: Colors.text,
+    color: colors.text,
     marginBottom: 2,
   },
   stayAddress: {
     fontSize: 13,
-    color: Colors.textSecondary,
+    color: colors.textSecondary,
   },
   stayDates: {
     flexDirection: 'row',
-    backgroundColor: Colors.background,
+    backgroundColor: colors.background,
     borderRadius: 12,
     padding: 12,
   },
@@ -1646,17 +1647,17 @@ const styles = StyleSheet.create({
   },
   stayDateLabel: {
     fontSize: 11,
-    color: Colors.textMuted,
+    color: colors.textMuted,
     marginBottom: 2,
   },
   stayDateValue: {
     fontSize: 14,
     fontWeight: '500' as const,
-    color: Colors.text,
+    color: colors.text,
   },
   stayDateDivider: {
     width: 1,
-    backgroundColor: Colors.borderLight,
+    backgroundColor: colors.borderLight,
     marginHorizontal: 12,
   },
   
@@ -1697,7 +1698,7 @@ const styles = StyleSheet.create({
     justifyContent: 'flex-end',
   },
   modalContent: {
-    backgroundColor: Colors.surface,
+    backgroundColor: colors.surface,
     borderTopLeftRadius: 28,
     borderTopRightRadius: 28,
     padding: 24,
@@ -1712,31 +1713,31 @@ const styles = StyleSheet.create({
   modalTitle: {
     fontSize: 20,
     fontWeight: '800' as const,
-    color: Colors.text,
+    color: colors.text,
     letterSpacing: -0.2,
   },
   modalCloseBtn: {
     width: 36,
     height: 36,
     borderRadius: 18,
-    backgroundColor: Colors.background,
+    backgroundColor: colors.background,
     justifyContent: 'center',
     alignItems: 'center',
   },
   formInput: {
-    backgroundColor: Colors.background,
+    backgroundColor: colors.background,
     borderRadius: 12,
     paddingHorizontal: 16,
     paddingVertical: 14,
     fontSize: 15,
-    color: Colors.text,
+    color: colors.text,
     marginBottom: 12,
   },
   formDateBtn: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 10,
-    backgroundColor: Colors.background,
+    backgroundColor: colors.background,
     borderRadius: 12,
     paddingHorizontal: 16,
     paddingVertical: 14,
@@ -1744,16 +1745,16 @@ const styles = StyleSheet.create({
   },
   formDateText: {
     fontSize: 15,
-    color: Colors.text,
+    color: colors.text,
   },
   formLabel: {
     fontSize: 13,
     fontWeight: '600' as const,
-    color: Colors.textSecondary,
+    color: colors.textSecondary,
     marginBottom: 6,
   },
   formSaveBtn: {
-    backgroundColor: Colors.accent,
+    backgroundColor: colors.accent,
     borderRadius: 14,
     paddingVertical: 16,
     alignItems: 'center',
@@ -1762,10 +1763,10 @@ const styles = StyleSheet.create({
   formSaveBtnText: {
     fontSize: 16,
     fontWeight: '600' as const,
-    color: Colors.textLight,
+    color: colors.textLight,
   },
   bookingCtaSection: {
-    backgroundColor: Colors.surface,
+    backgroundColor: colors.surface,
     borderRadius: 16,
     padding: 16,
     marginBottom: 16,
@@ -1776,21 +1777,21 @@ const styles = StyleSheet.create({
     gap: 12,
     paddingVertical: 12,
     borderBottomWidth: 1,
-    borderBottomColor: Colors.borderLight,
+    borderBottomColor: colors.borderLight,
   },
   bookingCtaTitle: {
     fontSize: 14,
     fontWeight: '600' as const,
-    color: Colors.text,
+    color: colors.text,
   },
   bookingCtaSub: {
     fontSize: 12,
-    color: Colors.textSecondary,
+    color: colors.textSecondary,
     marginTop: 1,
   },
   bookingDisclaimer: {
     fontSize: 11,
-    color: Colors.textMuted,
+    color: colors.textMuted,
     textAlign: 'center',
     marginTop: 8,
   },
@@ -1798,7 +1799,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 10,
-    backgroundColor: Colors.background,
+    backgroundColor: colors.background,
     paddingHorizontal: 16,
     paddingVertical: 14,
     borderRadius: 14,
@@ -1807,19 +1808,19 @@ const styles = StyleSheet.create({
   shareLinkText: {
     flex: 1,
     fontSize: 15,
-    color: Colors.text,
+    color: colors.text,
     fontWeight: '500' as const,
   },
   shareNote: {
     fontSize: 13,
-    color: Colors.textMuted,
+    color: colors.textMuted,
     marginTop: 16,
     lineHeight: 18,
     textAlign: 'center',
   },
   inviteDesc: {
     fontSize: 14,
-    color: Colors.textSecondary,
+    color: colors.textSecondary,
     marginBottom: 16,
     lineHeight: 20,
   },
@@ -1834,7 +1835,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     gap: 8,
     paddingVertical: 14,
-    backgroundColor: Colors.accent,
+    backgroundColor: colors.accent,
     borderRadius: 14,
   },
   shareActionButtonSuccess: {
@@ -1852,15 +1853,15 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     gap: 8,
     paddingVertical: 14,
-    backgroundColor: Colors.background,
+    backgroundColor: colors.background,
     borderRadius: 14,
     borderWidth: 1,
-    borderColor: Colors.accent + '30',
+    borderColor: colors.accent + '30',
   },
   shareActionTextOutline: {
     fontSize: 15,
     fontWeight: '600' as const,
-    color: Colors.accent,
+    color: colors.accent,
   },
   emptyIconComposed: {
     width: 80,

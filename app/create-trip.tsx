@@ -3,11 +3,12 @@ import { View, Text, StyleSheet, ScrollView, TouchableOpacity, TextInput, Image,
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter, useLocalSearchParams, Stack } from 'expo-router';
 import { MapPin, Calendar, Users, DollarSign, Camera, X } from 'lucide-react-native';
-import Colors from '@/constants/colors';
+import { useThemeColors } from '@/hooks/useThemeColors';
 import { useTripsStore, getUserTripCount } from '@/store/useTripsStore';
 import { useSubscriptionStore, FREE_TRIP_LIMIT } from '@/store/useSubscriptionStore';
 import { hapticSuccess, hapticLight } from '@/utils/haptics';
 import CalendarPicker from '@/components/CalendarPicker';
+import { ThemeColors } from '@/constants/themes';
 
 const coverImages = [
   'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=800',
@@ -20,6 +21,7 @@ const coverImages = [
 
 export default function CreateTripScreen() {
   const router = useRouter();
+  const colors = useThemeColors();
   const params = useLocalSearchParams<{
     prefillName?: string;
     prefillDestination?: string;
@@ -94,36 +96,38 @@ export default function CreateTripScreen() {
     }
   }, [customCoverImage]);
 
+  const s = createStyles(colors);
+
   return (
     <>
       <Stack.Screen options={{ headerShown: false }} />
-      <SafeAreaView style={styles.container} edges={['top']}>
-        <View style={styles.header}>
-          <TouchableOpacity style={styles.closeButton} onPress={() => router.back()}>
-            <X size={24} color={Colors.text} />
+      <SafeAreaView style={s.container} edges={['top']}>
+        <View style={staticStyles.header}>
+          <TouchableOpacity style={[s.closeButton]} onPress={() => router.back()}>
+            <X size={24} color={colors.text} />
           </TouchableOpacity>
-          <Text style={styles.headerTitle}>New Trip</Text>
-          <View style={styles.headerSpacer} />
+          <Text style={[staticStyles.headerTitle, { color: colors.text }]}>New Trip</Text>
+          <View style={staticStyles.headerSpacer} />
         </View>
 
-        <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.content}>
-          <View style={styles.coverSection}>
-            <Text style={styles.label}>Cover Photo</Text>
+        <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={staticStyles.content}>
+          <View style={staticStyles.coverSection}>
+            <Text style={[staticStyles.label, { color: colors.text }]}>Cover Photo</Text>
             <ScrollView 
               horizontal 
               showsHorizontalScrollIndicator={false}
-              contentContainerStyle={styles.coverScroll}
+              contentContainerStyle={staticStyles.coverScroll}
             >
               {customCoverImage && (
                 <TouchableOpacity
-                  style={[styles.coverOption, selectedCover === -1 && styles.coverOptionSelected]}
+                  style={[staticStyles.coverOption, selectedCover === -1 && { borderWidth: 3, borderColor: colors.accent }]}
                   onPress={() => setSelectedCover(-1)}
                 >
-                  <Image source={{ uri: customCoverImage }} style={styles.coverImage} />
+                  <Image source={{ uri: customCoverImage }} style={staticStyles.coverImage} />
                   {selectedCover === -1 && (
-                    <View style={styles.coverSelectedOverlay}>
-                      <View style={styles.coverCheck}>
-                        <Camera size={16} color={Colors.textLight} />
+                    <View style={staticStyles.coverSelectedOverlay}>
+                      <View style={[staticStyles.coverCheck, { backgroundColor: colors.accent }]}>
+                        <Camera size={16} color="#fff" />
                       </View>
                     </View>
                   )}
@@ -132,14 +136,14 @@ export default function CreateTripScreen() {
               {coverImages.map((img, index) => (
                 <TouchableOpacity
                   key={index}
-                  style={[styles.coverOption, selectedCover === index && styles.coverOptionSelected]}
+                  style={[staticStyles.coverOption, selectedCover === index && { borderWidth: 3, borderColor: colors.accent }]}
                   onPress={() => setSelectedCover(index)}
                 >
-                  <Image source={{ uri: img }} style={styles.coverImage} />
+                  <Image source={{ uri: img }} style={staticStyles.coverImage} />
                   {selectedCover === index && (
-                    <View style={styles.coverSelectedOverlay}>
-                      <View style={styles.coverCheck}>
-                        <Camera size={16} color={Colors.textLight} />
+                    <View style={staticStyles.coverSelectedOverlay}>
+                      <View style={[staticStyles.coverCheck, { backgroundColor: colors.accent }]}>
+                        <Camera size={16} color="#fff" />
                       </View>
                     </View>
                   )}
@@ -148,48 +152,48 @@ export default function CreateTripScreen() {
             </ScrollView>
           </View>
 
-          <View style={styles.inputGroup}>
-            <Text style={styles.label}>Trip Name *</Text>
-            <View style={styles.inputContainer}>
+          <View style={staticStyles.inputGroup}>
+            <Text style={[staticStyles.label, { color: colors.text }]}>Trip Name *</Text>
+            <View style={[s.inputContainer]}>
               <TextInput
-                style={styles.input}
+                style={[staticStyles.input, { color: colors.text }]}
                 placeholder="e.g., Summer in Paris"
-                placeholderTextColor={Colors.textMuted}
+                placeholderTextColor={colors.textMuted}
                 value={tripName}
                 onChangeText={setTripName}
               />
             </View>
           </View>
 
-          <View style={styles.inputGroup}>
-            <Text style={styles.label}>Destination *</Text>
-            <View style={styles.inputContainer}>
-              <MapPin size={20} color={Colors.textMuted} />
+          <View style={staticStyles.inputGroup}>
+            <Text style={[staticStyles.label, { color: colors.text }]}>Destination *</Text>
+            <View style={[s.inputContainer]}>
+              <MapPin size={20} color={colors.textMuted} />
               <TextInput
-                style={[styles.input, styles.inputWithIcon]}
+                style={[staticStyles.input, staticStyles.inputWithIcon, { color: colors.text }]}
                 placeholder="Where are you going?"
-                placeholderTextColor={Colors.textMuted}
+                placeholderTextColor={colors.textMuted}
                 value={destination}
                 onChangeText={setDestination}
               />
             </View>
           </View>
 
-          <View style={styles.row}>
-            <View style={[styles.inputGroup, styles.halfWidth]}>
-              <Text style={styles.label}>Start Date</Text>
-              <TouchableOpacity style={styles.inputContainer} onPress={() => setShowStartCalendar(true)}>
-                <Calendar size={20} color={Colors.textMuted} />
-                <Text style={[styles.inputText, !startDate && styles.placeholder]}>
+          <View style={staticStyles.row}>
+            <View style={[staticStyles.inputGroup, staticStyles.halfWidth]}>
+              <Text style={[staticStyles.label, { color: colors.text }]}>Start Date</Text>
+              <TouchableOpacity style={[s.inputContainer]} onPress={() => setShowStartCalendar(true)}>
+                <Calendar size={20} color={colors.textMuted} />
+                <Text style={[staticStyles.inputText, { color: startDate ? colors.text : colors.textMuted }]}>
                   {startDate ? new Date(startDate + 'T00:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : 'Select'}
                 </Text>
               </TouchableOpacity>
             </View>
-            <View style={[styles.inputGroup, styles.halfWidth]}>
-              <Text style={styles.label}>End Date</Text>
-              <TouchableOpacity style={styles.inputContainer} onPress={() => setShowEndCalendar(true)}>
-                <Calendar size={20} color={Colors.textMuted} />
-                <Text style={[styles.inputText, !endDate && styles.placeholder]}>
+            <View style={[staticStyles.inputGroup, staticStyles.halfWidth]}>
+              <Text style={[staticStyles.label, { color: colors.text }]}>End Date</Text>
+              <TouchableOpacity style={[s.inputContainer]} onPress={() => setShowEndCalendar(true)}>
+                <Calendar size={20} color={colors.textMuted} />
+                <Text style={[staticStyles.inputText, { color: endDate ? colors.text : colors.textMuted }]}>
                   {endDate ? new Date(endDate + 'T00:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : 'Select'}
                 </Text>
               </TouchableOpacity>
@@ -221,14 +225,14 @@ export default function CreateTripScreen() {
             title="End Date"
           />
 
-          <View style={styles.inputGroup}>
-            <Text style={styles.label}>Budget</Text>
-            <View style={styles.inputContainer}>
-              <DollarSign size={20} color={Colors.textMuted} />
+          <View style={staticStyles.inputGroup}>
+            <Text style={[staticStyles.label, { color: colors.text }]}>Budget</Text>
+            <View style={[s.inputContainer]}>
+              <DollarSign size={20} color={colors.textMuted} />
               <TextInput
-                style={[styles.input, styles.inputWithIcon]}
+                style={[staticStyles.input, staticStyles.inputWithIcon, { color: colors.text }]}
                 placeholder="Estimated budget"
-                placeholderTextColor={Colors.textMuted}
+                placeholderTextColor={colors.textMuted}
                 value={budget}
                 onChangeText={setBudget}
                 keyboardType="numeric"
@@ -236,23 +240,23 @@ export default function CreateTripScreen() {
             </View>
           </View>
 
-          <View style={styles.inputGroup}>
-            <Text style={styles.label}>Invite Travelers</Text>
-            <TouchableOpacity style={styles.inputContainer} onPress={() => Alert.alert('Share After Creating', 'Create your trip first, then invite travelers from the trip details page.')}>
-              <Users size={20} color={Colors.textMuted} />
-              <Text style={[styles.inputText, styles.placeholder]}>
+          <View style={staticStyles.inputGroup}>
+            <Text style={[staticStyles.label, { color: colors.text }]}>Invite Travelers</Text>
+            <TouchableOpacity style={[s.inputContainer]} onPress={() => Alert.alert('Share After Creating', 'Create your trip first, then invite travelers from the trip details page.')}>
+              <Users size={20} color={colors.textMuted} />
+              <Text style={[staticStyles.inputText, { color: colors.textMuted }]}>
                 Add collaborators
               </Text>
             </TouchableOpacity>
           </View>
         </ScrollView>
 
-        <View style={styles.footer}>
+        <View style={[s.footer]}>
           {isAtLimit && (
-            <View style={styles.limitBanner}>
-              <Text style={styles.limitBannerText}>You've used all {FREE_TRIP_LIMIT} free trips. Upgrade to Premium for unlimited trips.</Text>
+            <View style={[s.limitBanner]}>
+              <Text style={[staticStyles.limitBannerText, { color: colors.text }]}>You've used all {FREE_TRIP_LIMIT} free trips. Upgrade to Premium for unlimited trips.</Text>
               <TouchableOpacity
-                style={styles.limitUpgradeBtn}
+                style={[staticStyles.limitUpgradeBtn, { backgroundColor: colors.accent }]}
                 onPress={() => {
                   hapticLight();
                   router.back();
@@ -260,21 +264,21 @@ export default function CreateTripScreen() {
                 }}
                 activeOpacity={0.8}
               >
-                <Text style={styles.limitUpgradeBtnText}>View Premium</Text>
+                <Text style={staticStyles.limitUpgradeBtnText}>View Premium</Text>
               </TouchableOpacity>
             </View>
           )}
           {!isAtLimit && plan === 'free' && remaining <= 2 && remaining > 0 && (
-            <Text style={styles.remainingText}>
+            <Text style={[staticStyles.remainingText, { color: colors.textSecondary }]}>
               {remaining === 1 ? 'You have 1 free trip left' : `You have ${remaining} free trips left`} — upgrade anytime for unlimited trips
             </Text>
           )}
           <TouchableOpacity 
-            style={[styles.createButton, !isValid && styles.createButtonDisabled]}
+            style={[s.createButton, !isValid && s.createButtonDisabled]}
             onPress={handleCreate}
             disabled={!isValid}
           >
-            <Text style={styles.createButtonText}>Create Trip</Text>
+            <Text style={[staticStyles.createButtonText, { color: colors.textOnPrimary }]}>Create Trip</Text>
           </TouchableOpacity>
         </View>
       </SafeAreaView>
@@ -282,11 +286,59 @@ export default function CreateTripScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+const createStyles = (colors: ThemeColors) => StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: Colors.background,
+    backgroundColor: colors.background,
   },
+  closeButton: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    backgroundColor: colors.surface,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  inputContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: colors.surface,
+    paddingHorizontal: 14,
+    paddingVertical: 14,
+    borderRadius: 14,
+  },
+  footer: {
+    position: 'absolute',
+    bottom: 0,
+    left: 0,
+    right: 0,
+    padding: 20,
+    paddingBottom: 34,
+    backgroundColor: colors.background,
+    borderTopWidth: 1,
+    borderTopColor: colors.borderLight,
+  },
+  createButton: {
+    backgroundColor: colors.accent,
+    paddingVertical: 16,
+    borderRadius: 14,
+    alignItems: 'center',
+  },
+  createButtonDisabled: {
+    backgroundColor: colors.textMuted,
+  },
+  limitBanner: {
+    backgroundColor: colors.warningBg,
+    borderWidth: 1,
+    borderColor: colors.warning + '30',
+    borderRadius: 12,
+    padding: 14,
+    marginBottom: 12,
+    alignItems: 'center',
+  },
+});
+
+const staticStyles = StyleSheet.create({
   header: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -294,18 +346,9 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
     paddingVertical: 12,
   },
-  closeButton: {
-    width: 44,
-    height: 44,
-    borderRadius: 22,
-    backgroundColor: Colors.surface,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
   headerTitle: {
     fontSize: 18,
-    fontWeight: '600',
-    color: Colors.text,
+    fontWeight: '600' as const,
   },
   headerSpacer: {
     width: 44,
@@ -319,8 +362,7 @@ const styles = StyleSheet.create({
   },
   label: {
     fontSize: 14,
-    fontWeight: '600',
-    color: Colors.text,
+    fontWeight: '600' as const,
     marginBottom: 10,
   },
   coverScroll: {
@@ -332,10 +374,6 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     overflow: 'hidden',
     marginRight: 12,
-  },
-  coverOptionSelected: {
-    borderWidth: 3,
-    borderColor: Colors.primary,
   },
   coverImage: {
     width: '100%',
@@ -351,25 +389,15 @@ const styles = StyleSheet.create({
     width: 32,
     height: 32,
     borderRadius: 16,
-    backgroundColor: Colors.primary,
     justifyContent: 'center',
     alignItems: 'center',
   },
   inputGroup: {
     marginBottom: 20,
   },
-  inputContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: Colors.surface,
-    paddingHorizontal: 14,
-    paddingVertical: 14,
-    borderRadius: 14,
-  },
   input: {
     flex: 1,
     fontSize: 15,
-    color: Colors.text,
   },
   inputWithIcon: {
     marginLeft: 10,
@@ -377,11 +405,7 @@ const styles = StyleSheet.create({
   inputText: {
     flex: 1,
     fontSize: 15,
-    color: Colors.text,
     marginLeft: 10,
-  },
-  placeholder: {
-    color: Colors.textMuted,
   },
   row: {
     flexDirection: 'row',
@@ -390,49 +414,17 @@ const styles = StyleSheet.create({
   halfWidth: {
     flex: 1,
   },
-  footer: {
-    position: 'absolute',
-    bottom: 0,
-    left: 0,
-    right: 0,
-    padding: 20,
-    paddingBottom: 34,
-    backgroundColor: Colors.background,
-    borderTopWidth: 1,
-    borderTopColor: Colors.borderLight,
-  },
-  createButton: {
-    backgroundColor: Colors.primary,
-    paddingVertical: 16,
-    borderRadius: 14,
-    alignItems: 'center',
-  },
-  createButtonDisabled: {
-    backgroundColor: Colors.textMuted,
-  },
   createButtonText: {
     fontSize: 16,
-    fontWeight: '600',
-    color: Colors.textLight,
-  },
-  limitBanner: {
-    backgroundColor: Colors.warning + '12',
-    borderWidth: 1,
-    borderColor: Colors.warning + '30',
-    borderRadius: 12,
-    padding: 14,
-    marginBottom: 12,
-    alignItems: 'center',
+    fontWeight: '600' as const,
   },
   limitBannerText: {
     fontSize: 13,
-    color: Colors.text,
     textAlign: 'center' as const,
     lineHeight: 18,
     marginBottom: 10,
   },
   limitUpgradeBtn: {
-    backgroundColor: Colors.accent,
     paddingHorizontal: 20,
     paddingVertical: 10,
     borderRadius: 10,
@@ -440,11 +432,10 @@ const styles = StyleSheet.create({
   limitUpgradeBtnText: {
     fontSize: 13,
     fontWeight: '600' as const,
-    color: Colors.textLight,
+    color: '#fff',
   },
   remainingText: {
     fontSize: 12,
-    color: Colors.textSecondary,
     textAlign: 'center' as const,
     marginBottom: 10,
   },

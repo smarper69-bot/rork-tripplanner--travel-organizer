@@ -7,13 +7,15 @@ import {
   Hotel, Ticket, ChevronRight, Plane, ExternalLink, ArrowRight
 } from 'lucide-react-native';
 import { openHotelSearch, openFlightSearch } from '@/utils/bookingLinks';
-import Colors from '@/constants/colors';
+import { useThemeColors } from '@/hooks/useThemeColors';
 import { openComingSoon } from '@/utils/comingSoon';
 import { destinations, getDestinationWithDefaults, DiscoverDestination } from '@/mocks/destinations';
+import { ThemeColors } from '@/constants/themes';
 
 export default function DestinationOverviewScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const router = useRouter();
+  const colors = useThemeColors();
 
   const rawDestination: DiscoverDestination | undefined =
     destinations.find(d => d.id === id) ??
@@ -26,26 +28,26 @@ export default function DestinationOverviewScreen() {
     return (
       <>
         <Stack.Screen options={{ title: 'Not Found' }} />
-        <View style={styles.notFound}>
-          <MapPin size={48} color={Colors.textMuted} />
-          <Text style={styles.notFoundTitle}>Destination not found</Text>
-          <Text style={styles.notFoundSubtitle}>We couldn{"'"}t find that destination. Try one of these instead:</Text>
-          <TouchableOpacity style={styles.backExploreButton} onPress={() => router.replace('/discover' as any)}>
-            <Text style={styles.backExploreText}>Back to Explore</Text>
+        <View style={[staticStyles.notFound, { backgroundColor: colors.background }]}>
+          <MapPin size={48} color={colors.textMuted} />
+          <Text style={[staticStyles.notFoundTitle, { color: colors.text }]}>Destination not found</Text>
+          <Text style={[staticStyles.notFoundSubtitle, { color: colors.textSecondary }]}>We couldn{"'"}t find that destination. Try one of these instead:</Text>
+          <TouchableOpacity style={[staticStyles.backExploreButton, { backgroundColor: colors.accent }]} onPress={() => router.replace('/discover' as any)}>
+            <Text style={staticStyles.backExploreText}>Back to Explore</Text>
           </TouchableOpacity>
-          <View style={styles.suggestedList}>
+          <View style={staticStyles.suggestedList}>
             {suggestedDestinations.map((dest) => (
               <TouchableOpacity
                 key={dest.id}
-                style={styles.suggestedCard}
+                style={[staticStyles.suggestedCard, { backgroundColor: colors.surface, borderColor: colors.border }]}
                 onPress={() => router.replace({ pathname: '/destination/[id]' as any, params: { id: dest.id } })}
               >
-                <Image source={{ uri: dest.imageUrl }} style={styles.suggestedImage} />
-                <View style={styles.suggestedInfo}>
-                  <Text style={styles.suggestedCity}>{dest.city}</Text>
-                  <Text style={styles.suggestedCountry}>{dest.country}</Text>
+                <Image source={{ uri: dest.imageUrl }} style={staticStyles.suggestedImage} />
+                <View style={staticStyles.suggestedInfo}>
+                  <Text style={[staticStyles.suggestedCity, { color: colors.text }]}>{dest.city}</Text>
+                  <Text style={[staticStyles.suggestedCountry, { color: colors.textSecondary }]}>{dest.country}</Text>
                 </View>
-                <ChevronRight size={18} color={Colors.textMuted} />
+                <ChevronRight size={18} color={colors.textMuted} />
               </TouchableOpacity>
             ))}
           </View>
@@ -73,148 +75,150 @@ export default function DestinationOverviewScreen() {
     });
   };
 
+  const s = createStyles(colors);
+
   return (
     <>
       <Stack.Screen options={{ headerShown: false, title: destination.city }} />
-      <View style={styles.container}>
+      <View style={[staticStyles.container, { backgroundColor: colors.background }]}>
         <ScrollView showsVerticalScrollIndicator={false}>
-          <View style={styles.heroContainer}>
-            <Image source={{ uri: destination.imageUrl }} style={styles.heroImage} />
-            <View style={styles.heroOverlay} />
+          <View style={staticStyles.heroContainer}>
+            <Image source={{ uri: destination.imageUrl }} style={staticStyles.heroImage} />
+            <View style={staticStyles.heroOverlay} />
             
-            <SafeAreaView style={styles.heroContent} edges={['top']}>
-              <View style={styles.heroHeader}>
+            <SafeAreaView style={staticStyles.heroContent} edges={['top']}>
+              <View style={staticStyles.heroHeader}>
                 <TouchableOpacity 
-                  style={styles.backButton}
+                  style={staticStyles.backButton}
                   onPress={() => router.back()}
                 >
                   <ArrowLeft size={24} color="#fff" />
                 </TouchableOpacity>
               </View>
 
-              <View style={styles.heroInfo}>
-                <Text style={styles.heroCity}>{destination.city}</Text>
-                <Text style={styles.heroCountry}>{destination.country}</Text>
-                <View style={styles.ratingRow}>
+              <View style={staticStyles.heroInfo}>
+                <Text style={staticStyles.heroCity}>{destination.city}</Text>
+                <Text style={staticStyles.heroCountry}>{destination.country}</Text>
+                <View style={staticStyles.ratingRow}>
                   <Star size={14} color="#FFD700" fill="#FFD700" />
-                  <Text style={styles.ratingText}>{(destination.popularityScore / 20).toFixed(1)}</Text>
+                  <Text style={staticStyles.ratingText}>{(destination.popularityScore / 20).toFixed(1)}</Text>
                 </View>
               </View>
             </SafeAreaView>
           </View>
 
-          <View style={styles.content}>
-            <View style={styles.tagsRow}>
+          <View style={staticStyles.content}>
+            <View style={staticStyles.tagsRow}>
               {destination.tripTypes.slice(0, 4).map((tag, index) => (
-                <View key={index} style={styles.tag}>
-                  <Text style={styles.tagText}>{tag}</Text>
+                <View key={index} style={[s.tag]}>
+                  <Text style={[staticStyles.tagText, { color: colors.text }]}>{tag}</Text>
                 </View>
               ))}
             </View>
 
-            <View style={styles.infoCards}>
-              <View style={styles.infoCard}>
-                <DollarSign size={18} color={Colors.primary} />
+            <View style={staticStyles.infoCards}>
+              <View style={[s.infoCard]}>
+                <DollarSign size={18} color={colors.accent} />
                 <View>
-                  <Text style={styles.infoLabel}>Avg. Daily</Text>
-                  <Text style={styles.infoValue}>${destination.avgDailyCost}</Text>
+                  <Text style={[staticStyles.infoLabel, { color: colors.textMuted }]}>Avg. Daily</Text>
+                  <Text style={[staticStyles.infoValue, { color: colors.text }]}>${destination.avgDailyCost}</Text>
                 </View>
               </View>
-              <View style={styles.infoCard}>
-                <Calendar size={18} color={Colors.primary} />
+              <View style={[s.infoCard]}>
+                <Calendar size={18} color={colors.accent} />
                 <View>
-                  <Text style={styles.infoLabel}>Best Time</Text>
-                  <Text style={styles.infoValue}>{bestMonthsText}</Text>
+                  <Text style={[staticStyles.infoLabel, { color: colors.textMuted }]}>Best Time</Text>
+                  <Text style={[staticStyles.infoValue, { color: colors.text }]}>{bestMonthsText}</Text>
                 </View>
               </View>
             </View>
 
-            <View style={styles.section}>
-              <Text style={styles.sectionTitle}>Why Go</Text>
-              <Text style={styles.whyGoText}>{destination.whyGo}</Text>
+            <View style={staticStyles.section}>
+              <Text style={[staticStyles.sectionTitle, { color: colors.text }]}>Why Go</Text>
+              <Text style={[staticStyles.whyGoText, { color: colors.textSecondary }]}>{destination.whyGo}</Text>
             </View>
 
-            <View style={styles.section}>
-              <Text style={styles.sectionTitle}>Hotels</Text>
+            <View style={staticStyles.section}>
+              <Text style={[staticStyles.sectionTitle, { color: colors.text }]}>Hotels</Text>
               <TouchableOpacity
-                style={styles.hotelsCta}
+                style={[staticStyles.hotelsCta, { backgroundColor: colors.text }]}
                 activeOpacity={0.8}
                 onPress={() => router.push(`/hotels/${destination.city}` as any)}
               >
-                <Text style={styles.hotelsCtaText}>Take me to hotels</Text>
-                <ArrowRight size={20} color="#fff" />
+                <Text style={[staticStyles.hotelsCtaText, { color: colors.background }]}>Take me to hotels</Text>
+                <ArrowRight size={20} color={colors.background} />
               </TouchableOpacity>
-              <Text style={styles.hotelsCtaCaption}>We may earn a commission on bookings.</Text>
+              <Text style={[staticStyles.hotelsCtaCaption, { color: colors.textMuted }]}>We may earn a commission on bookings.</Text>
             </View>
 
-            <View style={styles.section}>
-              <View style={styles.sectionHeader}>
-                <Text style={styles.sectionTitle}>Things to Do</Text>
-                <TouchableOpacity style={styles.seeAllButton} onPress={() => openComingSoon('All activities')}>
-                  <Text style={styles.seeAllText}>See all</Text>
-                  <ChevronRight size={16} color={Colors.textSecondary} />
+            <View style={staticStyles.section}>
+              <View style={staticStyles.sectionHeader}>
+                <Text style={[staticStyles.sectionTitle, { color: colors.text }]}>Things to Do</Text>
+                <TouchableOpacity style={staticStyles.seeAllButton} onPress={() => openComingSoon('All activities')}>
+                  <Text style={[staticStyles.seeAllText, { color: colors.textSecondary }]}>See all</Text>
+                  <ChevronRight size={16} color={colors.textSecondary} />
                 </TouchableOpacity>
               </View>
-              <View style={styles.activitiesList}>
+              <View style={staticStyles.activitiesList}>
                 {destination.activities.map((activity, index) => (
-                  <TouchableOpacity key={index} style={styles.activityCard} onPress={() => openComingSoon('Activity details')}>
-                    <View style={styles.activityIcon}>
-                      <Ticket size={18} color={Colors.primary} />
+                  <TouchableOpacity key={index} style={[s.activityCard]} onPress={() => openComingSoon('Activity details')}>
+                    <View style={[staticStyles.activityIcon, { backgroundColor: colors.accent + '15' }]}>
+                      <Ticket size={18} color={colors.accent} />
                     </View>
-                    <View style={styles.activityInfo}>
-                      <Text style={styles.activityName}>{activity.name}</Text>
-                      <Text style={styles.activityMeta}>{activity.duration} · {activity.price}</Text>
+                    <View style={staticStyles.activityInfo}>
+                      <Text style={[staticStyles.activityName, { color: colors.text }]}>{activity.name}</Text>
+                      <Text style={[staticStyles.activityMeta, { color: colors.textSecondary }]}>{activity.duration} · {activity.price}</Text>
                     </View>
-                    <ChevronRight size={18} color={Colors.textMuted} />
+                    <ChevronRight size={18} color={colors.textMuted} />
                   </TouchableOpacity>
                 ))}
               </View>
             </View>
 
-            <View style={styles.bookingSection}>
-              <Text style={styles.sectionTitle}>Book Your Trip</Text>
+            <View style={staticStyles.bookingSection}>
+              <Text style={[staticStyles.sectionTitle, { color: colors.text }]}>Book Your Trip</Text>
               <TouchableOpacity
-                style={styles.bookingCta}
+                style={[s.bookingCta]}
                 activeOpacity={0.7}
                 onPress={() => openHotelSearch({ city: destination.city, country: destination.country })}
               >
-                <View style={styles.bookingCtaLeft}>
-                  <View style={[styles.bookingCtaIcon, { backgroundColor: '#FEF3C7' }]}>
-                    <Hotel size={20} color="#D97706" />
+                <View style={staticStyles.bookingCtaLeft}>
+                  <View style={[staticStyles.bookingCtaIcon, { backgroundColor: colors.warningBg }]}>
+                    <Hotel size={20} color={colors.warning} />
                   </View>
                   <View>
-                    <Text style={styles.bookingCtaTitle}>Find Hotels</Text>
-                    <Text style={styles.bookingCtaSubtitle}>Search accommodations in {destination.city}</Text>
+                    <Text style={[staticStyles.bookingCtaTitle, { color: colors.text }]}>Find Hotels</Text>
+                    <Text style={[staticStyles.bookingCtaSubtitle, { color: colors.textSecondary }]}>Search accommodations in {destination.city}</Text>
                   </View>
                 </View>
-                <ExternalLink size={18} color={Colors.textMuted} />
+                <ExternalLink size={18} color={colors.textMuted} />
               </TouchableOpacity>
               <TouchableOpacity
-                style={styles.bookingCta}
+                style={[s.bookingCta]}
                 activeOpacity={0.7}
                 onPress={() => openFlightSearch({ city: destination.city, country: destination.country })}
               >
-                <View style={styles.bookingCtaLeft}>
-                  <View style={[styles.bookingCtaIcon, { backgroundColor: '#EEF2FF' }]}>
-                    <Plane size={20} color="#6366F1" />
+                <View style={staticStyles.bookingCtaLeft}>
+                  <View style={[staticStyles.bookingCtaIcon, { backgroundColor: colors.info + '15' }]}>
+                    <Plane size={20} color={colors.info} />
                   </View>
                   <View>
-                    <Text style={styles.bookingCtaTitle}>Find Flights</Text>
-                    <Text style={styles.bookingCtaSubtitle}>Search flights to {destination.city}</Text>
+                    <Text style={[staticStyles.bookingCtaTitle, { color: colors.text }]}>Find Flights</Text>
+                    <Text style={[staticStyles.bookingCtaSubtitle, { color: colors.textSecondary }]}>Search flights to {destination.city}</Text>
                   </View>
                 </View>
-                <ExternalLink size={18} color={Colors.textMuted} />
+                <ExternalLink size={18} color={colors.textMuted} />
               </TouchableOpacity>
-              <Text style={styles.bookingDisclaimer}>Opens partner site. We may earn a commission.</Text>
+              <Text style={[staticStyles.bookingDisclaimer, { color: colors.textMuted }]}>Opens partner site. We may earn a commission.</Text>
             </View>
 
-            <View style={styles.highlightsSection}>
-              <Text style={styles.sectionTitle}>Highlights</Text>
-              <View style={styles.highlightsList}>
+            <View style={staticStyles.highlightsSection}>
+              <Text style={[staticStyles.sectionTitle, { color: colors.text }]}>Highlights</Text>
+              <View style={staticStyles.highlightsList}>
                 {destination.highlights.map((highlight, index) => (
-                  <View key={index} style={styles.highlightItem}>
-                    <MapPin size={14} color={Colors.primary} />
-                    <Text style={styles.highlightText}>{highlight}</Text>
+                  <View key={index} style={[s.highlightItem]}>
+                    <MapPin size={14} color={colors.accent} />
+                    <Text style={[staticStyles.highlightText, { color: colors.text }]}>{highlight}</Text>
                   </View>
                 ))}
               </View>
@@ -222,15 +226,15 @@ export default function DestinationOverviewScreen() {
           </View>
         </ScrollView>
 
-        <SafeAreaView style={styles.footer} edges={['bottom']}>
-          <View style={styles.footerContent}>
-            <View style={styles.footerPrice}>
-              <Text style={styles.footerPriceLabel}>From</Text>
-              <Text style={styles.footerPriceValue}>${destination.avgDailyCost}/day</Text>
+        <SafeAreaView style={[staticStyles.footer, { backgroundColor: colors.background, borderTopColor: colors.border }]} edges={['bottom']}>
+          <View style={staticStyles.footerContent}>
+            <View style={staticStyles.footerPrice}>
+              <Text style={[staticStyles.footerPriceLabel, { color: colors.textMuted }]}>From</Text>
+              <Text style={[staticStyles.footerPriceValue, { color: colors.text }]}>${destination.avgDailyCost}/day</Text>
             </View>
-            <TouchableOpacity style={styles.planButton} onPress={handlePlanTrip}>
+            <TouchableOpacity style={[staticStyles.planButton, { backgroundColor: colors.accent }]} onPress={handlePlanTrip}>
               <Plane size={18} color="#fff" />
-              <Text style={styles.planButtonText}>Plan this trip</Text>
+              <Text style={staticStyles.planButtonText}>Plan this trip</Text>
             </TouchableOpacity>
           </View>
         </SafeAreaView>
@@ -239,28 +243,76 @@ export default function DestinationOverviewScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+const createStyles = (colors: ThemeColors) => StyleSheet.create({
+  tag: {
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    backgroundColor: colors.chipBg,
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: colors.border,
+  },
+  infoCard: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+    backgroundColor: colors.surface,
+    padding: 14,
+    borderRadius: 14,
+    borderWidth: 1,
+    borderColor: colors.border,
+  },
+  activityCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: colors.surface,
+    padding: 14,
+    borderRadius: 14,
+    borderWidth: 1,
+    borderColor: colors.border,
+  },
+  bookingCta: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    backgroundColor: colors.surface,
+    padding: 14,
+    borderRadius: 14,
+    borderWidth: 1,
+    borderColor: colors.border,
+    marginBottom: 10,
+  },
+  highlightItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+    backgroundColor: colors.surface,
+    padding: 14,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: colors.border,
+  },
+});
+
+const staticStyles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: Colors.background,
   },
   notFound: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: Colors.background,
     padding: 24,
   },
   notFoundTitle: {
     fontSize: 20,
     fontWeight: '700' as const,
-    color: Colors.text,
     marginTop: 16,
     marginBottom: 8,
   },
   notFoundSubtitle: {
     fontSize: 14,
-    color: Colors.textSecondary,
     textAlign: 'center',
     marginBottom: 20,
     lineHeight: 20,
@@ -268,7 +320,6 @@ const styles = StyleSheet.create({
   backExploreButton: {
     paddingVertical: 12,
     paddingHorizontal: 28,
-    backgroundColor: Colors.primary,
     borderRadius: 12,
     marginBottom: 28,
   },
@@ -284,11 +335,9 @@ const styles = StyleSheet.create({
   suggestedCard: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: Colors.surface,
     borderRadius: 14,
     padding: 12,
     borderWidth: 1,
-    borderColor: Colors.border,
   },
   suggestedImage: {
     width: 56,
@@ -302,12 +351,10 @@ const styles = StyleSheet.create({
   suggestedCity: {
     fontSize: 15,
     fontWeight: '600' as const,
-    color: Colors.text,
     marginBottom: 2,
   },
   suggestedCountry: {
     fontSize: 13,
-    color: Colors.textSecondary,
   },
   heroContainer: {
     height: 320,
@@ -370,16 +417,9 @@ const styles = StyleSheet.create({
     gap: 8,
     marginBottom: 20,
   },
-  tag: {
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    backgroundColor: Colors.text + '10',
-    borderRadius: 16,
-  },
   tagText: {
     fontSize: 13,
     fontWeight: '500' as const,
-    color: Colors.text,
     textTransform: 'capitalize' as const,
   },
   infoCards: {
@@ -387,25 +427,12 @@ const styles = StyleSheet.create({
     gap: 12,
     marginBottom: 24,
   },
-  infoCard: {
-    flex: 1,
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 12,
-    backgroundColor: Colors.surface,
-    padding: 14,
-    borderRadius: 14,
-    borderWidth: 1,
-    borderColor: Colors.border,
-  },
   infoLabel: {
     fontSize: 12,
-    color: Colors.textMuted,
   },
   infoValue: {
     fontSize: 15,
     fontWeight: '600' as const,
-    color: Colors.text,
   },
   section: {
     marginBottom: 24,
@@ -419,7 +446,6 @@ const styles = StyleSheet.create({
   sectionTitle: {
     fontSize: 18,
     fontWeight: '700' as const,
-    color: Colors.text,
     marginBottom: 12,
   },
   seeAllButton: {
@@ -430,19 +456,16 @@ const styles = StyleSheet.create({
   },
   seeAllText: {
     fontSize: 14,
-    color: Colors.textSecondary,
     fontWeight: '500' as const,
   },
   whyGoText: {
     fontSize: 15,
     lineHeight: 24,
-    color: Colors.textSecondary,
   },
   hotelsCta: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: '#111',
     height: 60,
     borderRadius: 18,
     gap: 10,
@@ -450,31 +473,19 @@ const styles = StyleSheet.create({
   hotelsCtaText: {
     fontSize: 17,
     fontWeight: '700' as const,
-    color: '#fff',
   },
   hotelsCtaCaption: {
     fontSize: 11,
-    color: Colors.textMuted,
     textAlign: 'center',
     marginTop: 10,
   },
   activitiesList: {
     gap: 10,
   },
-  activityCard: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: Colors.surface,
-    padding: 14,
-    borderRadius: 14,
-    borderWidth: 1,
-    borderColor: Colors.border,
-  },
   activityIcon: {
     width: 40,
     height: 40,
     borderRadius: 12,
-    backgroundColor: Colors.primary + '12',
     justifyContent: 'center',
     alignItems: 'center',
     marginRight: 12,
@@ -485,12 +496,10 @@ const styles = StyleSheet.create({
   activityName: {
     fontSize: 15,
     fontWeight: '600' as const,
-    color: Colors.text,
     marginBottom: 2,
   },
   activityMeta: {
     fontSize: 13,
-    color: Colors.textSecondary,
   },
   highlightsSection: {
     marginBottom: 24,
@@ -498,33 +507,11 @@ const styles = StyleSheet.create({
   highlightsList: {
     gap: 10,
   },
-  highlightItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 10,
-    backgroundColor: Colors.surface,
-    padding: 14,
-    borderRadius: 12,
-    borderWidth: 1,
-    borderColor: Colors.border,
-  },
   highlightText: {
     fontSize: 15,
-    color: Colors.text,
   },
   bookingSection: {
     marginBottom: 24,
-  },
-  bookingCta: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    backgroundColor: Colors.surface,
-    padding: 14,
-    borderRadius: 14,
-    borderWidth: 1,
-    borderColor: Colors.border,
-    marginBottom: 10,
   },
   bookingCtaLeft: {
     flexDirection: 'row',
@@ -542,16 +529,13 @@ const styles = StyleSheet.create({
   bookingCtaTitle: {
     fontSize: 15,
     fontWeight: '600' as const,
-    color: Colors.text,
     marginBottom: 2,
   },
   bookingCtaSubtitle: {
     fontSize: 12,
-    color: Colors.textSecondary,
   },
   bookingDisclaimer: {
     fontSize: 11,
-    color: Colors.textMuted,
     textAlign: 'center',
     marginTop: 4,
   },
@@ -560,9 +544,7 @@ const styles = StyleSheet.create({
     bottom: 0,
     left: 0,
     right: 0,
-    backgroundColor: Colors.background,
     borderTopWidth: 1,
-    borderTopColor: Colors.border,
   },
   footerContent: {
     flexDirection: 'row',
@@ -574,18 +556,15 @@ const styles = StyleSheet.create({
   footerPrice: {},
   footerPriceLabel: {
     fontSize: 12,
-    color: Colors.textMuted,
   },
   footerPriceValue: {
     fontSize: 18,
     fontWeight: '700' as const,
-    color: Colors.text,
   },
   planButton: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 8,
-    backgroundColor: Colors.primary,
     paddingVertical: 14,
     paddingHorizontal: 24,
     borderRadius: 14,

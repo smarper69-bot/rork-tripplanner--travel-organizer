@@ -9,11 +9,11 @@ import {
   Check, Wand2, Utensils, Landmark, Waves, Mountain
 } from 'lucide-react-native';
 import { z } from 'zod';
-import Colors from '@/constants/colors';
 import { useThemeColors } from '@/hooks/useThemeColors';
 import { useTripsStore } from '@/store/useTripsStore';
 import { generateObject } from '@rork-ai/toolkit-sdk';
 import { Trip } from '@/types/trip';
+import { ThemeColors } from '@/constants/themes';
 
 interface GeneratedDay {
   date: string;
@@ -192,20 +192,22 @@ Available dates: ${tripDates.join(', ')}`;
     }
   }, [selectedTrip, selectedInterests, freeformInput, getDatesForTrip]);
 
+  const s = createStyles(colors);
+
   const renderTripPicker = () => (
-    <View style={styles.tripPickerOverlay}>
-      <View style={styles.tripPickerContainer}>
-        <Text style={styles.tripPickerTitle}>Select a Trip</Text>
-        <ScrollView style={styles.tripPickerList} showsVerticalScrollIndicator={false}>
+    <View style={[staticStyles.tripPickerOverlay, { backgroundColor: colors.overlay }]}>
+      <View style={[staticStyles.tripPickerContainer, { backgroundColor: colors.surface }]}>
+        <Text style={[staticStyles.tripPickerTitle, { color: colors.text }]}>Select a Trip</Text>
+        <ScrollView style={staticStyles.tripPickerList} showsVerticalScrollIndicator={false}>
           {trips.length === 0 && (
-            <Text style={styles.noTripsText}>No trips yet. Create a trip first.</Text>
+            <Text style={[staticStyles.noTripsText, { color: colors.textMuted }]}>No trips yet. Create a trip first.</Text>
           )}
           {trips.map((trip) => (
             <TouchableOpacity
               key={trip.id}
               style={[
-                styles.tripPickerItem,
-                selectedTripId === trip.id && styles.tripPickerItemSelected,
+                s.tripPickerItem,
+                selectedTripId === trip.id && s.tripPickerItemSelected,
               ]}
               onPress={() => {
                 setSelectedTripId(trip.id);
@@ -213,86 +215,86 @@ Available dates: ${tripDates.join(', ')}`;
               }}
               activeOpacity={0.7}
             >
-              <View style={styles.tripPickerItemContent}>
-                <Text style={styles.tripPickerItemName}>{trip.name}</Text>
-                <Text style={styles.tripPickerItemMeta}>
+              <View style={staticStyles.tripPickerItemContent}>
+                <Text style={[staticStyles.tripPickerItemName, { color: colors.text }]}>{trip.name}</Text>
+                <Text style={[staticStyles.tripPickerItemMeta, { color: colors.textSecondary }]}>
                   {trip.destination}, {trip.country}
                 </Text>
               </View>
-              {selectedTripId === trip.id && <Check size={18} color={Colors.primary} />}
+              {selectedTripId === trip.id && <Check size={18} color={colors.accent} />}
             </TouchableOpacity>
           ))}
         </ScrollView>
         <TouchableOpacity
-          style={styles.tripPickerClose}
+          style={staticStyles.tripPickerClose}
           onPress={() => setShowTripPicker(false)}
         >
-          <Text style={styles.tripPickerCloseText}>Cancel</Text>
+          <Text style={[staticStyles.tripPickerCloseText, { color: colors.textSecondary }]}>Cancel</Text>
         </TouchableOpacity>
       </View>
     </View>
   );
 
   return (
-    <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]} edges={['top']}>
-      <View style={[styles.header, { borderBottomColor: colors.borderLight }]}>
-        <View style={[styles.headerIcon, { backgroundColor: colors.primary + '15' }]}>
-          <Sparkles size={24} color={colors.primary} />
+    <SafeAreaView style={[staticStyles.containerBase, { backgroundColor: colors.background }]} edges={['top']}>
+      <View style={[staticStyles.header, { borderBottomColor: colors.borderLight }]}>
+        <View style={[staticStyles.headerIcon, { backgroundColor: colors.accent + '20' }]}>
+          <Sparkles size={24} color={colors.accent} />
         </View>
-        <View style={styles.headerContent}>
-          <Text style={[styles.title, { color: colors.text }]}>AI Concierge</Text>
-          <Text style={[styles.subtitle, { color: colors.textSecondary }]}>Generate itineraries with AI</Text>
+        <View style={staticStyles.headerContent}>
+          <Text style={[staticStyles.titleText, { color: colors.text }]}>AI Concierge</Text>
+          <Text style={[staticStyles.subtitleText, { color: colors.textSecondary }]}>Generate itineraries with AI</Text>
         </View>
       </View>
 
       <KeyboardAvoidingView 
-        style={styles.keyboardView}
+        style={staticStyles.keyboardView}
         behavior={Platform.OS === 'ios' ? 'padding' : undefined}
         keyboardVerticalOffset={90}
       >
         <ScrollView
           ref={scrollViewRef}
-          style={styles.scrollBody}
-          contentContainerStyle={styles.scrollContent}
+          style={staticStyles.scrollBody}
+          contentContainerStyle={staticStyles.scrollContent}
           showsVerticalScrollIndicator={false}
           onContentSizeChange={() => scrollViewRef.current?.scrollToEnd({ animated: true })}
         >
-          <View style={[styles.configSection, { backgroundColor: colors.surface }]}>
-            <Text style={[styles.configLabel, { color: colors.textSecondary }]}>Trip</Text>
+          <View style={[s.configSection]}>
+            <Text style={[staticStyles.configLabel, { color: colors.textSecondary }]}>Trip</Text>
             <TouchableOpacity
-              style={[styles.tripSelector, { backgroundColor: colors.background }]}
+              style={[s.tripSelector]}
               onPress={() => setShowTripPicker(true)}
               activeOpacity={0.7}
             >
               {selectedTrip ? (
-                <View style={styles.tripSelectorContent}>
-                  <MapPin size={16} color={Colors.primary} />
+                <View style={staticStyles.tripSelectorContent}>
+                  <MapPin size={16} color={colors.accent} />
                   <View style={{ flex: 1 }}>
-                    <Text style={[styles.tripSelectorName, { color: colors.text }]}>{selectedTrip.name}</Text>
-                    <Text style={styles.tripSelectorMeta}>
+                    <Text style={[staticStyles.tripSelectorName, { color: colors.text }]}>{selectedTrip.name}</Text>
+                    <Text style={[staticStyles.tripSelectorMeta, { color: colors.textSecondary }]}>
                       {selectedTrip.destination}, {selectedTrip.country}
                     </Text>
                   </View>
                 </View>
               ) : (
-                <Text style={styles.tripSelectorPlaceholder}>Select a trip...</Text>
+                <Text style={[staticStyles.tripSelectorPlaceholder, { color: colors.textMuted }]}>Select a trip...</Text>
               )}
               <ChevronDown size={18} color={colors.textMuted} />
             </TouchableOpacity>
 
-            <Text style={[styles.configLabel, { color: colors.textSecondary }]}>Interests (optional)</Text>
-            <View style={styles.interestsGrid}>
+            <Text style={[staticStyles.configLabel, { color: colors.textSecondary }]}>Interests (optional)</Text>
+            <View style={staticStyles.interestsGrid}>
               {INTEREST_OPTIONS.map((opt) => {
                 const isActive = selectedInterests.includes(opt.id);
                 return (
                   <TouchableOpacity
                     key={opt.id}
-                    style={[styles.interestChip, isActive && styles.interestChipActive]}
+                    style={[s.interestChip, isActive && s.interestChipActive]}
                     onPress={() => toggleInterest(opt.id)}
                     activeOpacity={0.7}
                   >
-                    <opt.icon size={16} color={isActive ? Colors.textLight : Colors.textSecondary} />
-                    <Text style={[styles.interestChipText, isActive && styles.interestChipTextActive]}>
+                    <opt.icon size={16} color={isActive ? colors.chipActiveText : colors.textSecondary} />
+                    <Text style={[s.interestChipText, isActive && s.interestChipTextActive]}>
                       {opt.label}
                     </Text>
                   </TouchableOpacity>
@@ -300,9 +302,9 @@ Available dates: ${tripDates.join(', ')}`;
               })}
             </View>
 
-            <Text style={[styles.configLabel, { color: colors.textSecondary }]}>Additional notes (optional)</Text>
+            <Text style={[staticStyles.configLabel, { color: colors.textSecondary }]}>Additional notes (optional)</Text>
             <TextInput
-              style={[styles.notesInput, { backgroundColor: colors.background, color: colors.text }]}
+              style={[s.notesInput]}
               placeholder="e.g. we love street food, skip museums..."
               placeholderTextColor={colors.textMuted}
               value={freeformInput}
@@ -313,65 +315,60 @@ Available dates: ${tripDates.join(', ')}`;
 
             <TouchableOpacity
               style={[
-                styles.generateButton, { backgroundColor: colors.primary },
-                (!selectedTrip || isGenerating) && styles.generateButtonDisabled,
+                s.generateButton,
+                (!selectedTrip || isGenerating) && staticStyles.generateButtonDisabled,
               ]}
               onPress={handleGenerate}
               disabled={!selectedTrip || isGenerating}
               activeOpacity={0.7}
             >
               {isGenerating ? (
-                <ActivityIndicator size="small" color={Colors.textLight} />
+                <ActivityIndicator size="small" color={colors.textOnPrimary} />
               ) : (
-                <Wand2 size={20} color={Colors.textLight} />
+                <Wand2 size={20} color={colors.textOnPrimary} />
               )}
-              <Text style={styles.generateButtonText}>
+              <Text style={[staticStyles.generateButtonText, { color: colors.textOnPrimary }]}>
                 {isGenerating ? 'Generating...' : 'Generate Itinerary'}
               </Text>
             </TouchableOpacity>
           </View>
 
           {chatLog.length > 0 && (
-            <View style={styles.chatSection}>
-              <Text style={styles.chatSectionTitle}>Activity</Text>
+            <View style={staticStyles.chatSection}>
+              <Text style={[staticStyles.chatSectionTitle, { color: colors.textMuted }]}>Activity</Text>
               {chatLog.map((entry) => (
                 <View
                   key={entry.id}
                   style={[
-                    styles.chatBubble,
-                    entry.role === 'user' ? styles.chatBubbleUser : styles.chatBubbleAi,
+                    staticStyles.chatBubble,
+                    entry.role === 'user' ? staticStyles.chatBubbleUser : staticStyles.chatBubbleAi,
                   ]}
                 >
                   {entry.role === 'assistant' && (
-                    <View style={styles.aiAvatarSmall}>
-                      <Sparkles size={12} color={Colors.primary} />
+                    <View style={[staticStyles.aiAvatarSmall, { backgroundColor: colors.accent + '20' }]}>
+                      <Sparkles size={12} color={colors.accent} />
                     </View>
                   )}
-                  <View style={styles.chatBubbleContent}>
-                    <Text
-                      style={[
-                        styles.chatBubbleText,
-                        entry.role === 'user' && styles.chatBubbleTextUser,
-                      ]}
-                    >
+                  <View style={[staticStyles.chatBubbleContent, { backgroundColor: colors.surface }]}>
+                    <Text style={[staticStyles.chatBubbleText, { color: colors.text }]}>
                       {entry.text}
                     </Text>
                     {entry.generatedDays && entry.generatedDays.length > 0 && (
-                      <View style={styles.itineraryPreview}>
+                      <View style={staticStyles.itineraryPreview}>
                         {entry.generatedDays.map((day, dayIdx) => (
-                          <View key={day.date} style={styles.dayCard}>
-                            <View style={styles.dayHeader}>
-                              <Calendar size={14} color={Colors.primary} />
-                              <Text style={styles.dayHeaderText}>Day {dayIdx + 1}</Text>
-                              <Text style={styles.dayDateText}>{day.date}</Text>
+                          <View key={day.date} style={[s.dayCard]}>
+                            <View style={staticStyles.dayHeader}>
+                              <Calendar size={14} color={colors.accent} />
+                              <Text style={[staticStyles.dayHeaderText, { color: colors.text }]}>Day {dayIdx + 1}</Text>
+                              <Text style={[staticStyles.dayDateText, { color: colors.textMuted }]}>{day.date}</Text>
                             </View>
                             {day.items.map((item, itemIdx) => (
-                              <View key={`${day.date}-${itemIdx}`} style={styles.activityRow}>
-                                <Text style={styles.activityTime}>{item.time}</Text>
-                                <View style={styles.activityInfo}>
-                                  <Text style={styles.activityTitle}>{item.title}</Text>
+                              <View key={`${day.date}-${itemIdx}`} style={staticStyles.activityRow}>
+                                <Text style={[staticStyles.activityTime, { color: colors.textSecondary }]}>{item.time}</Text>
+                                <View style={staticStyles.activityInfo}>
+                                  <Text style={[staticStyles.activityTitle, { color: colors.text }]}>{item.title}</Text>
                                   {item.notes ? (
-                                    <Text style={styles.activityNotes} numberOfLines={2}>{item.notes}</Text>
+                                    <Text style={[staticStyles.activityNotes, { color: colors.textMuted }]} numberOfLines={2}>{item.notes}</Text>
                                   ) : null}
                                 </View>
                               </View>
@@ -380,17 +377,17 @@ Available dates: ${tripDates.join(', ')}`;
                         ))}
                         <TouchableOpacity
                           style={[
-                            styles.saveButton,
-                            entry.saved && styles.saveButtonDone,
+                            s.saveButton,
+                            entry.saved && { backgroundColor: colors.successBg },
                           ]}
                           onPress={() => handleSaveItinerary(entry.id)}
                           disabled={entry.saved}
                           activeOpacity={0.7}
                         >
-                          <Check size={18} color={entry.saved ? '#10B981' : Colors.textLight} />
+                          <Check size={18} color={entry.saved ? colors.success : colors.textOnPrimary} />
                           <Text style={[
-                            styles.saveButtonText,
-                            entry.saved && styles.saveButtonTextDone,
+                            staticStyles.saveButtonText,
+                            { color: entry.saved ? colors.success : colors.textOnPrimary },
                           ]}>
                             {entry.saved ? 'Saved to trip' : 'Save to trip'}
                           </Text>
@@ -404,10 +401,10 @@ Available dates: ${tripDates.join(', ')}`;
           )}
 
           {chatLog.length === 0 && (
-            <View style={styles.emptyHint}>
-              <Wand2 size={32} color={Colors.textMuted} />
-              <Text style={styles.emptyHintTitle}>AI Itinerary Generator</Text>
-              <Text style={styles.emptyHintText}>
+            <View style={staticStyles.emptyHint}>
+              <Wand2 size={32} color={colors.textMuted} />
+              <Text style={[staticStyles.emptyHintTitle, { color: colors.text }]}>AI Itinerary Generator</Text>
+              <Text style={[staticStyles.emptyHintText, { color: colors.textSecondary }]}>
                 Select a trip, choose your interests, and let AI create a detailed day-by-day itinerary for you.
               </Text>
             </View>
@@ -422,10 +419,101 @@ Available dates: ${tripDates.join(', ')}`;
   );
 }
 
-const styles = StyleSheet.create({
-  container: {
+const createStyles = (colors: ThemeColors) => StyleSheet.create({
+  configSection: {
+    backgroundColor: colors.surface,
+    borderRadius: 20,
+    padding: 20,
+    marginBottom: 16,
+  },
+  tripSelector: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    backgroundColor: colors.inputBackground,
+    borderRadius: 14,
+    padding: 14,
+    marginBottom: 20,
+  },
+  interestChip: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    paddingHorizontal: 14,
+    paddingVertical: 10,
+    backgroundColor: colors.inputBackground,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: colors.borderLight,
+  },
+  interestChipActive: {
+    backgroundColor: colors.chipActiveBg,
+    borderColor: colors.chipActiveBg,
+  },
+  interestChipText: {
+    fontSize: 13,
+    fontWeight: '500' as const,
+    color: colors.textSecondary,
+  },
+  interestChipTextActive: {
+    color: colors.chipActiveText,
+  },
+  notesInput: {
+    backgroundColor: colors.inputBackground,
+    borderRadius: 14,
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    fontSize: 14,
+    color: colors.text,
+    minHeight: 60,
+    textAlignVertical: 'top' as const,
+    marginBottom: 20,
+  },
+  generateButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 10,
+    backgroundColor: colors.accent,
+    paddingVertical: 16,
+    borderRadius: 14,
+  },
+  dayCard: {
+    backgroundColor: colors.inputBackground,
+    borderRadius: 14,
+    padding: 14,
+    gap: 8,
+  },
+  saveButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
+    backgroundColor: colors.accent,
+    paddingVertical: 14,
+    borderRadius: 12,
+    marginTop: 4,
+  },
+  tripPickerItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingVertical: 14,
+    paddingHorizontal: 14,
+    borderRadius: 12,
+    marginBottom: 6,
+    backgroundColor: colors.inputBackground,
+  },
+  tripPickerItemSelected: {
+    backgroundColor: colors.accent + '15',
+    borderWidth: 1,
+    borderColor: colors.accent + '30',
+  },
+});
+
+const staticStyles = StyleSheet.create({
+  containerBase: {
     flex: 1,
-    backgroundColor: Colors.background,
   },
   header: {
     flexDirection: 'row',
@@ -434,27 +522,23 @@ const styles = StyleSheet.create({
     paddingVertical: 16,
     gap: 12,
     borderBottomWidth: 1,
-    borderBottomColor: Colors.borderLight,
   },
   headerIcon: {
     width: 48,
     height: 48,
     borderRadius: 24,
-    backgroundColor: Colors.primary + '15',
     justifyContent: 'center',
     alignItems: 'center',
   },
   headerContent: {
     flex: 1,
   },
-  title: {
+  titleText: {
     fontSize: 20,
     fontWeight: '700' as const,
-    color: Colors.text,
   },
-  subtitle: {
+  subtitleText: {
     fontSize: 13,
-    color: Colors.textSecondary,
   },
   keyboardView: {
     flex: 1,
@@ -465,29 +549,13 @@ const styles = StyleSheet.create({
   scrollContent: {
     padding: 20,
   },
-  configSection: {
-    backgroundColor: Colors.surface,
-    borderRadius: 20,
-    padding: 20,
-    marginBottom: 16,
-  },
   configLabel: {
     fontSize: 13,
     fontWeight: '600' as const,
-    color: Colors.textSecondary,
     textTransform: 'uppercase' as const,
     letterSpacing: 0.5,
     marginBottom: 10,
     marginTop: 4,
-  },
-  tripSelector: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    backgroundColor: Colors.background,
-    borderRadius: 14,
-    padding: 14,
-    marginBottom: 20,
   },
   tripSelectorContent: {
     flexDirection: 'row',
@@ -498,16 +566,13 @@ const styles = StyleSheet.create({
   tripSelectorName: {
     fontSize: 15,
     fontWeight: '600' as const,
-    color: Colors.text,
   },
   tripSelectorMeta: {
     fontSize: 12,
-    color: Colors.textSecondary,
     marginTop: 1,
   },
   tripSelectorPlaceholder: {
     fontSize: 15,
-    color: Colors.textMuted,
   },
   interestsGrid: {
     flexDirection: 'row',
@@ -515,56 +580,12 @@ const styles = StyleSheet.create({
     gap: 8,
     marginBottom: 20,
   },
-  interestChip: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 6,
-    paddingHorizontal: 14,
-    paddingVertical: 10,
-    backgroundColor: Colors.background,
-    borderRadius: 12,
-    borderWidth: 1,
-    borderColor: Colors.borderLight,
-  },
-  interestChipActive: {
-    backgroundColor: Colors.primary,
-    borderColor: Colors.primary,
-  },
-  interestChipText: {
-    fontSize: 13,
-    fontWeight: '500' as const,
-    color: Colors.textSecondary,
-  },
-  interestChipTextActive: {
-    color: Colors.textLight,
-  },
-  notesInput: {
-    backgroundColor: Colors.background,
-    borderRadius: 14,
-    paddingHorizontal: 16,
-    paddingVertical: 12,
-    fontSize: 14,
-    color: Colors.text,
-    minHeight: 60,
-    textAlignVertical: 'top' as const,
-    marginBottom: 20,
-  },
-  generateButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 10,
-    backgroundColor: Colors.primary,
-    paddingVertical: 16,
-    borderRadius: 14,
-  },
   generateButtonDisabled: {
     opacity: 0.4,
   },
   generateButtonText: {
     fontSize: 16,
     fontWeight: '600' as const,
-    color: Colors.textLight,
   },
   chatSection: {
     marginTop: 8,
@@ -572,7 +593,6 @@ const styles = StyleSheet.create({
   chatSectionTitle: {
     fontSize: 13,
     fontWeight: '600' as const,
-    color: Colors.textMuted,
     textTransform: 'uppercase' as const,
     letterSpacing: 0.5,
     marginBottom: 12,
@@ -592,7 +612,6 @@ const styles = StyleSheet.create({
     width: 28,
     height: 28,
     borderRadius: 14,
-    backgroundColor: Colors.primary + '15',
     justifyContent: 'center',
     alignItems: 'center',
     marginTop: 2,
@@ -601,40 +620,14 @@ const styles = StyleSheet.create({
     maxWidth: '85%',
     padding: 14,
     borderRadius: 16,
-    backgroundColor: Colors.surface,
   },
   chatBubbleText: {
     fontSize: 14,
     lineHeight: 20,
-    color: Colors.text,
-  },
-  chatBubbleTextUser: {
-    color: Colors.text,
-  },
-  successBadge: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 6,
-    marginTop: 10,
-    paddingHorizontal: 10,
-    paddingVertical: 6,
-    backgroundColor: '#D1FAE5',
-    borderRadius: 8,
-  },
-  successBadgeText: {
-    fontSize: 12,
-    fontWeight: '600' as const,
-    color: '#065F46',
   },
   itineraryPreview: {
     marginTop: 12,
     gap: 10,
-  },
-  dayCard: {
-    backgroundColor: Colors.background,
-    borderRadius: 14,
-    padding: 14,
-    gap: 8,
   },
   dayHeader: {
     flexDirection: 'row',
@@ -645,11 +638,9 @@ const styles = StyleSheet.create({
   dayHeaderText: {
     fontSize: 14,
     fontWeight: '700' as const,
-    color: Colors.text,
   },
   dayDateText: {
     fontSize: 12,
-    color: Colors.textMuted,
     marginLeft: 'auto' as const,
   },
   activityRow: {
@@ -660,7 +651,6 @@ const styles = StyleSheet.create({
   activityTime: {
     fontSize: 12,
     fontWeight: '600' as const,
-    color: Colors.textSecondary,
     width: 46,
     paddingTop: 2,
   },
@@ -671,33 +661,14 @@ const styles = StyleSheet.create({
   activityTitle: {
     fontSize: 14,
     fontWeight: '600' as const,
-    color: Colors.text,
   },
   activityNotes: {
     fontSize: 12,
-    color: Colors.textMuted,
     lineHeight: 16,
-  },
-  saveButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 8,
-    backgroundColor: Colors.primary,
-    paddingVertical: 14,
-    borderRadius: 12,
-    marginTop: 4,
-  },
-  saveButtonDone: {
-    backgroundColor: '#D1FAE5',
   },
   saveButtonText: {
     fontSize: 15,
     fontWeight: '600' as const,
-    color: Colors.textLight,
-  },
-  saveButtonTextDone: {
-    color: '#065F46',
   },
   emptyHint: {
     alignItems: 'center',
@@ -707,23 +678,19 @@ const styles = StyleSheet.create({
   emptyHintTitle: {
     fontSize: 18,
     fontWeight: '600' as const,
-    color: Colors.text,
   },
   emptyHintText: {
     fontSize: 14,
-    color: Colors.textSecondary,
     textAlign: 'center',
     lineHeight: 20,
     paddingHorizontal: 20,
   },
   tripPickerOverlay: {
     ...StyleSheet.absoluteFillObject,
-    backgroundColor: 'rgba(0,0,0,0.45)',
     justifyContent: 'flex-end',
     zIndex: 100,
   },
   tripPickerContainer: {
-    backgroundColor: Colors.surface,
     borderTopLeftRadius: 24,
     borderTopRightRadius: 24,
     padding: 20,
@@ -732,26 +699,10 @@ const styles = StyleSheet.create({
   tripPickerTitle: {
     fontSize: 18,
     fontWeight: '700' as const,
-    color: Colors.text,
     marginBottom: 16,
   },
   tripPickerList: {
     maxHeight: 300,
-  },
-  tripPickerItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingVertical: 14,
-    paddingHorizontal: 14,
-    borderRadius: 12,
-    marginBottom: 6,
-    backgroundColor: Colors.background,
-  },
-  tripPickerItemSelected: {
-    backgroundColor: Colors.primary + '10',
-    borderWidth: 1,
-    borderColor: Colors.primary + '30',
   },
   tripPickerItemContent: {
     flex: 1,
@@ -759,16 +710,13 @@ const styles = StyleSheet.create({
   tripPickerItemName: {
     fontSize: 15,
     fontWeight: '600' as const,
-    color: Colors.text,
   },
   tripPickerItemMeta: {
     fontSize: 12,
-    color: Colors.textSecondary,
     marginTop: 2,
   },
   noTripsText: {
     fontSize: 14,
-    color: Colors.textMuted,
     textAlign: 'center',
     paddingVertical: 20,
   },
@@ -780,6 +728,5 @@ const styles = StyleSheet.create({
   tripPickerCloseText: {
     fontSize: 15,
     fontWeight: '500' as const,
-    color: Colors.textSecondary,
   },
 });

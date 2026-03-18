@@ -3,8 +3,8 @@ import { View, Text, StyleSheet, ScrollView, TouchableOpacity, TextInput, Alert 
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter, useLocalSearchParams, Stack } from 'expo-router';
 import { MapPin, Calendar, DollarSign, Users, X, Check } from 'lucide-react-native';
-import Colors from '@/constants/colors';
 import { useThemeColors } from '@/hooks/useThemeColors';
+import { ThemeColors } from '@/constants/themes';
 import { useTripsStore } from '@/store/useTripsStore';
 import CalendarPicker from '@/components/CalendarPicker';
 
@@ -41,6 +41,8 @@ export default function EditTripScreen() {
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [trip?.id]);
+
+  const styles = createStyles(colors);
 
   if (!trip) {
     return (
@@ -109,7 +111,7 @@ export default function EditTripScreen() {
   return (
     <>
       <Stack.Screen options={{ headerShown: false }} />
-      <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]} edges={['top']}>
+      <SafeAreaView style={styles.container} edges={['top']}>
         <View style={styles.header}>
           <TouchableOpacity style={styles.headerBtn} onPress={handleCancel}>
             <X size={22} color={colors.text} />
@@ -120,7 +122,7 @@ export default function EditTripScreen() {
             onPress={handleSave}
             disabled={!isValid}
           >
-            <Check size={22} color={isValid ? '#fff' : Colors.textMuted} />
+            <Check size={22} color={isValid ? '#fff' : colors.textMuted} />
           </TouchableOpacity>
         </View>
 
@@ -135,7 +137,7 @@ export default function EditTripScreen() {
               <TextInput
                 style={styles.input}
                 placeholder="e.g., Summer in Paris"
-                placeholderTextColor={Colors.textMuted}
+                placeholderTextColor={colors.textMuted}
                 value={tripName}
                 onChangeText={setTripName}
                 testID="edit-trip-name"
@@ -146,11 +148,11 @@ export default function EditTripScreen() {
           <View style={styles.inputGroup}>
             <Text style={styles.label}>City</Text>
             <View style={styles.inputContainer}>
-              <MapPin size={20} color={Colors.textMuted} />
+              <MapPin size={20} color={colors.textMuted} />
               <TextInput
                 style={[styles.input, styles.inputWithIcon]}
                 placeholder="Destination city"
-                placeholderTextColor={Colors.textMuted}
+                placeholderTextColor={colors.textMuted}
                 value={city}
                 onChangeText={setCity}
                 testID="edit-trip-city"
@@ -161,11 +163,11 @@ export default function EditTripScreen() {
           <View style={styles.inputGroup}>
             <Text style={styles.label}>Country</Text>
             <View style={styles.inputContainer}>
-              <MapPin size={20} color={Colors.textMuted} />
+              <MapPin size={20} color={colors.textMuted} />
               <TextInput
                 style={[styles.input, styles.inputWithIcon]}
                 placeholder="Country"
-                placeholderTextColor={Colors.textMuted}
+                placeholderTextColor={colors.textMuted}
                 value={country}
                 onChangeText={setCountry}
                 testID="edit-trip-country"
@@ -181,7 +183,7 @@ export default function EditTripScreen() {
                 onPress={() => setShowStartCalendar(true)}
                 testID="edit-trip-start-date"
               >
-                <Calendar size={20} color={Colors.textMuted} />
+                <Calendar size={20} color={colors.textMuted} />
                 <Text style={[styles.inputText, !startDate && styles.placeholder]}>
                   {startDate ? formatDateDisplay(startDate) : 'Select'}
                 </Text>
@@ -194,7 +196,7 @@ export default function EditTripScreen() {
                 onPress={() => setShowEndCalendar(true)}
                 testID="edit-trip-end-date"
               >
-                <Calendar size={20} color={Colors.textMuted} />
+                <Calendar size={20} color={colors.textMuted} />
                 <Text style={[styles.inputText, !endDate && styles.placeholder]}>
                   {endDate ? formatDateDisplay(endDate) : 'Select'}
                 </Text>
@@ -205,11 +207,11 @@ export default function EditTripScreen() {
           <View style={styles.inputGroup}>
             <Text style={styles.label}>Total Budget</Text>
             <View style={styles.inputContainer}>
-              <DollarSign size={20} color={Colors.textMuted} />
+              <DollarSign size={20} color={colors.textMuted} />
               <TextInput
                 style={[styles.input, styles.inputWithIcon]}
                 placeholder="e.g., 5000"
-                placeholderTextColor={Colors.textMuted}
+                placeholderTextColor={colors.textMuted}
                 value={budget}
                 onChangeText={setBudget}
                 keyboardType="numeric"
@@ -221,7 +223,7 @@ export default function EditTripScreen() {
           <View style={styles.inputGroup}>
             <Text style={styles.label}>Travelers</Text>
             <View style={styles.inputContainer}>
-              <Users size={20} color={Colors.textMuted} />
+              <Users size={20} color={colors.textMuted} />
               <Text style={[styles.inputText, styles.readOnlyText]}>
                 {travelers} {parseInt(travelers) === 1 ? 'traveler' : 'travelers'}
               </Text>
@@ -273,10 +275,10 @@ export default function EditTripScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+const createStyles = (colors: ThemeColors) => StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: Colors.background,
+    backgroundColor: colors.background,
   },
   notFound: {
     flex: 1,
@@ -286,16 +288,16 @@ const styles = StyleSheet.create({
   },
   notFoundText: {
     fontSize: 16,
-    color: Colors.textSecondary,
+    color: colors.textSecondary,
   },
   backBtn: {
     paddingHorizontal: 20,
     paddingVertical: 10,
-    backgroundColor: Colors.primary,
+    backgroundColor: colors.primary,
     borderRadius: 12,
   },
   backBtnText: {
-    color: Colors.textLight,
+    color: colors.textLight,
     fontSize: 15,
     fontWeight: '600' as const,
   },
@@ -310,20 +312,20 @@ const styles = StyleSheet.create({
     width: 44,
     height: 44,
     borderRadius: 22,
-    backgroundColor: Colors.surface,
+    backgroundColor: colors.surface,
     justifyContent: 'center',
     alignItems: 'center',
   },
   saveHeaderBtn: {
-    backgroundColor: Colors.primary,
+    backgroundColor: colors.primary,
   },
   saveHeaderBtnDisabled: {
-    backgroundColor: Colors.borderLight,
+    backgroundColor: colors.borderLight,
   },
   headerTitle: {
     fontSize: 18,
     fontWeight: '600' as const,
-    color: Colors.text,
+    color: colors.text,
   },
   content: {
     padding: 20,
@@ -335,13 +337,13 @@ const styles = StyleSheet.create({
   label: {
     fontSize: 14,
     fontWeight: '600' as const,
-    color: Colors.text,
+    color: colors.text,
     marginBottom: 10,
   },
   inputContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: Colors.surface,
+    backgroundColor: colors.surface,
     paddingHorizontal: 14,
     paddingVertical: 14,
     borderRadius: 14,
@@ -349,7 +351,7 @@ const styles = StyleSheet.create({
   input: {
     flex: 1,
     fontSize: 15,
-    color: Colors.text,
+    color: colors.text,
   },
   inputWithIcon: {
     marginLeft: 10,
@@ -357,18 +359,18 @@ const styles = StyleSheet.create({
   inputText: {
     flex: 1,
     fontSize: 15,
-    color: Colors.text,
+    color: colors.text,
     marginLeft: 10,
   },
   placeholder: {
-    color: Colors.textMuted,
+    color: colors.textMuted,
   },
   readOnlyText: {
-    color: Colors.textSecondary,
+    color: colors.textSecondary,
   },
   hintText: {
     fontSize: 12,
-    color: Colors.textMuted,
+    color: colors.textMuted,
     marginTop: 6,
     marginLeft: 2,
   },
@@ -387,9 +389,9 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     padding: 20,
     paddingBottom: 34,
-    backgroundColor: Colors.background,
+    backgroundColor: colors.background,
     borderTopWidth: 1,
-    borderTopColor: Colors.borderLight,
+    borderTopColor: colors.borderLight,
     gap: 12,
   },
   cancelButton: {
@@ -397,28 +399,28 @@ const styles = StyleSheet.create({
     paddingVertical: 16,
     borderRadius: 14,
     alignItems: 'center',
-    backgroundColor: Colors.surface,
+    backgroundColor: colors.surface,
     borderWidth: 1,
-    borderColor: Colors.borderLight,
+    borderColor: colors.borderLight,
   },
   cancelButtonText: {
     fontSize: 16,
     fontWeight: '600' as const,
-    color: Colors.text,
+    color: colors.text,
   },
   saveButton: {
     flex: 2,
-    backgroundColor: Colors.primary,
+    backgroundColor: colors.primary,
     paddingVertical: 16,
     borderRadius: 14,
     alignItems: 'center',
   },
   saveButtonDisabled: {
-    backgroundColor: Colors.textMuted,
+    backgroundColor: colors.textMuted,
   },
   saveButtonText: {
     fontSize: 16,
     fontWeight: '600' as const,
-    color: Colors.textLight,
+    color: colors.textLight,
   },
 });
