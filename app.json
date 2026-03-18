@@ -15,14 +15,34 @@
     },
     "ios": {
       "supportsTablet": false,
-      "bundleIdentifier": "app.rork.tripplanner-travel-organizer-66zlm3j"
+      "bundleIdentifier": "app.rork.tripplanner-travel-organizer-66zlm3j",
+      "associatedDomains": ["applinks:tripnest.app"]
     },
     "android": {
       "adaptiveIcon": {
         "foregroundImage": "./assets/images/adaptive-icon.png",
         "backgroundColor": "#ffffff"
       },
-      "package": "app.rork.tripplanner_travel_organizer_66zlm3j"
+      "package": "app.rork.tripplanner_travel_organizer_66zlm3j",
+      "intentFilters": [
+        {
+          "action": "VIEW",
+          "autoVerify": true,
+          "data": [
+            {
+              "scheme": "https",
+              "host": "tripnest.app",
+              "pathPrefix": "/join"
+            },
+            {
+              "scheme": "https",
+              "host": "tripnest.app",
+              "pathPrefix": "/shared"
+            }
+          ],
+          "category": ["BROWSABLE", "DEFAULT"]
+        }
+      ]
     },
     "web": {
       "favicon": "./assets/images/favicon.png"

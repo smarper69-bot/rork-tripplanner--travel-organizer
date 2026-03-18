@@ -294,11 +294,16 @@ export const useTripsStore = create(
           const trip = get().trips.find((t) => t.id === tripId);
           if (!trip) return '';
           const baseUrl = getBaseUrl();
-          const correctLink = `${baseUrl}/join/${tripId}`;
-          if (trip.inviteId && trip.inviteLink && trip.inviteLink === correctLink) {
-            console.log('[TripsStore] Reusing existing invite link:', trip.inviteLink);
-            return trip.inviteLink;
-          }
+          const params = new URLSearchParams();
+          params.set('name', trip.name);
+          params.set('dest', trip.destination);
+          params.set('country', trip.country || '');
+          params.set('start', trip.startDate);
+          params.set('end', trip.endDate);
+          if (trip.totalBudget) params.set('budget', trip.totalBudget.toString());
+          if (trip.collaborators.length > 0) params.set('travelers', trip.collaborators.length.toString());
+          if (trip.ownerName) params.set('owner', trip.ownerName);
+          const correctLink = `${baseUrl}/join/${tripId}?${params.toString()}`;
           const inviteId = trip.inviteId || generateId();
           const inviteLink = correctLink;
           const trips = get().trips.map((t) =>

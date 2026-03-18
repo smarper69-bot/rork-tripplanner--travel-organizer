@@ -1,7 +1,7 @@
-import React, { useMemo } from 'react';
+import React, { useMemo, useEffect, useRef } from 'react';
 import {
   View, Text, StyleSheet, ScrollView, TouchableOpacity,
-  Image, Platform,
+  Image, Platform, ActivityIndicator, Animated, Linking,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useLocalSearchParams, useRouter, Stack } from 'expo-router';
@@ -9,7 +9,7 @@ import {
   ArrowLeft, MapPin, Calendar, Users, Clock,
   DollarSign, Plane, ChevronRight, Download,
   Flower2, Church, Palmtree, Mountain, Sun, Landmark, Trees, Snowflake, Tent,
-  Camera, ListChecks,
+  Camera, ListChecks, AlertCircle, ExternalLink,
 } from 'lucide-react-native';
 import Colors from '@/constants/colors';
 import { useTripsStore } from '@/store/useTripsStore';
@@ -17,19 +17,72 @@ import { mockTrips } from '@/mocks/trips';
 import { TripIcon, StoredItineraryItem } from '@/types/trip';
 import { getDestinationImageHQ } from '@/utils/destinationImages';
 
+interface TripPreview {
+  name: string;
+  destination: string;
+  country: string;
+  startDate: string;
+  endDate: string;
+  totalBudget: number;
+  travelers: number;
+  ownerName: string;
+}
+
+function parsePreviewFromParams(params: Record<string, string | string[] | undefined>): TripPreview | null {
+  const name = typeof params.name === 'string' ? params.name : '';
+  const dest = typeof params.dest === 'string' ? params.dest : '';
+  if (!name && !dest) return null;
+
+  return {
+    name: name || 'Shared Trip',
+    destination: dest || 'Unknown',
+    country: typeof params.country === 'string' ? params.country : '',
+    startDate: typeof params.start === 'string' ? params.start : '',
+    endDate: typeof params.end === 'string' ? params.end : '',
+    totalBudget: typeof params.budget === 'string' ? parseInt(params.budget, 10) || 0 : 0,
+    travelers: typeof params.travelers === 'string' ? parseInt(params.travelers, 10) || 1 : 1,
+    ownerName: typeof params.owner === 'string' ? params.owner : '',
+  };
+}
+
 export default function SharedTripScreen() {
-  const { id } = useLocalSearchParams<{ id: string }>();
+  const params = useLocalSearchParams<{
+    id: string;
+    name?: string;
+    dest?: string;
+    country?: string;
+    start?: string;
+    end?: string;
+    budget?: string;
+    travelers?: string;
+    owner?: string;
+  }>();
+  const { id } = params;
   const router = useRouter();
 
+  const isHydrated = useTripsStore((s) => s.isHydrated);
   const storeTrips = useTripsStore((s) => s.trips);
   const allItineraryItems = useTripsStore((s) => s.itineraryItems);
   const allMemories = useTripsStore((s) => s.memories);
 
+  const fadeAnim = useRef(new Animated.Value(0)).current;
+
+  useEffect(() => {
+    Animated.timing(fadeAnim, {
+      toValue: 1,
+      duration: 500,
+      useNativeDriver: true,
+    }).start();
+  }, [fadeAnim]);
+
   const trip = useMemo(() => {
+    if (!isHydrated) return undefined;
     const stored = storeTrips.find((t) => t.id === id);
     if (stored) return stored;
     return mockTrips.find((t) => t.id === id);
-  }, [storeTrips, id]);
+  }, [storeTrips, id, isHydrated]);
+
+  const preview = useMemo(() => parsePreviewFromParams(params), [params]);
 
   const itineraryItems = useMemo(
     () => allItineraryItems.filter((i) => i.tripId === id),
@@ -56,58 +109,125 @@ export default function SharedTripScreen() {
     return iconMap[iconName] || Landmark;
   };
 
-  if (!trip) {
+  const hasLocalData = !!trip;
+  const hasPreviewData = !!preview;
+  const isLoading = !isHydrated;
+
+  const handleOpenInApp = () => {
+    if (Platform.OS === 'web') {
+      const scheme = `rork-app://shared/${id}`;
+      void Linking.canOpenURL(scheme).then((supported) => {
+        if (supported) {
+          void Linking.openURL(scheme);
+        } else {
+          console.log('[SharedTrip] App not installed, staying on web preview');
+        }
+      }).catch(() => {
+        console.log('[SharedTrip] Could not check URL scheme');
+      });
+    } else {
+      router.push(`/trip/${id}` as any);
+    }
+  };
+
+  if (isLoading) {
     return (
       <>
         <Stack.Screen options={{ headerShown: false }} />
-        <SafeAreaView style={styles.notFoundContainer}>
-          <View style={styles.notFoundContent}>
+        <View style={styles.loadingContainer}>
+          <View style={styles.loadingContent}>
             <View style={styles.logoRow}>
               <View style={styles.logoMark}>
                 <Plane size={18} color="#fff" />
               </View>
               <Text style={styles.logoText}>TripNest</Text>
             </View>
-            <Text style={styles.notFoundTitle}>Trip not found</Text>
-            <Text style={styles.notFoundSub}>
-              This trip may have been removed or the link is invalid.
-            </Text>
-            <TouchableOpacity style={styles.notFoundBtn} onPress={() => router.back()}>
-              <Text style={styles.notFoundBtnText}>Go Back</Text>
-            </TouchableOpacity>
+            <ActivityIndicator size="large" color="#1A1A1A" style={{ marginTop: 32 }} />
+            <Text style={styles.loadingText}>Loading trip details...</Text>
           </View>
+        </View>
+      </>
+    );
+  }
+
+  if (!hasLocalData && !hasPreviewData) {
+    return (
+      <>
+        <Stack.Screen options={{ headerShown: false }} />
+        <SafeAreaView style={styles.notFoundContainer}>
+          <Animated.View style={[styles.notFoundContent, { opacity: fadeAnim }]}>
+            <View style={styles.logoRow}>
+              <View style={styles.logoMark}>
+                <Plane size={18} color="#fff" />
+              </View>
+              <Text style={styles.logoText}>TripNest</Text>
+            </View>
+            <View style={styles.errorIconWrap}>
+              <AlertCircle size={40} color="#EF4444" />
+            </View>
+            <Text style={styles.notFoundTitle}>This trip link is invalid or expired</Text>
+            <Text style={styles.notFoundSub}>
+              The trip may have been removed, or this link is no longer active. Ask the trip owner to send a new link.
+            </Text>
+            <TouchableOpacity style={styles.notFoundBtn} onPress={() => router.replace('/')}>
+              <Text style={styles.notFoundBtnText}>Go to TripNest</Text>
+            </TouchableOpacity>
+          </Animated.View>
         </SafeAreaView>
       </>
     );
   }
 
   const formatDate = (date: string) => {
-    return new Date(date).toLocaleDateString('en-US', {
-      month: 'short',
-      day: 'numeric',
-      year: 'numeric',
-    });
+    try {
+      return new Date(date).toLocaleDateString('en-US', {
+        month: 'short',
+        day: 'numeric',
+        year: 'numeric',
+      });
+    } catch {
+      return date;
+    }
   };
 
   const formatShortDate = (date: string) => {
-    return new Date(date).toLocaleDateString('en-US', {
-      weekday: 'short',
-      month: 'short',
-      day: 'numeric',
-    });
+    try {
+      return new Date(date).toLocaleDateString('en-US', {
+        weekday: 'short',
+        month: 'short',
+        day: 'numeric',
+      });
+    } catch {
+      return date;
+    }
   };
 
   const calculateDays = () => {
-    const start = new Date(trip.startDate);
-    const end = new Date(trip.endDate);
-    return Math.max(Math.ceil((end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24)), 1);
+    try {
+      const startStr = trip?.startDate ?? preview?.startDate ?? '';
+      const endStr = trip?.endDate ?? preview?.endDate ?? '';
+      if (!startStr || !endStr) return 0;
+      const start = new Date(startStr);
+      const end = new Date(endStr);
+      return Math.max(Math.ceil((end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24)), 1);
+    } catch {
+      return 0;
+    }
   };
 
-  const tripDays = calculateDays();
-  const IconComponent = getIconComponent(trip.icon);
-  const coverImage = getDestinationImageHQ(trip.destination, trip.country);
+  const displayName = trip?.name ?? preview?.name ?? 'Shared Trip';
+  const displayDest = trip?.destination ?? preview?.destination ?? '';
+  const displayCountry = trip?.country ?? preview?.country ?? '';
+  const displayStart = trip?.startDate ?? preview?.startDate ?? '';
+  const displayEnd = trip?.endDate ?? preview?.endDate ?? '';
+  const displayBudget = trip?.totalBudget ?? preview?.totalBudget ?? 0;
+  const displayTravelers = trip?.collaborators?.length ?? preview?.travelers ?? 1;
 
-  const allActivities = trip.itinerary.flatMap((day) => day.activities);
+  const tripDays = calculateDays();
+  const IconComponent = trip ? getIconComponent(trip.icon) : Landmark;
+  const coverImage = getDestinationImageHQ(displayDest, displayCountry);
+
+  const allActivities = trip ? trip.itinerary.flatMap((day) => day.activities) : [];
 
   const groupedStoredItinerary = useMemo(() => {
     const groups: Record<string, StoredItineraryItem[]> = {};
@@ -133,7 +253,11 @@ export default function SharedTripScreen() {
       <View style={styles.container}>
         <ScrollView showsVerticalScrollIndicator={false} bounces={false}>
           <View style={styles.heroSection}>
-            <Image source={{ uri: coverImage }} style={styles.heroImage} />
+            <Image
+              source={{ uri: coverImage }}
+              style={styles.heroImage}
+              defaultSource={{ uri: 'https://images.unsplash.com/photo-1488646953014-85cb44e25828?w=800&h=500&fit=crop&q=80' }}
+            />
             <View style={styles.heroOverlay} />
 
             <SafeAreaView style={styles.heroContentWrap} edges={['top']}>
@@ -155,73 +279,84 @@ export default function SharedTripScreen() {
               <View style={styles.sharedBadge}>
                 <Text style={styles.sharedBadgeText}>Shared Trip</Text>
               </View>
-              <Text style={styles.heroTitle}>{trip.name}</Text>
-              <View style={styles.heroLocationRow}>
-                <MapPin size={15} color="rgba(255,255,255,0.85)" />
-                <Text style={styles.heroLocation}>
-                  {trip.destination}, {trip.country}
-                </Text>
-              </View>
+              <Text style={styles.heroTitle}>{displayName}</Text>
+              {(displayDest || displayCountry) && (
+                <View style={styles.heroLocationRow}>
+                  <MapPin size={15} color="rgba(255,255,255,0.85)" />
+                  <Text style={styles.heroLocation}>
+                    {[displayDest, displayCountry].filter(Boolean).join(', ')}
+                  </Text>
+                </View>
+              )}
             </View>
           </View>
 
-          <View style={styles.body}>
-            <View style={styles.summaryCard}>
-              <View style={styles.summaryRow}>
-                <View style={styles.summaryItem}>
-                  <View style={[styles.summaryIcon, { backgroundColor: '#F0F0F0' }]}>
-                    <Calendar size={18} color="#1A1A1A" />
-                  </View>
-                  <View>
-                    <Text style={styles.summaryValue}>
-                      {formatDate(trip.startDate)}
-                    </Text>
-                    <Text style={styles.summaryLabel}>
-                      {tripDays} day{tripDays !== 1 ? 's' : ''} trip
-                    </Text>
-                  </View>
-                </View>
-              </View>
-
-              <View style={styles.summaryDivider} />
-
-              <View style={styles.summaryRow}>
-                <View style={styles.summaryItem}>
-                  <View style={[styles.summaryIcon, { backgroundColor: '#F0F0F0' }]}>
-                    <Clock size={18} color="#1A1A1A" />
-                  </View>
-                  <View>
-                    <Text style={styles.summaryValue}>
-                      {formatShortDate(trip.startDate)}
-                    </Text>
-                    <Text style={styles.summaryLabel}>
-                      to {formatShortDate(trip.endDate)}
-                    </Text>
-                  </View>
-                </View>
-              </View>
-
-              {trip.totalBudget > 0 && (
-                <>
-                  <View style={styles.summaryDivider} />
+          <Animated.View style={[styles.body, { opacity: fadeAnim }]}>
+            {(displayStart || displayBudget > 0) && (
+              <View style={styles.summaryCard}>
+                {displayStart && (
                   <View style={styles.summaryRow}>
                     <View style={styles.summaryItem}>
                       <View style={[styles.summaryIcon, { backgroundColor: '#F0F0F0' }]}>
-                        <DollarSign size={18} color="#1A1A1A" />
+                        <Calendar size={18} color="#1A1A1A" />
                       </View>
                       <View>
                         <Text style={styles.summaryValue}>
-                          ${trip.totalBudget.toLocaleString()}
+                          {formatDate(displayStart)}
                         </Text>
-                        <Text style={styles.summaryLabel}>Total budget</Text>
+                        {tripDays > 0 && (
+                          <Text style={styles.summaryLabel}>
+                            {tripDays} day{tripDays !== 1 ? 's' : ''} trip
+                          </Text>
+                        )}
                       </View>
                     </View>
                   </View>
-                </>
-              )}
-            </View>
+                )}
 
-            {trip.collaborators.length > 0 && (
+                {displayStart && displayEnd && (
+                  <>
+                    <View style={styles.summaryDivider} />
+                    <View style={styles.summaryRow}>
+                      <View style={styles.summaryItem}>
+                        <View style={[styles.summaryIcon, { backgroundColor: '#F0F0F0' }]}>
+                          <Clock size={18} color="#1A1A1A" />
+                        </View>
+                        <View>
+                          <Text style={styles.summaryValue}>
+                            {formatShortDate(displayStart)}
+                          </Text>
+                          <Text style={styles.summaryLabel}>
+                            to {formatShortDate(displayEnd)}
+                          </Text>
+                        </View>
+                      </View>
+                    </View>
+                  </>
+                )}
+
+                {displayBudget > 0 && (
+                  <>
+                    <View style={styles.summaryDivider} />
+                    <View style={styles.summaryRow}>
+                      <View style={styles.summaryItem}>
+                        <View style={[styles.summaryIcon, { backgroundColor: '#F0F0F0' }]}>
+                          <DollarSign size={18} color="#1A1A1A" />
+                        </View>
+                        <View>
+                          <Text style={styles.summaryValue}>
+                            ${displayBudget.toLocaleString()}
+                          </Text>
+                          <Text style={styles.summaryLabel}>Total budget</Text>
+                        </View>
+                      </View>
+                    </View>
+                  </>
+                )}
+              </View>
+            )}
+
+            {hasLocalData && trip.collaborators.length > 0 && (
               <View style={styles.section}>
                 <View style={styles.sectionHeader}>
                   <Users size={16} color={Colors.text} />
@@ -231,7 +366,13 @@ export default function SharedTripScreen() {
                 <View style={styles.travelersCard}>
                   {trip.collaborators.map((collab) => (
                     <View key={collab.id} style={styles.travelerRow}>
-                      <Image source={{ uri: collab.avatar }} style={styles.travelerAvatar} />
+                      {collab.avatar ? (
+                        <Image source={{ uri: collab.avatar }} style={styles.travelerAvatar} />
+                      ) : (
+                        <View style={[styles.travelerAvatar, styles.avatarPlaceholder]}>
+                          <Users size={16} color="#999" />
+                        </View>
+                      )}
                       <View style={styles.travelerInfo}>
                         <Text style={styles.travelerName}>{collab.name}</Text>
                         <Text style={styles.travelerRole}>
@@ -244,7 +385,28 @@ export default function SharedTripScreen() {
               </View>
             )}
 
-            {hasItinerary && (
+            {!hasLocalData && displayTravelers > 1 && (
+              <View style={styles.section}>
+                <View style={styles.sectionHeader}>
+                  <Users size={16} color={Colors.text} />
+                  <Text style={styles.sectionTitle}>Travelers</Text>
+                  <Text style={styles.sectionCount}>{displayTravelers}</Text>
+                </View>
+                <View style={styles.travelersCard}>
+                  <View style={styles.travelerRow}>
+                    <View style={[styles.travelerAvatar, styles.avatarPlaceholder]}>
+                      <Users size={16} color="#999" />
+                    </View>
+                    <View style={styles.travelerInfo}>
+                      <Text style={styles.travelerName}>{displayTravelers} travelers on this trip</Text>
+                      <Text style={styles.travelerRole}>Open in app to see details</Text>
+                    </View>
+                  </View>
+                </View>
+              </View>
+            )}
+
+            {hasLocalData && hasItinerary && (
               <View style={styles.section}>
                 <View style={styles.sectionHeader}>
                   <ListChecks size={16} color={Colors.text} />
@@ -314,7 +476,7 @@ export default function SharedTripScreen() {
               </View>
             )}
 
-            {hasMemories && (
+            {hasLocalData && hasMemories && (
               <View style={styles.section}>
                 <View style={styles.sectionHeader}>
                   <Camera size={16} color={Colors.text} />
@@ -345,22 +507,28 @@ export default function SharedTripScreen() {
             <View style={styles.ctaSection}>
               <View style={styles.ctaCard}>
                 <View style={styles.ctaIconContainer}>
-                  <IconComponent size={40} color={trip.iconColor} />
+                  <IconComponent size={40} color={trip?.iconColor ?? '#1A1A1A'} />
                 </View>
-                <Text style={styles.ctaTitle}>Want to join this trip?</Text>
+                <Text style={styles.ctaTitle}>
+                  {hasLocalData ? 'Want to join this trip?' : 'View full trip details'}
+                </Text>
                 <Text style={styles.ctaSub}>
-                  Open in the TripNest app to view all details, collaborate, and start planning.
+                  {hasLocalData
+                    ? 'Open in the TripNest app to view all details, collaborate, and start planning.'
+                    : 'Open in the TripNest app to see the full itinerary, collaborate with travelers, and plan together.'
+                  }
                 </Text>
 
                 <TouchableOpacity
                   style={styles.ctaPrimaryBtn}
                   activeOpacity={0.8}
-                  onPress={() => {
-                    router.push(`/trip/${id}` as any);
-                    console.log('[SharedTrip] Open in app tapped');
-                  }}
+                  onPress={handleOpenInApp}
                 >
-                  <Plane size={18} color="#fff" />
+                  {hasLocalData ? (
+                    <Plane size={18} color="#fff" />
+                  ) : (
+                    <ExternalLink size={18} color="#fff" />
+                  )}
                   <Text style={styles.ctaPrimaryText}>Open in TripNest</Text>
                   <ChevronRight size={18} color="#fff" />
                 </TouchableOpacity>
@@ -369,14 +537,10 @@ export default function SharedTripScreen() {
                   style={styles.ctaSecondaryBtn}
                   activeOpacity={0.7}
                   onPress={() => {
-                    if (Platform.OS === 'web') {
-                      console.log('[SharedTrip] Download tapped (web)');
-                    } else {
-                      console.log('[SharedTrip] Download tapped (native)');
-                    }
+                    console.log('[SharedTrip] Download tapped');
                   }}
                 >
-                  <Download size={18} color={Colors.text} />
+                  <Download size={18} color="#1A1A1A" />
                   <Text style={styles.ctaSecondaryText}>Download the App</Text>
                 </TouchableOpacity>
               </View>
@@ -396,7 +560,7 @@ export default function SharedTripScreen() {
                 This is a read-only view of a shared trip.
               </Text>
             </View>
-          </View>
+          </Animated.View>
         </ScrollView>
       </View>
     </>
@@ -408,6 +572,21 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: '#FAFAFA',
   },
+  loadingContainer: {
+    flex: 1,
+    backgroundColor: '#FAFAFA',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  loadingContent: {
+    alignItems: 'center',
+    paddingHorizontal: 40,
+  },
+  loadingText: {
+    fontSize: 15,
+    color: '#888',
+    marginTop: 16,
+  },
   notFoundContainer: {
     flex: 1,
     backgroundColor: '#FAFAFA',
@@ -417,6 +596,16 @@ const styles = StyleSheet.create({
   notFoundContent: {
     alignItems: 'center',
     paddingHorizontal: 40,
+  },
+  errorIconWrap: {
+    width: 72,
+    height: 72,
+    borderRadius: 36,
+    backgroundColor: '#FEE2E2',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginTop: 28,
+    marginBottom: 20,
   },
   logoRow: {
     flexDirection: 'row',
@@ -441,8 +630,8 @@ const styles = StyleSheet.create({
     fontSize: 20,
     fontWeight: '700' as const,
     color: '#1A1A1A',
-    marginTop: 32,
     marginBottom: 8,
+    textAlign: 'center',
   },
   notFoundSub: {
     fontSize: 15,
@@ -470,6 +659,7 @@ const styles = StyleSheet.create({
     width: '100%',
     height: '100%',
     resizeMode: 'cover',
+    backgroundColor: '#E0E0E0',
   },
   heroOverlay: {
     ...StyleSheet.absoluteFillObject,
@@ -644,6 +834,11 @@ const styles = StyleSheet.create({
     marginRight: 14,
     backgroundColor: '#F0F0F0',
   },
+  avatarPlaceholder: {
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: '#ECECEC',
+  },
   travelerInfo: {
     flex: 1,
   },
@@ -725,7 +920,7 @@ const styles = StyleSheet.create({
   fadeHintText: {
     fontSize: 13,
     color: '#999',
-    fontStyle: 'italic',
+    fontStyle: 'italic' as const,
   },
   memoriesScroll: {
     gap: 10,
