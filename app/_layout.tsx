@@ -7,6 +7,7 @@ import Colors from "@/constants/colors";
 import { useTripsStore } from "@/store/useTripsStore";
 import { useOnboardingStore } from "@/store/useOnboardingStore";
 import { usePreferencesStore } from "@/store/usePreferencesStore";
+import { useSubscriptionStore } from "@/store/useSubscriptionStore";
 
 void SplashScreen.preventAutoHideAsync();
 
@@ -169,12 +170,13 @@ export default function RootLayout() {
   const hydrateTrips = useTripsStore((s) => s.hydrate);
   const hydrateOnboarding = useOnboardingStore((s) => s.hydrate);
   const hydratePreferences = usePreferencesStore((s) => s.hydrate);
+  const hydrateSubscription = useSubscriptionStore((s) => s.hydrate);
 
   useEffect(() => {
-    void Promise.all([hydrateTrips(), hydrateOnboarding(), hydratePreferences()]).then(() => {
+    void Promise.all([hydrateTrips(), hydrateOnboarding(), hydratePreferences(), hydrateSubscription()]).then(() => {
       void SplashScreen.hideAsync();
     });
-  }, [hydrateTrips, hydrateOnboarding, hydratePreferences]);
+  }, [hydrateTrips, hydrateOnboarding, hydratePreferences, hydrateSubscription]);
 
   return (
     <QueryClientProvider client={queryClient}>

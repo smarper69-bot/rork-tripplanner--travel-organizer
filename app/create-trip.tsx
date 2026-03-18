@@ -4,8 +4,9 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter, useLocalSearchParams, Stack } from 'expo-router';
 import { MapPin, Calendar, Users, DollarSign, Camera, X } from 'lucide-react-native';
 import Colors from '@/constants/colors';
-import { useTripsStore } from '@/store/useTripsStore';
-import { hapticSuccess } from '@/utils/haptics';
+import { useTripsStore, getUserTripCount } from '@/store/useTripsStore';
+import { useSubscriptionStore, FREE_TRIP_LIMIT } from '@/store/useSubscriptionStore';
+import { hapticSuccess, hapticLight } from '@/utils/haptics';
 import CalendarPicker from '@/components/CalendarPicker';
 
 const coverImages = [
@@ -48,7 +49,13 @@ export default function CreateTripScreen() {
   }, [params.prefillName, params.prefillDestination, params.prefillImage]);
 
   const createTrip = useTripsStore((s) => s.createTrip);
-  const isValid = tripName.trim() && destination.trim();
+  const trips = useTripsStore((s) => s.trips);
+  const plan = useSubscriptionStore((s) => s.plan);
+  const canCreateTrip = useSubscriptionStore((s) => s.canCreateTrip);
+  const userTripCount = getUserTripCount(trips);
+  const remaining = plan === 'premium' ? Infinity : Math.max(0, FREE_TRIP_LIMIT - userTripCount);
+  const isAtLimit = !canCreateTrip(userTripCount);
+  const isValid = tripName.trim() && destination.trim() && !isAtLimit;
 
   const parseDestination = (dest: string) => {
     const parts = dest.split(',').map((s) => s.trim());
@@ -241,6 +248,27 @@ export default function CreateTripScreen() {
         </ScrollView>
 
         <View style={styles.footer}>
+          {isAtLimit && (
+            <View style={styles.limitBanner}>
+              <Text style={styles.limitBannerText}>You've used all {FREE_TRIP_LIMIT} free trips. Upgrade to Premium for unlimited trips.</Text>
+              <TouchableOpacity
+                style={styles.limitUpgradeBtn}
+                onPress={() => {
+                  hapticLight();
+                  router.back();
+                  setTimeout(() => router.push('/profile' as any), 150);
+                }}
+                activeOpacity={0.8}
+              >
+                <Text style={styles.limitUpgradeBtnText}>View Premium</Text>
+              </TouchableOpacity>
+            </View>
+          )}
+          {!isAtLimit && plan === 'free' && remaining <= 2 && remaining > 0 && (
+            <Text style={styles.remainingText}>
+              {remaining === 1 ? 'You have 1 free trip left' : `You have ${remaining} free trips left`} — upgrade anytime for unlimited trips
+            </Text>
+          )}
           <TouchableOpacity 
             style={[styles.createButton, !isValid && styles.createButtonDisabled]}
             onPress={handleCreate}
@@ -386,5 +414,38 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: '600',
     color: Colors.textLight,
+  },
+  limitBanner: {
+    backgroundColor: Colors.warning + '12',
+    borderWidth: 1,
+    borderColor: Colors.warning + '30',
+    borderRadius: 12,
+    padding: 14,
+    marginBottom: 12,
+    alignItems: 'center',
+  },
+  limitBannerText: {
+    fontSize: 13,
+    color: Colors.text,
+    textAlign: 'center' as const,
+    lineHeight: 18,
+    marginBottom: 10,
+  },
+  limitUpgradeBtn: {
+    backgroundColor: Colors.accent,
+    paddingHorizontal: 20,
+    paddingVertical: 10,
+    borderRadius: 10,
+  },
+  limitUpgradeBtnText: {
+    fontSize: 13,
+    fontWeight: '600' as const,
+    color: Colors.textLight,
+  },
+  remainingText: {
+    fontSize: 12,
+    color: Colors.textSecondary,
+    textAlign: 'center' as const,
+    marginBottom: 10,
   },
 });

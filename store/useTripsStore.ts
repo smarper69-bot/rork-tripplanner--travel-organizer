@@ -3,15 +3,17 @@ import { combine } from 'zustand/middleware';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Platform } from 'react-native';
 import { Trip, StoredItineraryItem, StoredStay, StoredMemory } from '@/types/trip';
+import { DEMO_TRIP_ID, demoTrip } from '@/mocks/demoTrip';
 
 function getBaseUrl(): string {
   if (Platform.OS === 'web' && typeof window !== 'undefined') {
     return window.location.origin;
   }
-  return 'https://tripla.app';
+  return 'https://tripnest.app';
 }
 
 const STORAGE_KEY = 'tripla_data_v1';
+const DEMO_DISMISSED_KEY = 'tripnest_demo_dismissed_v1';
 
 interface TripDraft {
   title: string;
@@ -28,6 +30,14 @@ interface PersistedData {
   itineraryItems: StoredItineraryItem[];
   stays: StoredStay[];
   memories: StoredMemory[];
+}
+
+export function isUserTrip(trip: Trip): boolean {
+  return trip.id !== DEMO_TRIP_ID;
+}
+
+export function getUserTripCount(trips: Trip[]): number {
+  return trips.filter(isUserTrip).length;
 }
 
 const generateId = () => {
@@ -80,7 +90,7 @@ export const useTripsStore = create(
     },
     (set, get) => {
       const toData = (): PersistedData => ({
-        trips: get().trips,
+        trips: get().trips.filter(t => t.id !== DEMO_TRIP_ID),
         itineraryItems: get().itineraryItems,
         stays: get().stays,
         memories: get().memories,
@@ -89,28 +99,52 @@ export const useTripsStore = create(
       return {
         hydrate: async () => {
           try {
-            const raw = await AsyncStorage.getItem(STORAGE_KEY);
+            const [raw, demoDismissed] = await Promise.all([
+              AsyncStorage.getItem(STORAGE_KEY),
+              AsyncStorage.getItem(DEMO_DISMISSED_KEY),
+            ]);
+            let trips: Trip[] = [];
+            let itineraryItems: StoredItineraryItem[] = [];
+            let stays: StoredStay[] = [];
+            let memories: StoredMemory[] = [];
+
             if (raw) {
               const parsed = JSON.parse(raw);
               if (Array.isArray(parsed)) {
-                set({ trips: parsed as Trip[], itineraryItems: [], stays: [], memories: [], isHydrated: true });
+                trips = parsed as Trip[];
               } else {
                 const data = parsed as PersistedData;
-                set({
-                  trips: data.trips ?? [],
-                  itineraryItems: data.itineraryItems ?? [],
-                  stays: data.stays ?? [],
-                  memories: data.memories ?? [],
-                  isHydrated: true,
-                });
+                trips = data.trips ?? [];
+                itineraryItems = data.itineraryItems ?? [];
+                stays = data.stays ?? [];
+                memories = data.memories ?? [];
               }
-            } else {
-              set({ isHydrated: true });
             }
+
+            trips = trips.filter(t => t.id !== DEMO_TRIP_ID);
+
+            if (demoDismissed !== 'true') {
+              trips = [...trips, demoTrip];
+              console.log('[TripsStore] Injected demo trip');
+            }
+
+            set({ trips, itineraryItems, stays, memories, isHydrated: true });
           } catch (e) {
             console.error('[TripsStore] Failed to hydrate:', e);
             set({ isHydrated: true });
           }
+        },
+
+        dismissDemoTrip: async () => {
+          const trips = get().trips.filter(t => t.id !== DEMO_TRIP_ID);
+          set({ trips });
+          try {
+            await AsyncStorage.setItem(DEMO_DISMISSED_KEY, 'true');
+            console.log('[TripsStore] Demo trip dismissed');
+          } catch (e) {
+            console.error('[TripsStore] Failed to persist demo dismissal:', e);
+          }
+          void persistData({ ...toData(), trips });
         },
 
         createTrip: (draft: TripDraft) => {

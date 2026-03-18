@@ -5,7 +5,8 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { Plus, Compass, Globe, MapPin, Calendar, ChevronRight, ArrowRight, Plane } from 'lucide-react-native';
 import Colors from '@/constants/colors';
-import { useTripsStore } from '@/store/useTripsStore';
+import { useTripsStore, getUserTripCount } from '@/store/useTripsStore';
+import { useSubscriptionStore, FREE_TRIP_LIMIT } from '@/store/useSubscriptionStore';
 import { useOnboardingStore } from '@/store/useOnboardingStore';
 import { Trip } from '@/types/trip';
 import { getDestinationImage } from '@/utils/destinationImages';
@@ -79,6 +80,10 @@ export default function HomeScreen() {
   const router = useRouter();
   const { trips } = useTripsStore();
   const userName = useOnboardingStore((s) => s.userName);
+  const plan = useSubscriptionStore((s) => s.plan);
+  const userTripCount = getUserTripCount(trips);
+  const remaining = plan === 'premium' ? Infinity : Math.max(0, FREE_TRIP_LIMIT - userTripCount);
+  const showSoftLimit = plan === 'free' && remaining <= 1 && remaining >= 0 && userTripCount > 0;
   const fadeAnim = useRef(new Animated.Value(0)).current;
   const slideAnim = useRef(new Animated.Value(20)).current;
   const [featuredIndex, setFeaturedIndex] = useState<number>(0);
@@ -125,6 +130,20 @@ export default function HomeScreen() {
           <Text style={styles.greeting}>{getGreeting()}{userName ? `, ${userName}` : ''}</Text>
           <Text style={styles.title}>Where to next?</Text>
         </Animated.View>
+
+        {showSoftLimit && (
+          <Pressable
+            style={styles.tripLimitBanner}
+            onPress={() => router.push('/profile' as any)}
+          >
+            <Text style={styles.tripLimitText}>
+              {remaining === 0
+                ? "You've used all free trips — upgrade for unlimited trips"
+                : `You have ${remaining} free trip left — upgrade anytime for unlimited trips`}
+            </Text>
+            <Text style={styles.tripLimitAction}>View Premium</Text>
+          </Pressable>
+        )}
 
         <View style={styles.quickActions}>
           {[
@@ -670,5 +689,25 @@ const styles = StyleSheet.create({
     fontSize: 15,
     fontWeight: '600' as const,
     color: Colors.textLight,
+  },
+  tripLimitBanner: {
+    marginHorizontal: 24,
+    marginBottom: 20,
+    backgroundColor: Colors.accent + '10',
+    borderRadius: 14,
+    padding: 14,
+    borderWidth: 1,
+    borderColor: Colors.accent + '20',
+  },
+  tripLimitText: {
+    fontSize: 13,
+    color: Colors.text,
+    lineHeight: 18,
+    marginBottom: 6,
+  },
+  tripLimitAction: {
+    fontSize: 13,
+    fontWeight: '600' as const,
+    color: Colors.accent,
   },
 });

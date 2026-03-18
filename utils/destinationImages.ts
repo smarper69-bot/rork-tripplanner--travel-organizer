@@ -79,21 +79,34 @@ const FALLBACK_IMAGES = [
   'https://images.unsplash.com/photo-1476514525535-07fb3b4ae5f1?w=800&h=500&fit=crop&q=80',
   'https://images.unsplash.com/photo-1530789253388-582c481c54b0?w=800&h=500&fit=crop&q=80',
   'https://images.unsplash.com/photo-1469474968028-56623f02e42e?w=800&h=500&fit=crop&q=80',
+  'https://images.unsplash.com/photo-1500835556837-99ac94a94552?w=800&h=500&fit=crop&q=80',
+  'https://images.unsplash.com/photo-1436491865332-7a61a109db05?w=800&h=500&fit=crop&q=80',
+  'https://images.unsplash.com/photo-1503220317375-aaad61436b1b?w=800&h=500&fit=crop&q=80',
 ];
 
+export const DEFAULT_FALLBACK_IMAGE = 'https://images.unsplash.com/photo-1488646953014-85cb44e25828?w=800&h=500&fit=crop&q=80';
+
 export function getDestinationImage(destination: string, fallbackId?: string): string {
+  if (!destination || destination.trim().length === 0) {
+    console.log('[DestinationImages] Empty destination, using fallback');
+    return DEFAULT_FALLBACK_IMAGE;
+  }
+
   const direct = DESTINATION_IMAGES[destination];
   if (direct) return direct;
 
-  const lower = destination.toLowerCase();
+  const lower = destination.toLowerCase().trim();
   for (const [key, url] of Object.entries(DESTINATION_IMAGES)) {
-    if (key.toLowerCase() === lower || lower.includes(key.toLowerCase()) || key.toLowerCase().includes(lower)) {
+    const keyLower = key.toLowerCase();
+    if (keyLower === lower || lower.includes(keyLower) || keyLower.includes(lower)) {
       return url;
     }
   }
 
   const hash = (fallbackId ?? destination).split('').reduce((acc, c) => acc + c.charCodeAt(0), 0);
-  return FALLBACK_IMAGES[hash % FALLBACK_IMAGES.length];
+  const fallback = FALLBACK_IMAGES[hash % FALLBACK_IMAGES.length];
+  console.log('[DestinationImages] No match for:', destination, '- using fallback');
+  return fallback;
 }
 
 export function getDestinationImageHQ(destination: string): string {

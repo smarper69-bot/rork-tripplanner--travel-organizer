@@ -1,11 +1,12 @@
 import React, { useState, useRef, useCallback, useEffect } from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Animated, Pressable } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Animated, Pressable, Alert } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { Plus, Plane, Clock, CheckCircle, MapPin, Compass } from 'lucide-react-native';
 import Colors from '@/constants/colors';
 import TripCard from '@/components/TripCard';
-import { useTripsStore } from '@/store/useTripsStore';
+import { useTripsStore, getUserTripCount } from '@/store/useTripsStore';
+import { useSubscriptionStore, FREE_TRIP_LIMIT } from '@/store/useSubscriptionStore';
 import { hapticLight, hapticMedium, hapticSelection } from '@/utils/haptics';
 
 const tabs = [
@@ -37,6 +38,10 @@ export default function TripsScreen() {
   const router = useRouter();
   const [activeTab, setActiveTab] = useState('upcoming');
   const { trips } = useTripsStore();
+  const plan = useSubscriptionStore((s) => s.plan);
+  const canCreateTrip = useSubscriptionStore((s) => s.canCreateTrip);
+  const userTripCount = getUserTripCount(trips);
+  const isAtLimit = !canCreateTrip(userTripCount);
 
   const filteredTrips = trips.filter((trip) => {
     if (activeTab === 'upcoming') return trip.status === 'upcoming' || trip.status === 'ongoing';
@@ -58,11 +63,24 @@ export default function TripsScreen() {
       <View style={styles.header}>
         <View>
           <Text style={styles.title}>My Trips</Text>
-          <Text style={styles.subtitle}>{trips.length} trip{trips.length !== 1 ? 's' : ''}</Text>
+          <Text style={styles.subtitle}>
+            {plan === 'free' ? `${userTripCount}/${FREE_TRIP_LIMIT} trips used` : `${userTripCount} trip${userTripCount !== 1 ? 's' : ''}`}
+          </Text>
         </View>
         <Pressable
           onPress={() => {
             hapticMedium();
+            if (isAtLimit) {
+              Alert.alert(
+                'Trip Limit Reached',
+                `You've used all ${FREE_TRIP_LIMIT} free trips. Upgrade to Premium for unlimited trips.`,
+                [
+                  { text: 'Later', style: 'cancel' },
+                  { text: 'View Premium', onPress: () => router.push('/profile' as any) },
+                ],
+              );
+              return;
+            }
             router.push('/create-trip' as any);
           }}
           onPressIn={onAddPressIn}
@@ -100,6 +118,14 @@ export default function TripsScreen() {
         showsVerticalScrollIndicator={false}
         contentContainerStyle={styles.content}
       >
+        {plan === 'free' && userTripCount >= 2 && userTripCount < FREE_TRIP_LIMIT && (
+          <TouchableOpacity style={styles.softLimitBanner} onPress={() => router.push('/profile' as any)} activeOpacity={0.7}>
+            <Text style={styles.softLimitText}>
+              You have {FREE_TRIP_LIMIT - userTripCount} free trip{FREE_TRIP_LIMIT - userTripCount === 1 ? '' : 's'} left — upgrade anytime for unlimited trips
+            </Text>
+            <Text style={styles.softLimitUpgrade}>Upgrade</Text>
+          </TouchableOpacity>
+        )}
         {filteredTrips.length > 0 ? (
           filteredTrips.map((trip, index) => (
             <AnimatedTripCard key={trip.id} index={index}>
@@ -320,6 +346,27 @@ const styles = StyleSheet.create({
   },
   emptySecondaryText: {
     fontSize: 14,
+    fontWeight: '600' as const,
+    color: Colors.accent,
+  },
+  softLimitBanner: {
+    marginHorizontal: 24,
+    marginBottom: 16,
+    backgroundColor: Colors.accent + '10',
+    borderRadius: 12,
+    padding: 14,
+    flexDirection: 'row' as const,
+    alignItems: 'center' as const,
+    gap: 10,
+  },
+  softLimitText: {
+    flex: 1,
+    fontSize: 13,
+    color: Colors.text,
+    lineHeight: 18,
+  },
+  softLimitUpgrade: {
+    fontSize: 13,
     fontWeight: '600' as const,
     color: Colors.accent,
   },

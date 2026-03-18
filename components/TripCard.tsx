@@ -4,8 +4,9 @@ import { MapPin, Calendar } from 'lucide-react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import Colors from '@/constants/colors';
 import { Trip } from '@/types/trip';
-import { getDestinationImage } from '@/utils/destinationImages';
+import { getDestinationImage, DEFAULT_FALLBACK_IMAGE } from '@/utils/destinationImages';
 import { hapticLight } from '@/utils/haptics';
+import { DEMO_TRIP_ID } from '@/mocks/demoTrip';
 
 interface TripCardProps {
   trip: Trip;
@@ -43,8 +44,9 @@ export default function TripCard({ trip, onPress, variant = 'large' }: TripCardP
     }).start();
   }, [scaleAnim]);
 
-  const imageUrl = getDestinationImage(trip.destination, trip.id);
+  const [imageUrl, setImageUrl] = React.useState(() => getDestinationImage(trip.destination, trip.id));
   const imageOpacity = useRef(new Animated.Value(0)).current;
+  const isDemo = trip.id === DEMO_TRIP_ID;
 
   const onImageLoad = useCallback(() => {
     console.log('[TripCard] Image loaded for:', trip.destination, imageUrl);
@@ -54,6 +56,11 @@ export default function TripCard({ trip, onPress, variant = 'large' }: TripCardP
       useNativeDriver: true,
     }).start();
   }, [imageOpacity, trip.destination, imageUrl]);
+
+  const onImageError = useCallback(() => {
+    console.log('[TripCard] Image failed for:', trip.destination, '- switching to fallback');
+    setImageUrl(DEFAULT_FALLBACK_IMAGE);
+  }, [trip.destination]);
 
   const getBadgeText = () => {
     if (trip.status === 'ongoing') return 'In progress';
@@ -80,7 +87,7 @@ export default function TripCard({ trip, onPress, variant = 'large' }: TripCardP
             source={{ uri: imageUrl }}
             style={styles.compactImage}
             onLoad={onImageLoad}
-            onError={() => console.log('[TripCard] Compact image error for:', trip.destination)}
+            onError={onImageError}
           />
           <LinearGradient
             colors={['transparent', 'rgba(0,0,0,0.6)']}
@@ -107,7 +114,7 @@ export default function TripCard({ trip, onPress, variant = 'large' }: TripCardP
           source={{ uri: imageUrl }}
           style={styles.cardImage}
           onLoad={onImageLoad}
-          onError={() => console.log('[TripCard] Image error for:', trip.destination)}
+          onError={onImageError}
         />
         <LinearGradient
           colors={['transparent', 'rgba(0,0,0,0.15)', 'rgba(0,0,0,0.75)']}
@@ -115,8 +122,14 @@ export default function TripCard({ trip, onPress, variant = 'large' }: TripCardP
           style={styles.cardGradient}
         />
 
+        {isDemo && (
+          <View style={styles.demoBadge}>
+            <Text style={styles.demoBadgeText}>DEMO</Text>
+          </View>
+        )}
+
         {badgeText && (
-          <View style={styles.badge}>
+          <View style={[styles.badge, isDemo && styles.badgeWithDemo]}>
             <Text style={styles.badgeText}>{badgeText}</Text>
           </View>
         )}
@@ -195,6 +208,24 @@ const styles = StyleSheet.create({
     fontSize: 11,
     fontWeight: '700' as const,
     letterSpacing: 0.2,
+  },
+  badgeWithDemo: {
+    right: 72,
+  },
+  demoBadge: {
+    position: 'absolute' as const,
+    top: 14,
+    right: 14,
+    backgroundColor: Colors.accent,
+    paddingHorizontal: 10,
+    paddingVertical: 5,
+    borderRadius: 20,
+  },
+  demoBadgeText: {
+    color: '#FFFFFF',
+    fontSize: 10,
+    fontWeight: '800' as const,
+    letterSpacing: 0.8,
   },
   cardContent: {
     position: 'absolute' as const,

@@ -10,8 +10,9 @@ import {
 import Colors from '@/constants/colors';
 import { openComingSoon } from '@/utils/comingSoon';
 import { hapticLight } from '@/utils/haptics';
-import { useTripsStore } from '@/store/useTripsStore';
+import { useTripsStore, getUserTripCount } from '@/store/useTripsStore';
 import { usePreferencesStore, CurrencyOption, AppearanceOption } from '@/store/usePreferencesStore';
+import { useSubscriptionStore, FREE_TRIP_LIMIT, PLAN_FEATURES } from '@/store/useSubscriptionStore';
 
 
 interface SettingsItemProps {
@@ -60,13 +61,14 @@ function SettingsItem({ icon, label, value, onPress, showChevron = true, toggle,
   );
 }
 
-const proFeatures = [
+const premiumFeaturesList = [
   { icon: Briefcase, text: 'Unlimited trips' },
   { icon: Sparkles, text: 'AI itinerary generation' },
-  { icon: Download, text: 'Full offline access' },
-  { icon: Globe, text: 'My Globe travel map' },
-  { icon: BarChart3, text: 'Travel statistics' },
-  { icon: Users, text: 'Advanced collaboration' },
+  { icon: Sparkles, text: 'AI travel suggestions' },
+  { icon: Users, text: 'Collaborative editing & shared planning' },
+  { icon: Download, text: 'Offline trip access' },
+  { icon: Globe, text: 'Advanced globe & travel history' },
+  { icon: BarChart3, text: 'Smart hotel & activity suggestions' },
 ];
 
 const CURRENCY_OPTIONS: CurrencyOption[] = ['USD', 'GBP', 'EUR'];
@@ -74,7 +76,8 @@ const APPEARANCE_OPTIONS: AppearanceOption[] = ['Light', 'Dark', 'System'];
 
 export default function ProfileScreen() {
   const router = useRouter();
-  const [isPro] = React.useState(false);
+  const plan = useSubscriptionStore((s) => s.plan);
+  const isPro = plan === 'premium';
 
   const notifications = usePreferencesStore((s) => s.notifications);
   const offlineMode = usePreferencesStore((s) => s.offlineMode);
@@ -128,6 +131,7 @@ export default function ProfileScreen() {
   };
 
   const trips = useTripsStore((s) => s.trips);
+  const userTripCount = getUserTripCount(trips);
   const countriesVisited = new Set(trips.map(t => t.country || t.destination).filter(Boolean)).size;
   const totalNights = trips.reduce((sum, t) => {
     if (!t.startDate || !t.endDate) return sum;
@@ -164,8 +168,8 @@ export default function ProfileScreen() {
 
         <View style={styles.statsRow}>
           <View style={styles.statItem}>
-            <Text style={styles.statValue}>{trips.length}</Text>
-            <Text style={styles.statLabel}>Trips</Text>
+            <Text style={styles.statValue}>{userTripCount}</Text>
+            <Text style={styles.statLabel}>{isPro ? 'Trips' : `/ ${FREE_TRIP_LIMIT} Trips`}</Text>
           </View>
           <View style={styles.statDivider} />
           <View style={styles.statItem}>
@@ -187,13 +191,13 @@ export default function ProfileScreen() {
                   <Crown size={20} color={Colors.textLight} />
                 </View>
                 <View style={styles.proTitleContainer}>
-                  <Text style={styles.proTitle}>TripNest Pro</Text>
-                  <Text style={styles.proSubtitle}>Unlock the full experience</Text>
+                  <Text style={styles.proTitle}>TripNest Premium</Text>
+                  <Text style={styles.proSubtitle}>Plan together, use AI, and unlock unlimited trips</Text>
                 </View>
               </View>
 
               <View style={styles.proFeatures}>
-                {proFeatures.map((feature, index) => (
+                {premiumFeaturesList.map((feature, index) => (
                   <View key={index} style={styles.proFeatureItem}>
                     <View style={styles.proFeatureCheck}>
                       <Check size={12} color={Colors.accent} />
@@ -220,13 +224,20 @@ export default function ProfileScreen() {
                 </TouchableOpacity>
               </View>
 
-              <TouchableOpacity style={styles.upgradeButton} onPress={() => openComingSoon('TripNest Pro subscription')} activeOpacity={0.8}>
-                <Text style={styles.upgradeButtonText}>Upgrade to Pro</Text>
+              <TouchableOpacity style={styles.upgradeButton} onPress={() => openComingSoon('TripNest Premium subscription')} activeOpacity={0.8}>
+                <Text style={styles.upgradeButtonText}>Upgrade to Premium</Text>
               </TouchableOpacity>
 
               <Text style={styles.proDisclaimer}>
                 Cancel anytime. 7-day free trial included.
               </Text>
+
+              <View style={styles.freeCompare}>
+                <Text style={styles.freeCompareTitle}>Your free plan includes:</Text>
+                {PLAN_FEATURES.free.features.map((f, i) => (
+                  <Text key={i} style={styles.freeCompareItem}>{`\u2022 ${f}`}</Text>
+                ))}
+              </View>
             </View>
           </View>
         )}
@@ -554,6 +565,23 @@ const styles = StyleSheet.create({
     fontSize: 11,
     color: Colors.textMuted,
     textAlign: 'center',
+  },
+  freeCompare: {
+    marginTop: 16,
+    paddingTop: 16,
+    borderTopWidth: StyleSheet.hairlineWidth,
+    borderTopColor: Colors.borderLight,
+  },
+  freeCompareTitle: {
+    fontSize: 12,
+    fontWeight: '600' as const,
+    color: Colors.textSecondary,
+    marginBottom: 6,
+  },
+  freeCompareItem: {
+    fontSize: 12,
+    color: Colors.textMuted,
+    lineHeight: 20,
   },
   section: {
     marginBottom: 24,
