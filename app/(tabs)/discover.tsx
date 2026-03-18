@@ -5,7 +5,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { Search, SlidersHorizontal, TrendingUp, MapPin, Sun, Mountain, Utensils, Compass, ChevronRight, DollarSign, Calendar, Heart, Plane, Star } from 'lucide-react-native';
 import { useThemeColors } from '@/hooks/useThemeColors';
-import { openComingSoon } from '@/utils/comingSoon';
+
 import { hapticLight } from '@/utils/haptics';
 import { destinations, DiscoverDestination, TripType } from '@/mocks/destinations';
 import { mockTrips } from '@/mocks/trips';
@@ -61,7 +61,7 @@ function DestinationCardCompact({ destination, onPress }: DestinationCardCompact
   return (
     <Animated.View style={{ transform: [{ scale }] }}>
       <Pressable style={staticStyles.compactCard} onPress={onPress} onPressIn={onPressIn} onPressOut={onPressOut}>
-        <Image source={{ uri: destination.imageUrl }} style={staticStyles.compactImage} />
+        <Image source={{ uri: destination.imageUrl }} style={staticStyles.compactImage} defaultSource={{ uri: destination.imageUrl }} />
         <LinearGradient
           colors={['transparent', 'rgba(0,0,0,0.15)', 'rgba(0,0,0,0.7)']}
           locations={[0, 0.4, 1]}
@@ -100,7 +100,7 @@ function DestinationCardLarge({ destination, onPress }: DestinationCardLargeProp
   return (
     <Animated.View style={{ transform: [{ scale }] }}>
       <Pressable style={staticStyles.largeCard} onPress={onPress} onPressIn={onPressIn} onPressOut={onPressOut}>
-        <Image source={{ uri: destination.imageUrl }} style={staticStyles.largeImage} />
+        <Image source={{ uri: destination.imageUrl }} style={staticStyles.largeImage} defaultSource={{ uri: destination.imageUrl }} />
         <LinearGradient
           colors={['rgba(0,0,0,0.05)', 'rgba(0,0,0,0.15)', 'rgba(0,0,0,0.75)']}
           locations={[0, 0.35, 1]}
@@ -151,7 +151,7 @@ function DestinationCardRow({ destination, onPress, colors }: DestinationCardRow
         onPressIn={onPressIn}
         onPressOut={onPressOut}
       >
-        <Image source={{ uri: destination.imageUrl }} style={staticStyles.rowImage} />
+        <Image source={{ uri: destination.imageUrl }} style={staticStyles.rowImage} defaultSource={{ uri: destination.imageUrl }} />
         <View style={staticStyles.rowContent}>
           <Text style={[staticStyles.rowCity, { color: colors.text }]}>{destination.city}</Text>
           <Text style={[staticStyles.rowCountry, { color: colors.textSecondary }]}>{destination.country}</Text>
@@ -290,7 +290,7 @@ export default function DiscoverScreen() {
               value={searchQuery}
               onChangeText={setSearchQuery}
             />
-            <TouchableOpacity style={[s.filterIcon]} onPress={() => openComingSoon('Filters')}>
+            <TouchableOpacity style={[s.filterIcon]} onPress={() => hapticLight()}>
               <SlidersHorizontal size={18} color={colors.text} />
             </TouchableOpacity>
           </View>
@@ -360,7 +360,7 @@ export default function DiscoverScreen() {
                   <DollarSign size={18} color="#27AE60" />
                   <Text style={[staticStyles.sectionTitleText, { color: colors.text }]}>Budget-Friendly</Text>
                 </View>
-                <TouchableOpacity style={staticStyles.seeAllButton} onPress={() => openComingSoon('Budget-friendly destinations')}>
+                <TouchableOpacity style={staticStyles.seeAllButton} onPress={() => { hapticLight(); router.push({ pathname: '/explore-category', params: { category: 'budget' } }); }}>
                   <Text style={[staticStyles.seeAllText, { color: colors.textSecondary }]}>See all</Text>
                   <ChevronRight size={16} color={colors.textSecondary} />
                 </TouchableOpacity>
@@ -409,7 +409,7 @@ export default function DiscoverScreen() {
                   <Calendar size={18} color="#E67E22" />
                   <Text style={[staticStyles.sectionTitleText, { color: colors.text }]}>Best in {currentMonthName}</Text>
                 </View>
-                <TouchableOpacity style={staticStyles.seeAllButton} onPress={() => openComingSoon('Seasonal destinations')}>
+                <TouchableOpacity style={staticStyles.seeAllButton} onPress={() => { hapticLight(); router.push({ pathname: '/explore-category', params: { category: 'seasonal' } }); }}>
                   <Text style={[staticStyles.seeAllText, { color: colors.textSecondary }]}>See all</Text>
                   <ChevronRight size={16} color={colors.textSecondary} />
                 </TouchableOpacity>
@@ -435,7 +435,7 @@ export default function DiscoverScreen() {
                   <Heart size={18} color="#E74C3C" />
                   <Text style={[staticStyles.sectionTitleText, { color: colors.text }]}>Recommended for You</Text>
                 </View>
-                <TouchableOpacity style={staticStyles.seeAllButton} onPress={() => openComingSoon('Personalized recommendations')}>
+                <TouchableOpacity style={staticStyles.seeAllButton} onPress={() => { hapticLight(); router.push({ pathname: '/explore-category', params: { category: 'recommended' } }); }}>
                   <Text style={[staticStyles.seeAllText, { color: colors.textSecondary }]}>See all</Text>
                   <ChevronRight size={16} color={colors.textSecondary} />
                 </TouchableOpacity>
@@ -459,7 +459,7 @@ export default function DiscoverScreen() {
                   <Plane size={18} color="#3498DB" />
                   <Text style={[staticStyles.sectionTitleText, { color: colors.text }]}>Weekend Getaways</Text>
                 </View>
-                <TouchableOpacity style={staticStyles.seeAllButton} onPress={() => openComingSoon('Weekend getaways')}>
+                <TouchableOpacity style={staticStyles.seeAllButton} onPress={() => { hapticLight(); router.push({ pathname: '/explore-category', params: { category: 'weekend' } }); }}>
                   <Text style={[staticStyles.seeAllText, { color: colors.textSecondary }]}>See all</Text>
                   <ChevronRight size={16} color={colors.textSecondary} />
                 </TouchableOpacity>
@@ -497,7 +497,7 @@ export default function DiscoverScreen() {
                   onPress={() => handleDestinationPress(dest)}
                   activeOpacity={0.9}
                 >
-                  <Image source={{ uri: dest.imageUrl }} style={staticStyles.filteredImage} />
+                  <Image source={{ uri: dest.imageUrl }} style={staticStyles.filteredImage} defaultSource={{ uri: dest.imageUrl }} />
                   <LinearGradient
                     colors={['transparent', 'rgba(0,0,0,0.15)', 'rgba(0,0,0,0.7)']}
                     locations={[0, 0.4, 1]}
@@ -691,6 +691,7 @@ const staticStyles = StyleSheet.create({
   largeImage: {
     width: '100%',
     height: '100%',
+    backgroundColor: '#2a2a2a',
   },
   largeContent: {
     ...StyleSheet.absoluteFillObject,
@@ -765,6 +766,7 @@ const staticStyles = StyleSheet.create({
   compactImage: {
     width: '100%',
     height: '100%',
+    backgroundColor: '#2a2a2a',
   },
   compactContent: {
     ...StyleSheet.absoluteFillObject,
@@ -819,6 +821,7 @@ const staticStyles = StyleSheet.create({
     width: 64,
     height: 64,
     borderRadius: 12,
+    backgroundColor: '#2a2a2a',
   },
   rowContent: {
     flex: 1,
@@ -869,6 +872,7 @@ const staticStyles = StyleSheet.create({
   filteredImage: {
     width: '100%',
     height: '100%',
+    backgroundColor: '#2a2a2a',
   },
   filteredContent: {
     ...StyleSheet.absoluteFillObject,
