@@ -51,7 +51,7 @@
       [
         "expo-router",
         {
-          "origin": "https://rork.com/"
+          "origin": "https://tripnest.app/"
         }
       ],
       "expo-font",

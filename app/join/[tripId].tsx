@@ -149,7 +149,7 @@ export default function JoinTripByIdScreen() {
 
   const hasLocalData = !!trip;
   const hasPreviewData = !!preview;
-  const isLoading = !isHydrated;
+  const isLoading = !isHydrated && !hasPreviewData;
   const s = createStyles(colors, isDark);
 
   const handleJoin = () => {

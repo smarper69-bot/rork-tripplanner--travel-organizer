@@ -170,6 +170,12 @@ function RootLayoutNav() {
           }} 
         />
         <Stack.Screen 
+          name="join/test" 
+          options={{ 
+            headerShown: false,
+          }} 
+        />
+        <Stack.Screen 
           name="explore-category" 
           options={{ 
             headerShown: false,
