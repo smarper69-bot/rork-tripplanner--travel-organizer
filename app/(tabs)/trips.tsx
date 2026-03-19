@@ -1,13 +1,13 @@
 import React, { useState, useRef, useCallback, useEffect } from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Animated, Pressable, Alert } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Animated, Pressable, Alert, Platform } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { useRouter } from 'expo-router';
+import { useRouter, useLocalSearchParams } from 'expo-router';
 import { Plus, Plane, Clock, CheckCircle, MapPin, Compass } from 'lucide-react-native';
 import { useThemeColors } from '@/hooks/useThemeColors';
 import TripCard from '@/components/TripCard';
 import { useTripsStore, getUserTripCount } from '@/store/useTripsStore';
 import { useSubscriptionStore, FREE_TRIP_LIMIT } from '@/store/useSubscriptionStore';
-import { hapticLight, hapticMedium, hapticSelection } from '@/utils/haptics';
+import { hapticLight, hapticMedium, hapticSelection, hapticSuccess } from '@/utils/haptics';
 import { ThemeColors } from '@/constants/themes';
 
 const tabs = [
@@ -37,8 +37,31 @@ function AnimatedTripCard({ children, index }: { children: React.ReactNode; inde
 
 export default function TripsScreen() {
   const router = useRouter();
+  const params = useLocalSearchParams<{ deleted?: string }>();
   const colors = useThemeColors();
   const [activeTab, setActiveTab] = useState('upcoming');
+  const [showDeletedToast, setShowDeletedToast] = useState(false);
+  const toastOpacity = useRef(new Animated.Value(0)).current;
+  const toastTranslateY = useRef(new Animated.Value(20)).current;
+
+  useEffect(() => {
+    if (params.deleted === '1') {
+      hapticSuccess();
+      setShowDeletedToast(true);
+      Animated.parallel([
+        Animated.timing(toastOpacity, { toValue: 1, duration: 250, useNativeDriver: true }),
+        Animated.spring(toastTranslateY, { toValue: 0, useNativeDriver: true, speed: 16, bounciness: 4 }),
+      ]).start();
+      const timer = setTimeout(() => {
+        Animated.timing(toastOpacity, { toValue: 0, duration: 300, useNativeDriver: true }).start(() => {
+          setShowDeletedToast(false);
+          toastTranslateY.setValue(20);
+        });
+      }, 2500);
+      router.setParams({ deleted: undefined } as any);
+      return () => clearTimeout(timer);
+    }
+  }, [params.deleted, router, toastOpacity, toastTranslateY]);
   const { trips } = useTripsStore();
   const plan = useSubscriptionStore((s) => s.plan);
   const canCreateTrip = useSubscriptionStore((s) => s.canCreateTrip);
@@ -186,6 +209,18 @@ export default function TripsScreen() {
           </View>
         )}
       </ScrollView>
+      {showDeletedToast && (
+        <Animated.View
+          style={[
+            s.deletedToast,
+            { opacity: toastOpacity, transform: [{ translateY: toastTranslateY }] },
+          ]}
+          pointerEvents="none"
+        >
+          <CheckCircle size={18} color="#FFFFFF" />
+          <Text style={s.deletedToastText}>Trip deleted</Text>
+        </Animated.View>
+      )}
     </SafeAreaView>
   );
 }
@@ -372,5 +407,27 @@ const createStyles = (colors: ThemeColors) => StyleSheet.create({
     fontSize: 13,
     fontWeight: '600' as const,
     color: colors.accent,
+  },
+  deletedToast: {
+    position: 'absolute' as const,
+    bottom: Platform.OS === 'web' ? 90 : 100,
+    alignSelf: 'center' as const,
+    flexDirection: 'row' as const,
+    alignItems: 'center' as const,
+    gap: 8,
+    backgroundColor: '#1F2937',
+    paddingHorizontal: 20,
+    paddingVertical: 12,
+    borderRadius: 28,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.2,
+    shadowRadius: 12,
+    elevation: 6,
+  },
+  deletedToastText: {
+    fontSize: 14,
+    fontWeight: '600' as const,
+    color: '#FFFFFF',
   },
 });

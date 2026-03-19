@@ -1,7 +1,7 @@
 import React, { useState, useRef, useMemo, useEffect, useCallback } from 'react';
 import { 
   View, Text, StyleSheet, ScrollView, TouchableOpacity, Image, 
-  Dimensions, Modal, TextInput, Alert, Platform, Share
+  Dimensions, Modal, TextInput, Alert, Platform, Share, Animated as RNAnimated, ActivityIndicator
 } from 'react-native';
 import { TripIcon, StoredItineraryItem, ActivityLogEntry } from '@/types/trip';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -18,7 +18,7 @@ import * as ImagePicker from 'expo-image-picker';
 import * as Clipboard from 'expo-clipboard';
 import { useThemeColors } from '@/hooks/useThemeColors';
 import { useUserAvatar } from '@/hooks/useUserProfile';
-import { hapticHeavy, hapticSuccess, hapticSelection } from '@/utils/haptics';
+import { hapticHeavy, hapticSuccess, hapticSelection, hapticWarning, hapticLight } from '@/utils/haptics';
 
 import CalendarPicker from '@/components/CalendarPicker';
 import { useTripsStore } from '@/store/useTripsStore';
@@ -97,6 +97,10 @@ export default function TripDetailScreen() {
   const [linkCopied, setLinkCopied] = useState(false);
   const [inviteLink, setInviteLink] = useState('');
   const [isDeleting, setIsDeleting] = useState(false);
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [deleteLoading, setDeleteLoading] = useState(false);
+  const deleteModalOpacity = useRef(new RNAnimated.Value(0)).current;
+  const deleteModalScale = useRef(new RNAnimated.Value(0.9)).current;
 
   const getIconComponent = useCallback((iconName: TripIcon) => {
     const iconMap: Record<TripIcon, React.ComponentType<{ size: number; color: string }>> = {
@@ -272,31 +276,42 @@ export default function TripDetailScreen() {
     ]);
   };
 
-  const handleDeleteTrip = () => {
+  const openDeleteModal = useCallback(() => {
+    if (!trip) return;
+    hapticWarning();
+    setShowDeleteModal(true);
+    RNAnimated.parallel([
+      RNAnimated.timing(deleteModalOpacity, { toValue: 1, duration: 200, useNativeDriver: true }),
+      RNAnimated.spring(deleteModalScale, { toValue: 1, useNativeDriver: true, speed: 18, bounciness: 4 }),
+    ]).start();
+  }, [trip, deleteModalOpacity, deleteModalScale]);
+
+  const closeDeleteModal = useCallback(() => {
+    RNAnimated.timing(deleteModalOpacity, { toValue: 0, duration: 150, useNativeDriver: true }).start(() => {
+      setShowDeleteModal(false);
+      deleteModalScale.setValue(0.9);
+    });
+  }, [deleteModalOpacity, deleteModalScale]);
+
+  const confirmDeleteTrip = useCallback(() => {
     if (!trip) return;
     const tripId = trip.id;
     hapticHeavy();
-    Alert.alert(
-      'Remove this trip?',
-      'This will delete the trip and its related data.',
-      [
-        { text: 'Cancel', style: 'cancel' },
-        {
-          text: 'Delete',
-          style: 'destructive',
-          onPress: () => {
-            setIsDeleting(true);
-            console.log('[TripDetail] Deleting trip:', tripId);
-            router.replace('/(tabs)/trips');
-            setTimeout(() => {
-              deleteTripAction(tripId);
-              console.log('[TripDetail] Deleted trip:', tripId);
-            }, 100);
-          },
-        },
-      ]
-    );
-  };
+    setDeleteLoading(true);
+    console.log('[TripDetail] Deleting trip:', tripId);
+    setTimeout(() => {
+      setIsDeleting(true);
+      setShowDeleteModal(false);
+      deleteModalScale.setValue(0.9);
+      deleteModalOpacity.setValue(0);
+      router.replace({ pathname: '/(tabs)/trips', params: { deleted: '1' } } as any);
+      setTimeout(() => {
+        deleteTripAction(tripId);
+        setDeleteLoading(false);
+        console.log('[TripDetail] Deleted trip:', tripId);
+      }, 100);
+    }, 600);
+  }, [trip, deleteTripAction, router, deleteModalOpacity, deleteModalScale]);
 
   const handleSaveBudget = () => {
     if (!trip) return;
@@ -837,7 +852,7 @@ export default function TripDetailScreen() {
                     <Share2 size={18} color={colors.text} />
                   </TouchableOpacity>
                   {isOwner && (
-                    <TouchableOpacity style={styles.actionButton} onPress={handleDeleteTrip} testID="trip-detail-delete">
+                    <TouchableOpacity style={styles.actionButton} onPress={openDeleteModal} testID="trip-detail-delete">
                       <Trash2 size={18} color="#EF4444" />
                     </TouchableOpacity>
                   )}
@@ -1167,6 +1182,51 @@ export default function TripDetailScreen() {
             </Text>
           </View>
         </View>
+      </Modal>
+
+      <Modal visible={showDeleteModal} transparent animationType="none" onRequestClose={closeDeleteModal}>
+        <RNAnimated.View style={[styles.deleteModalOverlay, { opacity: deleteModalOpacity }]}>
+          <TouchableOpacity style={styles.deleteModalOverlayTouch} activeOpacity={1} onPress={closeDeleteModal} />
+          <RNAnimated.View style={[styles.deleteModalCard, { transform: [{ scale: deleteModalScale }] }]}>
+            <View style={styles.deleteModalIconWrap}>
+              <View style={styles.deleteModalIconCircle}>
+                <Trash2 size={28} color="#EF4444" />
+              </View>
+            </View>
+            <Text style={styles.deleteModalTitle}>Delete trip?</Text>
+            <Text style={styles.deleteModalBody}>
+              This will permanently remove this trip and all its planning details, stays, memories, and budget data.
+            </Text>
+            <View style={styles.deleteModalActions}>
+              <TouchableOpacity
+                style={styles.deleteModalCancelBtn}
+                onPress={() => {
+                  hapticLight();
+                  closeDeleteModal();
+                }}
+                activeOpacity={0.7}
+                disabled={deleteLoading}
+              >
+                <Text style={styles.deleteModalCancelText}>Cancel</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={[styles.deleteModalConfirmBtn, deleteLoading && styles.deleteModalConfirmBtnLoading]}
+                onPress={confirmDeleteTrip}
+                activeOpacity={0.7}
+                disabled={deleteLoading}
+              >
+                {deleteLoading ? (
+                  <ActivityIndicator size="small" color="#FFFFFF" />
+                ) : (
+                  <>
+                    <Trash2 size={16} color="#FFFFFF" />
+                    <Text style={styles.deleteModalConfirmText}>Delete Trip</Text>
+                  </>
+                )}
+              </TouchableOpacity>
+            </View>
+          </RNAnimated.View>
+        </RNAnimated.View>
       </Modal>
 
       <CalendarPicker
@@ -2063,5 +2123,94 @@ const createTripStyles = (colors: any) => StyleSheet.create({
     fontSize: 12,
     color: colors.textMuted,
     marginTop: 3,
+  },
+  deleteModalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.55)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 32,
+  },
+  deleteModalOverlayTouch: {
+    position: 'absolute' as const,
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+  },
+  deleteModalCard: {
+    backgroundColor: colors.surface,
+    borderRadius: 24,
+    padding: 28,
+    width: '100%',
+    maxWidth: 340,
+    alignItems: 'center' as const,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.15,
+    shadowRadius: 24,
+    elevation: 10,
+  },
+  deleteModalIconWrap: {
+    marginBottom: 16,
+  },
+  deleteModalIconCircle: {
+    width: 64,
+    height: 64,
+    borderRadius: 32,
+    backgroundColor: '#FEE2E2',
+    justifyContent: 'center' as const,
+    alignItems: 'center' as const,
+  },
+  deleteModalTitle: {
+    fontSize: 20,
+    fontWeight: '700' as const,
+    color: colors.text,
+    marginBottom: 8,
+    textAlign: 'center' as const,
+  },
+  deleteModalBody: {
+    fontSize: 14,
+    color: colors.textSecondary,
+    textAlign: 'center' as const,
+    lineHeight: 21,
+    marginBottom: 24,
+    paddingHorizontal: 4,
+  },
+  deleteModalActions: {
+    flexDirection: 'row' as const,
+    gap: 12,
+    width: '100%',
+  },
+  deleteModalCancelBtn: {
+    flex: 1,
+    paddingVertical: 14,
+    borderRadius: 14,
+    backgroundColor: colors.background,
+    alignItems: 'center' as const,
+    justifyContent: 'center' as const,
+  },
+  deleteModalCancelText: {
+    fontSize: 15,
+    fontWeight: '600' as const,
+    color: colors.text,
+  },
+  deleteModalConfirmBtn: {
+    flex: 1,
+    flexDirection: 'row' as const,
+    paddingVertical: 14,
+    borderRadius: 14,
+    backgroundColor: '#EF4444',
+    alignItems: 'center' as const,
+    justifyContent: 'center' as const,
+    gap: 6,
+  },
+  deleteModalConfirmBtnLoading: {
+    opacity: 0.8,
+  },
+  deleteModalConfirmText: {
+    fontSize: 15,
+    fontWeight: '600' as const,
+    color: '#FFFFFF',
   },
 });
