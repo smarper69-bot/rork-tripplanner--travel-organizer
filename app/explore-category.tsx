@@ -1,4 +1,4 @@
-import React, { useMemo, useRef, useCallback } from 'react';
+import React, { useMemo, useRef, useCallback, useState } from 'react';
 import { View, Text, StyleSheet, ScrollView, Image, Pressable, Animated, TouchableOpacity } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -8,6 +8,7 @@ import { useThemeColors } from '@/hooks/useThemeColors';
 import { hapticLight } from '@/utils/haptics';
 import { destinations, DiscoverDestination } from '@/mocks/destinations';
 import { ThemeColors } from '@/constants/themes';
+import { DEFAULT_FALLBACK_IMAGE } from '@/utils/destinationImages';
 
 type CategoryType = 'trending' | 'budget' | 'seasonal' | 'recommended' | 'weekend';
 
@@ -45,6 +46,11 @@ interface CardProps {
 
 function DestinationGridCard({ destination, onPress, colors }: CardProps) {
   const scale = useRef(new Animated.Value(1)).current;
+  const [imgSrc, setImgSrc] = useState(destination.imageUrl);
+  const onImageError = useCallback(() => {
+    console.log('[ExploreCategory] Image failed for:', destination.city, '- using fallback');
+    setImgSrc(DEFAULT_FALLBACK_IMAGE);
+  }, [destination.city]);
   const onPressIn = useCallback(() => {
     hapticLight();
     Animated.spring(scale, { toValue: 0.96, useNativeDriver: true, speed: 50, bounciness: 4 }).start();
@@ -62,7 +68,7 @@ function DestinationGridCard({ destination, onPress, colors }: CardProps) {
         onPressOut={onPressOut}
       >
         <View style={styles.gridImageContainer}>
-          <Image source={{ uri: destination.imageUrl }} style={styles.gridImage} defaultSource={{ uri: destination.imageUrl }} />
+          <Image source={{ uri: imgSrc }} style={styles.gridImage} onError={onImageError} />
           <LinearGradient
             colors={['transparent', 'rgba(0,0,0,0.15)', 'rgba(0,0,0,0.7)']}
             locations={[0, 0.4, 1]}

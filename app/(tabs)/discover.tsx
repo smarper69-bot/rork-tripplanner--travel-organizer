@@ -394,7 +394,7 @@ export default function DiscoverScreen() {
                   <TrendingUp size={18} color={colors.accent} />
                   <Text style={[staticStyles.sectionTitleText, { color: colors.text }]}>Trending Now</Text>
                 </View>
-                <TouchableOpacity style={staticStyles.seeAllButton} onPress={() => { setSelectedCategory('trending'); }}>
+                <TouchableOpacity style={staticStyles.seeAllButton} onPress={() => { hapticLight(); router.push({ pathname: '/explore-category', params: { category: 'trending' } }); }}>
                   <Text style={[staticStyles.seeAllText, { color: colors.textSecondary }]}>See all</Text>
                   <ChevronRight size={16} color={colors.textSecondary} />
                 </TouchableOpacity>
