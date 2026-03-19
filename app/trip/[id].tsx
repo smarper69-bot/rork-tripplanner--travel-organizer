@@ -132,17 +132,6 @@ export default function TripDetailScreen() {
     }
   }, [trip, isDeleting, router]);
 
-  if (!trip) {
-    return (
-      <>
-        <Stack.Screen options={{ headerShown: false }} />
-        <View style={styles.notFound}>
-          <Text style={styles.notFoundText}>Trip not found</Text>
-        </View>
-      </>
-    );
-  }
-
   const formatDate = (date: string) => {
     return new Date(date).toLocaleDateString('en-US', { 
       weekday: 'short',
@@ -152,6 +141,7 @@ export default function TripDetailScreen() {
   };
 
   const calculateTripDays = () => {
+    if (!trip) return 0;
     const start = new Date(trip.startDate);
     const end = new Date(trip.endDate);
     const diff = Math.ceil((end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24));
@@ -160,8 +150,8 @@ export default function TripDetailScreen() {
 
   const tripDays = calculateTripDays();
   const tripNights = tripDays;
-  const budgetProgress = trip.totalBudget > 0 ? (trip.spentBudget / trip.totalBudget) * 100 : 0;
-  const IconComponent = getIconComponent(trip.icon);
+  const budgetProgress = trip && trip.totalBudget > 0 ? (trip.spentBudget / trip.totalBudget) * 100 : 0;
+  const IconComponent = getIconComponent(trip?.icon ?? 'landmark');
 
   const getStatusLabel = (status: string) => {
     switch (status) {
@@ -189,6 +179,7 @@ export default function TripDetailScreen() {
   };
 
   const handleSaveItinerary = () => {
+    if (!trip) return;
     if (!itineraryTitle.trim() || !itineraryDate) {
       Alert.alert('Missing Info', 'Please enter a title and select a date.');
       return;
@@ -216,6 +207,7 @@ export default function TripDetailScreen() {
   };
 
   const handleSaveStay = () => {
+    if (!trip) return;
     if (!stayName.trim() || !stayCheckIn || !stayCheckOut) {
       Alert.alert('Missing Info', 'Please enter a name and select check-in/check-out dates.');
       return;
@@ -243,6 +235,7 @@ export default function TripDetailScreen() {
   };
 
   const handleAddMemory = async () => {
+    if (!trip) return;
     if (Platform.OS === 'web') {
       addMemory(trip.id, {
         uri: 'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=300',
@@ -281,6 +274,7 @@ export default function TripDetailScreen() {
 
   const handleDeleteTrip = () => {
     if (!trip) return;
+    const tripId = trip.id;
     hapticHeavy();
     Alert.alert(
       'Remove this trip?',
@@ -292,9 +286,12 @@ export default function TripDetailScreen() {
           style: 'destructive',
           onPress: () => {
             setIsDeleting(true);
-            deleteTripAction(trip.id);
-            console.log('[TripDetail] Deleted trip:', trip.id);
+            console.log('[TripDetail] Deleting trip:', tripId);
             router.replace('/(tabs)/trips');
+            setTimeout(() => {
+              deleteTripAction(tripId);
+              console.log('[TripDetail] Deleted trip:', tripId);
+            }, 100);
           },
         },
       ]
@@ -302,6 +299,7 @@ export default function TripDetailScreen() {
   };
 
   const handleSaveBudget = () => {
+    if (!trip) return;
     hapticSuccess();
     const total = parseFloat(budgetTotalInput) || 0;
     const spent = parseFloat(budgetSpentInput) || 0;
@@ -309,7 +307,9 @@ export default function TripDetailScreen() {
     setShowBudgetEdit(false);
   };
 
-  const renderOverview = () => (
+  const renderOverview = () => {
+    if (!trip) return null;
+    return (
     <View style={styles.tabContentInner}>
       <View style={styles.overviewCard}>
         <Text style={styles.overviewCardTitle}>Trip Summary</Text>
@@ -426,7 +426,8 @@ export default function TripDetailScreen() {
         </TouchableOpacity>
       </View>
     </View>
-  );
+    );
+  };
 
   const renderItinerary = () => (
     <View style={styles.tabContentInner}>
@@ -492,7 +493,9 @@ export default function TripDetailScreen() {
     </View>
   );
 
-  const renderBudget = () => (
+  const renderBudget = () => {
+    if (!trip) return null;
+    return (
     <View style={styles.tabContentInner}>
       {trip.totalBudget > 0 ? (
         <>
@@ -556,9 +559,12 @@ export default function TripDetailScreen() {
         </View>
       )}
     </View>
-  );
+    );
+  };
 
-  const renderStays = () => (
+  const renderStays = () => {
+    if (!trip) return null;
+    return (
     <View style={styles.tabContentInner}>
       <TouchableOpacity
         style={styles.bookingCtaRow}
@@ -636,7 +642,8 @@ export default function TripDetailScreen() {
         </View>
       )}
     </View>
-  );
+    );
+  };
 
   const renderMemories = () => (
     <View style={styles.tabContentInner}>
@@ -784,6 +791,17 @@ export default function TripDetailScreen() {
       default: return renderOverview();
     }
   };
+
+  if (!trip) {
+    return (
+      <>
+        <Stack.Screen options={{ headerShown: false }} />
+        <View style={styles.notFound}>
+          <Text style={styles.notFoundText}>Trip not found</Text>
+        </View>
+      </>
+    );
+  }
 
   return (
     <>
