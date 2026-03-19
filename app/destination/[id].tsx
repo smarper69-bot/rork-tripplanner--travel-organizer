@@ -160,7 +160,7 @@ export default function DestinationOverviewScreen() {
                 </TouchableOpacity>
               </View>
               <View style={staticStyles.activitiesList}>
-                {destination.activities.map((activity, index) => (
+                {(destination.activities ?? []).map((activity, index) => (
                   <TouchableOpacity key={index} style={[s.activityCard]} onPress={() => openComingSoon('Activity details')}>
                     <View style={[staticStyles.activityIcon, { backgroundColor: colors.accent + '15' }]}>
                       <Ticket size={18} color={colors.accent} />

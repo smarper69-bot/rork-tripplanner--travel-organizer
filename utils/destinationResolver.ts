@@ -18,8 +18,81 @@ function normalizeForMatch(str: string): string {
   return str.toLowerCase().trim().replace(/[^a-z0-9\s]/g, '');
 }
 
+const ALIAS_MAP: Record<string, string> = {
+  'costa rica': 'san jose',
+  'safari kenya': 'masai mara',
+  'angkor wat': 'siem reap',
+  'angkor': 'siem reap',
+  'machu pichu': 'machu picchu',
+  'macchu picchu': 'machu picchu',
+  'swiss alps': 'swiss alps',
+  'alps': 'swiss alps',
+  'amalfi': 'amalfi coast',
+  'positano': 'amalfi coast',
+  'ravello': 'amalfi coast',
+  'oia': 'santorini',
+  'fira': 'santorini',
+  'ubud': 'bali',
+  'seminyak': 'bali',
+  'canggu': 'bali',
+  'kuta': 'bali',
+  'patong': 'phuket',
+  'phi phi': 'phuket',
+  'giza': 'cairo',
+  'pyramids': 'cairo',
+  'manhattan': 'new york',
+  'brooklyn': 'new york',
+  'hollywood': 'los angeles',
+  'beverly hills': 'los angeles',
+  'venice beach': 'los angeles',
+  'shibuya': 'tokyo',
+  'shinjuku': 'tokyo',
+  'akihabara': 'tokyo',
+  'montmartre': 'paris',
+  'le marais': 'paris',
+  'colosseum': 'rome',
+  'vatican': 'rome',
+  'trastevere': 'rome',
+  'la rambla': 'barcelona',
+  'gaudi': 'barcelona',
+  'sagrada familia': 'barcelona',
+  'stone town': 'zanzibar',
+  'la boca': 'buenos aires',
+  'palermo': 'buenos aires',
+  'old town': 'dubrovnik',
+  'gion': 'kyoto',
+  'arashiyama': 'kyoto',
+  'nyhavn': 'copenhagen',
+  'tivoli': 'copenhagen',
+  'myeongdong': 'seoul',
+  'gangnam': 'seoul',
+  'alfama': 'lisbon',
+  'belem': 'lisbon',
+  'medina': 'marrakech',
+  'jemaa el fna': 'marrakech',
+  'table mountain': 'cape town',
+  'stanley park': 'vancouver',
+  'bondi': 'sydney',
+  'bondi beach': 'sydney',
+  'marina bay': 'singapore',
+  'gardens by the bay': 'singapore',
+  'blue lagoon': 'reykjavik',
+  'golden circle': 'reykjavik',
+  'charles bridge': 'prague',
+  'old town square': 'prague',
+  'torres del paine': 'patagonia',
+  'el chalten': 'patagonia',
+  'perito moreno': 'patagonia',
+};
+
+function resolveAlias(input: string): string {
+  const norm = normalizeForMatch(input);
+  return ALIAS_MAP[norm] || input;
+}
+
 function findKnownDestination(city: string, country?: string): DiscoverDestination | null {
-  const cityNorm = normalizeForMatch(city);
+  const resolved = resolveAlias(city);
+  const cityNorm = normalizeForMatch(resolved);
   const countryNorm = country ? normalizeForMatch(country) : '';
 
   let match = destinations.find(d => normalizeForMatch(d.city) === cityNorm);
@@ -84,9 +157,9 @@ export function resolveDestination(city: string, country?: string): ResolvedDest
       description: known.description,
       imageUrl: known.imageUrl || imageResult.url,
       confidence: 'high',
-      tags: known.tags ?? known.tripTypes,
+      tags: known.tags,
       estimatedDailyBudget: known.avgDailyCost,
-      coordinates: known.coordinates ?? null,
+      coordinates: known.coordinates,
       isKnown: true,
     };
   }
@@ -122,4 +195,19 @@ export function isDestinationReliable(city: string, country?: string): boolean {
 
 export function getDestinationFallbackImage(): string {
   return DEFAULT_FALLBACK_IMAGE;
+}
+
+export function findDestinationById(id: string): DiscoverDestination | undefined {
+  return destinations.find(d => d.id === id);
+}
+
+export function searchDestinations(query: string): DiscoverDestination[] {
+  if (!query || query.trim().length === 0) return [];
+  const norm = normalizeForMatch(query);
+  return destinations.filter(d => {
+    const cityNorm = normalizeForMatch(d.city);
+    const countryNorm = normalizeForMatch(d.country);
+    const tagMatch = d.tags.some(t => normalizeForMatch(t).includes(norm));
+    return cityNorm.includes(norm) || countryNorm.includes(norm) || norm.includes(cityNorm) || tagMatch;
+  });
 }

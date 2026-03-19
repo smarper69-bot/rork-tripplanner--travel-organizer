@@ -29,8 +29,8 @@ export interface DiscoverDestination {
   iconColor: string;
   description: string;
   highlights: string[];
-  coordinates?: { latitude: number; longitude: number };
-  tags?: string[];
+  coordinates: { latitude: number; longitude: number };
+  tags: string[];
   whyGo?: string;
   hotels?: Hotel[];
   activities?: Activity[];
@@ -51,6 +51,8 @@ export const destinations: DiscoverDestination[] = [
     iconColor: '#1A1A1A',
     description: 'A dazzling blend of ultramodern and traditional, from neon-lit skyscrapers to historic temples.',
     highlights: ['Shibuya Crossing', 'Senso-ji Temple', 'Tsukiji Market'],
+    coordinates: { latitude: 35.6762, longitude: 139.6503 },
+    tags: ['city', 'culture', 'food', 'technology', 'temples'],
     whyGo: 'Tokyo seamlessly blends ancient traditions with cutting-edge technology. Experience centuries-old temples next to neon-lit streets, world-class sushi alongside robot restaurants, and serene gardens within a bustling metropolis of 14 million people.',
     hotels: [
       { name: 'Park Hyatt Tokyo', priceRange: '$400-600/night', rating: 4.9 },
@@ -78,7 +80,9 @@ export const destinations: DiscoverDestination[] = [
     iconColor: '#2C3E50',
     description: 'The City of Light captivates with world-class art, iconic landmarks, and unparalleled cuisine.',
     highlights: ['Eiffel Tower', 'Louvre Museum', 'Montmartre'],
-    whyGo: 'Paris defines romance, art, and culinary excellence. Stroll along the Seine, marvel at the Louvre\'s masterpieces, and indulge in croissants at corner cafés. Every arrondissement tells a different story of this timeless city.',
+    coordinates: { latitude: 48.8566, longitude: 2.3522 },
+    tags: ['city', 'culture', 'romantic', 'food', 'art', 'history'],
+    whyGo: 'Paris defines romance, art, and culinary excellence. Stroll along the Seine, marvel at the Louvre\'s masterpieces, and indulge in croissants at corner cafes. Every arrondissement tells a different story of this timeless city.',
     hotels: [
       { name: 'Le Meurice', priceRange: '$800-1200/night', rating: 4.9 },
       { name: 'Hotel Le Marais', priceRange: '$200-350/night', rating: 4.6 },
@@ -87,7 +91,7 @@ export const destinations: DiscoverDestination[] = [
     activities: [
       { name: 'Skip-the-Line Louvre Tour', duration: '3 hours', price: '$75' },
       { name: 'Seine River Cruise', duration: '1 hour', price: '$20' },
-      { name: 'Montmartre & Sacré-Cœur Walk', duration: '2.5 hours', price: '$35' },
+      { name: 'Montmartre & Sacre-Coeur Walk', duration: '2.5 hours', price: '$35' },
       { name: 'French Cooking Class', duration: '4 hours', price: '$150' },
     ],
   },
@@ -105,6 +109,8 @@ export const destinations: DiscoverDestination[] = [
     iconColor: '#27AE60',
     description: 'Tropical paradise with stunning rice terraces, ancient temples, and world-class surfing.',
     highlights: ['Ubud Rice Terraces', 'Uluwatu Temple', 'Seminyak Beach'],
+    coordinates: { latitude: -8.3405, longitude: 115.0920 },
+    tags: ['beach', 'nature', 'culture', 'budget', 'surfing', 'tropical'],
     whyGo: 'Bali offers spiritual retreats, world-class surf breaks, and lush jungle landscapes at incredible value. From yoga in Ubud to beach clubs in Seminyak, this island paradise caters to every type of traveler.',
     hotels: [
       { name: 'COMO Shambhala Estate', priceRange: '$600-900/night', rating: 4.9 },
@@ -132,6 +138,8 @@ export const destinations: DiscoverDestination[] = [
     iconColor: '#34495E',
     description: 'The city that never sleeps offers iconic skylines, Broadway shows, and diverse neighborhoods.',
     highlights: ['Central Park', 'Times Square', 'Statue of Liberty'],
+    coordinates: { latitude: 40.7128, longitude: -74.0060 },
+    tags: ['city', 'culture', 'food', 'luxury', 'nightlife', 'shopping'],
     whyGo: 'New York City is the ultimate urban adventure. From Broadway shows to world-class museums, diverse cuisines to iconic landmarks, NYC delivers endless experiences. Every neighborhood has its own personality waiting to be discovered.',
     hotels: [
       { name: 'The Plaza', priceRange: '$700-1100/night', rating: 4.8 },
@@ -157,19 +165,21 @@ export const destinations: DiscoverDestination[] = [
     imageUrl: 'https://images.unsplash.com/photo-1583422409516-2895a77efded?w=1600&h=900&fit=crop&q=80',
     icon: 'landmark',
     iconColor: '#E74C3C',
-    description: 'Gaudí\'s architectural masterpieces meet Mediterranean beaches and vibrant nightlife.',
-    highlights: ['Sagrada Família', 'Park Güell', 'La Rambla'],
-    whyGo: 'Barcelona blends stunning Gaudí architecture, Mediterranean beaches, and vibrant Catalan culture. Explore Gothic quarters by day, relax on sandy shores, and experience legendary nightlife. The perfect mix of culture and leisure.',
+    description: 'Gaudi\'s architectural masterpieces meet Mediterranean beaches and vibrant nightlife.',
+    highlights: ['Sagrada Familia', 'Park Guell', 'La Rambla'],
+    coordinates: { latitude: 41.3874, longitude: 2.1686 },
+    tags: ['city', 'beach', 'culture', 'food', 'architecture', 'nightlife'],
+    whyGo: 'Barcelona blends stunning Gaudi architecture, Mediterranean beaches, and vibrant Catalan culture. Explore Gothic quarters by day, relax on sandy shores, and experience legendary nightlife. The perfect mix of culture and leisure.',
     hotels: [
       { name: 'Hotel Arts Barcelona', priceRange: '$350-500/night', rating: 4.8 },
       { name: 'Hotel Jazz', priceRange: '$120-200/night', rating: 4.4 },
       { name: 'Generator Barcelona', priceRange: '$30-60/night', rating: 4.2 },
     ],
     activities: [
-      { name: 'Sagrada Família Guided Tour', duration: '2 hours', price: '$50' },
+      { name: 'Sagrada Familia Guided Tour', duration: '2 hours', price: '$50' },
       { name: 'Gothic Quarter Walking Tour', duration: '2.5 hours', price: '$25' },
       { name: 'Tapas & Wine Experience', duration: '3 hours', price: '$75' },
-      { name: 'Park Güell & Gaudí Houses', duration: '4 hours', price: '$65' },
+      { name: 'Park Guell & Gaudi Houses', duration: '4 hours', price: '$65' },
     ],
   },
   {
@@ -186,6 +196,8 @@ export const destinations: DiscoverDestination[] = [
     iconColor: '#8B4513',
     description: 'The Eternal City where ancient ruins stand alongside Renaissance art and modern Italian life.',
     highlights: ['Colosseum', 'Vatican City', 'Trevi Fountain'],
+    coordinates: { latitude: 41.9028, longitude: 12.4964 },
+    tags: ['city', 'culture', 'food', 'romantic', 'history', 'ancient'],
     whyGo: 'Rome is an open-air museum where every cobblestone tells a story. Walk through millennia of history from the Colosseum to the Vatican, then refuel with the best pasta and gelato on earth.',
     hotels: [
       { name: 'Hotel de Russie', priceRange: '$450-700/night', rating: 4.8 },
@@ -213,7 +225,9 @@ export const destinations: DiscoverDestination[] = [
     iconColor: '#3498DB',
     description: 'Iconic white-washed buildings perched on cliffs overlooking the deep blue Aegean Sea.',
     highlights: ['Oia Sunset', 'Red Beach', 'Akrotiri Ruins'],
-    whyGo: 'Santorini is pure magic—whitewashed villages cascading down volcanic cliffs into impossibly blue waters. Watch legendary sunsets from Oia, explore ancient ruins, and savor fresh seafood with Aegean views.',
+    coordinates: { latitude: 36.3932, longitude: 25.4615 },
+    tags: ['beach', 'romantic', 'luxury', 'island', 'sunset', 'volcanic'],
+    whyGo: 'Santorini is pure magic — whitewashed villages cascading down volcanic cliffs into impossibly blue waters. Watch legendary sunsets from Oia, explore ancient ruins, and savor fresh seafood with Aegean views.',
     hotels: [
       { name: 'Canaves Oia Suites', priceRange: '$500-800/night', rating: 4.9 },
       { name: 'Cosmopolitan Suites', priceRange: '$200-350/night', rating: 4.6 },
@@ -240,6 +254,20 @@ export const destinations: DiscoverDestination[] = [
     iconColor: '#D4AF37',
     description: 'Futuristic skyline, luxury shopping, and desert adventures in this modern marvel.',
     highlights: ['Burj Khalifa', 'Dubai Mall', 'Palm Jumeirah'],
+    coordinates: { latitude: 25.2048, longitude: 55.2708 },
+    tags: ['city', 'luxury', 'family', 'shopping', 'desert', 'modern'],
+    whyGo: 'Dubai pushes the boundaries of ambition with the world\'s tallest building, largest mall, and man-made islands. Beyond the glitz, discover desert safaris, historic souks, and a thriving food scene blending global cuisines.',
+    hotels: [
+      { name: 'Burj Al Arab', priceRange: '$1200-2500/night', rating: 4.9 },
+      { name: 'Jumeirah Beach Hotel', priceRange: '$300-500/night', rating: 4.6 },
+      { name: 'Rove Downtown', priceRange: '$80-150/night', rating: 4.3 },
+    ],
+    activities: [
+      { name: 'Burj Khalifa At The Top', duration: '1.5 hours', price: '$40' },
+      { name: 'Desert Safari with BBQ', duration: '6 hours', price: '$65' },
+      { name: 'Dubai Marina Dhow Cruise', duration: '2 hours', price: '$55' },
+      { name: 'Old Dubai & Souks Tour', duration: '3 hours', price: '$30' },
+    ],
   },
   {
     id: '9',
@@ -255,6 +283,20 @@ export const destinations: DiscoverDestination[] = [
     iconColor: '#16A085',
     description: 'Harbor city with iconic architecture, golden beaches, and a laid-back coastal vibe.',
     highlights: ['Opera House', 'Bondi Beach', 'Harbour Bridge'],
+    coordinates: { latitude: -33.8688, longitude: 151.2093 },
+    tags: ['city', 'beach', 'nature', 'adventure', 'coastal', 'surfing'],
+    whyGo: 'Sydney dazzles with its world-famous harbor, golden surf beaches, and vibrant cultural scene. Climb the Harbour Bridge, surf at Bondi, and enjoy fresh seafood at waterfront restaurants in one of the world\'s most livable cities.',
+    hotels: [
+      { name: 'Park Hyatt Sydney', priceRange: '$600-900/night', rating: 4.9 },
+      { name: 'QT Sydney', priceRange: '$200-350/night', rating: 4.5 },
+      { name: 'Wake Up! Sydney', priceRange: '$30-60/night', rating: 4.1 },
+    ],
+    activities: [
+      { name: 'Sydney Opera House Tour', duration: '1 hour', price: '$30' },
+      { name: 'Bondi to Coogee Walk', duration: '2 hours', price: 'Free' },
+      { name: 'Harbour Bridge Climb', duration: '3.5 hours', price: '$180' },
+      { name: 'Blue Mountains Day Trip', duration: 'Full day', price: '$95' },
+    ],
   },
   {
     id: '10',
@@ -270,6 +312,20 @@ export const destinations: DiscoverDestination[] = [
     iconColor: '#795548',
     description: 'Ancient Incan citadel set dramatically high in the Andes Mountains.',
     highlights: ['Sun Gate', 'Inca Trail', 'Huayna Picchu'],
+    coordinates: { latitude: -13.1631, longitude: -72.5450 },
+    tags: ['adventure', 'culture', 'nature', 'ancient', 'hiking', 'ruins'],
+    whyGo: 'Machu Picchu is one of the world\'s most awe-inspiring archaeological sites. Trek the legendary Inca Trail through cloud forests, then witness the 15th-century stone citadel emerging from the mist at sunrise.',
+    hotels: [
+      { name: 'Belmond Sanctuary Lodge', priceRange: '$800-1200/night', rating: 4.8 },
+      { name: 'Inkaterra Machu Picchu', priceRange: '$250-400/night', rating: 4.6 },
+      { name: 'Hostal Machupicchu Land', priceRange: '$30-60/night', rating: 4.0 },
+    ],
+    activities: [
+      { name: 'Guided Machu Picchu Tour', duration: '4 hours', price: '$45' },
+      { name: 'Huayna Picchu Hike', duration: '3 hours', price: '$25' },
+      { name: 'Inca Trail Trek (4 days)', duration: '4 days', price: '$600' },
+      { name: 'Sacred Valley Day Tour', duration: 'Full day', price: '$55' },
+    ],
   },
   {
     id: '11',
@@ -285,6 +341,20 @@ export const destinations: DiscoverDestination[] = [
     iconColor: '#F39C12',
     description: 'Vibrant street life, ornate shrines, and some of the world\'s best street food.',
     highlights: ['Grand Palace', 'Wat Arun', 'Chatuchak Market'],
+    coordinates: { latitude: 13.7563, longitude: 100.5018 },
+    tags: ['city', 'food', 'culture', 'budget', 'temples', 'street food'],
+    whyGo: 'Bangkok assaults the senses in the best way. Glittering temples, chaotic markets, and the world\'s best street food converge in a city that never stops. From rooftop bars to canal-side communities, there\'s always something to discover.',
+    hotels: [
+      { name: 'Mandarin Oriental Bangkok', priceRange: '$350-600/night', rating: 4.9 },
+      { name: 'Hotel Indigo Bangkok', priceRange: '$100-180/night', rating: 4.5 },
+      { name: 'NapPark Hostel', priceRange: '$15-30/night', rating: 4.2 },
+    ],
+    activities: [
+      { name: 'Grand Palace & Wat Pho Tour', duration: '3 hours', price: '$35' },
+      { name: 'Street Food Tour by Tuk-Tuk', duration: '4 hours', price: '$50' },
+      { name: 'Floating Markets Day Trip', duration: '5 hours', price: '$40' },
+      { name: 'Thai Cooking Class', duration: '4 hours', price: '$35' },
+    ],
   },
   {
     id: '12',
@@ -300,6 +370,20 @@ export const destinations: DiscoverDestination[] = [
     iconColor: '#5DADE2',
     description: 'Gateway to dramatic landscapes, Northern Lights, and geothermal wonders.',
     highlights: ['Blue Lagoon', 'Golden Circle', 'Northern Lights'],
+    coordinates: { latitude: 64.1466, longitude: -21.9426 },
+    tags: ['nature', 'adventure', 'geothermal', 'northern lights', 'glaciers'],
+    whyGo: 'Iceland is a land of extremes — glaciers and volcanoes, midnight sun and Northern Lights, hot springs and icy fjords. Drive the Golden Circle, soak in the Blue Lagoon, and witness landscapes that feel otherworldly.',
+    hotels: [
+      { name: 'The Retreat at Blue Lagoon', priceRange: '$700-1200/night', rating: 4.9 },
+      { name: 'CenterHotel Thingholt', priceRange: '$180-300/night', rating: 4.5 },
+      { name: 'Loft HI Hostel', priceRange: '$50-80/night', rating: 4.2 },
+    ],
+    activities: [
+      { name: 'Golden Circle Tour', duration: 'Full day', price: '$90' },
+      { name: 'Blue Lagoon Entry', duration: '3 hours', price: '$75' },
+      { name: 'Northern Lights Hunt', duration: '4 hours', price: '$65' },
+      { name: 'Glacier Hiking', duration: '5 hours', price: '$110' },
+    ],
   },
   {
     id: '13',
@@ -315,6 +399,20 @@ export const destinations: DiscoverDestination[] = [
     iconColor: '#C0392B',
     description: 'Sensory overload in the best way: colorful souks, aromatic spices, and stunning riads.',
     highlights: ['Jemaa el-Fnaa', 'Majorelle Garden', 'Medina'],
+    coordinates: { latitude: 31.6295, longitude: -7.9811 },
+    tags: ['culture', 'food', 'budget', 'souks', 'desert', 'spices'],
+    whyGo: 'Marrakech is a feast for the senses. Navigate the labyrinthine medina, haggle in the souks, and retreat to a serene riad courtyard. The Sahara desert is just a day trip away.',
+    hotels: [
+      { name: 'Royal Mansour', priceRange: '$600-1000/night', rating: 4.9 },
+      { name: 'Riad Yasmine', priceRange: '$100-200/night', rating: 4.6 },
+      { name: 'Equity Point Hostel', priceRange: '$15-30/night', rating: 4.1 },
+    ],
+    activities: [
+      { name: 'Medina Walking Tour', duration: '3 hours', price: '$25' },
+      { name: 'Moroccan Cooking Class', duration: '4 hours', price: '$40' },
+      { name: 'Sahara Desert Day Trip', duration: 'Full day', price: '$80' },
+      { name: 'Hammam Spa Experience', duration: '2 hours', price: '$30' },
+    ],
   },
   {
     id: '14',
@@ -330,6 +428,20 @@ export const destinations: DiscoverDestination[] = [
     iconColor: '#2980B9',
     description: 'Where mountains meet the sea, with world-class wine, wildlife, and stunning coastlines.',
     highlights: ['Table Mountain', 'Cape Point', 'V&A Waterfront'],
+    coordinates: { latitude: -33.9249, longitude: 18.4241 },
+    tags: ['nature', 'adventure', 'beach', 'city', 'wine', 'wildlife'],
+    whyGo: 'Cape Town sits at the dramatic confluence of mountain and ocean. Hike Table Mountain, cage dive with great whites, tour the Winelands, and explore the vibrant Bo-Kaap neighborhood.',
+    hotels: [
+      { name: 'One&Only Cape Town', priceRange: '$400-700/night', rating: 4.8 },
+      { name: 'POD Camps Bay', priceRange: '$150-250/night', rating: 4.5 },
+      { name: 'Once in Cape Town', priceRange: '$20-45/night', rating: 4.2 },
+    ],
+    activities: [
+      { name: 'Table Mountain Cable Car', duration: '2 hours', price: '$20' },
+      { name: 'Cape Peninsula Tour', duration: 'Full day', price: '$70' },
+      { name: 'Stellenbosch Wine Tasting', duration: '5 hours', price: '$60' },
+      { name: 'Robben Island Tour', duration: '4 hours', price: '$25' },
+    ],
   },
   {
     id: '15',
@@ -345,6 +457,20 @@ export const destinations: DiscoverDestination[] = [
     iconColor: '#E67E22',
     description: 'Charming canals, world-renowned museums, and a vibrant creative scene.',
     highlights: ['Anne Frank House', 'Van Gogh Museum', 'Canal Cruises'],
+    coordinates: { latitude: 52.3676, longitude: 4.9041 },
+    tags: ['city', 'culture', 'romantic', 'canals', 'art', 'cycling'],
+    whyGo: 'Amsterdam enchants with its ring of canals, world-class art museums, and cozy brown cafes. Cycle along the Herengracht, explore the Jordaan, and visit masterpieces by Rembrandt and Van Gogh.',
+    hotels: [
+      { name: 'Waldorf Astoria Amsterdam', priceRange: '$400-650/night', rating: 4.8 },
+      { name: 'Hotel V Nesplein', priceRange: '$150-250/night', rating: 4.5 },
+      { name: 'The Flying Pig Downtown', priceRange: '$30-60/night', rating: 4.1 },
+    ],
+    activities: [
+      { name: 'Canal Cruise', duration: '1 hour', price: '$18' },
+      { name: 'Van Gogh Museum Tour', duration: '2 hours', price: '$22' },
+      { name: 'Jordaan Neighborhood Walk', duration: '2.5 hours', price: '$25' },
+      { name: 'Bike Tour of Amsterdam', duration: '3 hours', price: '$35' },
+    ],
   },
   {
     id: '16',
@@ -359,7 +485,21 @@ export const destinations: DiscoverDestination[] = [
     icon: 'landmark',
     iconColor: '#F1C40F',
     description: 'Hilltop city of pastel buildings, vintage trams, and soulful fado music.',
-    highlights: ['Belém Tower', 'Alfama District', 'Pastéis de Belém'],
+    highlights: ['Belem Tower', 'Alfama District', 'Pasteis de Belem'],
+    coordinates: { latitude: 38.7223, longitude: -9.1393 },
+    tags: ['city', 'culture', 'food', 'budget', 'coastal', 'music'],
+    whyGo: 'Lisbon is Europe\'s sunniest capital, where pastel-colored buildings line steep cobblestone streets. Ride iconic Tram 28, listen to fado in Alfama, and feast on custard tarts fresh from the oven.',
+    hotels: [
+      { name: 'Four Seasons Ritz Lisbon', priceRange: '$350-550/night', rating: 4.8 },
+      { name: 'Hotel Mama Shelter', priceRange: '$100-180/night', rating: 4.4 },
+      { name: 'Lisbon Lounge Hostel', priceRange: '$20-40/night', rating: 4.2 },
+    ],
+    activities: [
+      { name: 'Tram 28 & Alfama Tour', duration: '3 hours', price: '$20' },
+      { name: 'Sintra Palace Day Trip', duration: 'Full day', price: '$55' },
+      { name: 'Fado Night Experience', duration: '2 hours', price: '$35' },
+      { name: 'Belem Food Walk', duration: '3 hours', price: '$45' },
+    ],
   },
   {
     id: '17',
@@ -375,6 +515,20 @@ export const destinations: DiscoverDestination[] = [
     iconColor: '#1ABC9C',
     description: 'Futuristic city-state with incredible food, gardens, and multicultural heritage.',
     highlights: ['Marina Bay Sands', 'Gardens by the Bay', 'Hawker Centers'],
+    coordinates: { latitude: 1.3521, longitude: 103.8198 },
+    tags: ['city', 'food', 'family', 'luxury', 'modern', 'gardens'],
+    whyGo: 'Singapore packs an incredible punch for its size. Michelin-starred hawker stalls, futuristic Supertree gardens, ethnic neighborhoods, and a thriving bar scene make this compact city-state endlessly rewarding.',
+    hotels: [
+      { name: 'Marina Bay Sands', priceRange: '$350-600/night', rating: 4.7 },
+      { name: 'Naumi Hotel', priceRange: '$150-250/night', rating: 4.5 },
+      { name: 'The Pod Boutique Capsule', priceRange: '$30-60/night', rating: 4.2 },
+    ],
+    activities: [
+      { name: 'Gardens by the Bay', duration: '3 hours', price: '$20' },
+      { name: 'Hawker Center Food Tour', duration: '3 hours', price: '$45' },
+      { name: 'Chinatown Heritage Walk', duration: '2 hours', price: '$15' },
+      { name: 'Night Safari', duration: '4 hours', price: '$40' },
+    ],
   },
   {
     id: '18',
@@ -390,6 +544,20 @@ export const destinations: DiscoverDestination[] = [
     iconColor: '#3498DB',
     description: 'Adventure capital of the world set amid dramatic alpine scenery.',
     highlights: ['Bungee Jumping', 'Milford Sound', 'Skiing'],
+    coordinates: { latitude: -45.0312, longitude: 168.6626 },
+    tags: ['adventure', 'nature', 'mountains', 'skiing', 'extreme sports'],
+    whyGo: 'Queenstown is where adrenaline meets jaw-dropping scenery. Bungee jump at the birthplace of the sport, jet boat through canyons, ski the Remarkables, or simply cruise the mirror-like waters of Milford Sound.',
+    hotels: [
+      { name: 'Eichardt\'s Private Hotel', priceRange: '$500-800/night', rating: 4.9 },
+      { name: 'Novotel Queenstown', priceRange: '$150-250/night', rating: 4.4 },
+      { name: 'Adventure Queenstown Hostel', priceRange: '$25-50/night', rating: 4.1 },
+    ],
+    activities: [
+      { name: 'Milford Sound Cruise', duration: 'Full day', price: '$120' },
+      { name: 'AJ Hackett Bungee Jump', duration: '2 hours', price: '$160' },
+      { name: 'Shotover Jet Boat', duration: '1 hour', price: '$100' },
+      { name: 'Remarkables Ski Day', duration: 'Full day', price: '$90' },
+    ],
   },
   {
     id: '19',
@@ -405,6 +573,20 @@ export const destinations: DiscoverDestination[] = [
     iconColor: '#C0392B',
     description: 'Japan\'s cultural heart with 2,000 temples, traditional gardens, and geisha districts.',
     highlights: ['Fushimi Inari', 'Arashiyama', 'Kinkaku-ji'],
+    coordinates: { latitude: 35.0116, longitude: 135.7681 },
+    tags: ['culture', 'nature', 'temples', 'traditional', 'gardens', 'zen'],
+    whyGo: 'Kyoto is Japan\'s soul — a city of 2,000 temples and shrines, bamboo groves, and tea houses. Walk through thousands of vermilion torii gates at Fushimi Inari, spot geisha in Gion, and experience timeless Japanese culture.',
+    hotels: [
+      { name: 'Aman Kyoto', priceRange: '$700-1100/night', rating: 4.9 },
+      { name: 'Hotel Kanra Kyoto', priceRange: '$180-300/night', rating: 4.6 },
+      { name: 'Piece Hostel Sanjo', priceRange: '$30-50/night', rating: 4.3 },
+    ],
+    activities: [
+      { name: 'Fushimi Inari Shrine Walk', duration: '2 hours', price: 'Free' },
+      { name: 'Arashiyama Bamboo Grove', duration: '3 hours', price: '$15' },
+      { name: 'Tea Ceremony in Gion', duration: '1 hour', price: '$35' },
+      { name: 'Nara Deer Park Day Trip', duration: 'Full day', price: '$40' },
+    ],
   },
   {
     id: '20',
@@ -420,6 +602,20 @@ export const destinations: DiscoverDestination[] = [
     iconColor: '#00CED1',
     description: 'Paradise islands with crystal-clear waters, overwater villas, and pristine reefs.',
     highlights: ['Overwater Bungalows', 'Snorkeling', 'Sunset Cruises'],
+    coordinates: { latitude: 3.2028, longitude: 73.2207 },
+    tags: ['beach', 'romantic', 'luxury', 'island', 'snorkeling', 'tropical'],
+    whyGo: 'The Maldives is the ultimate tropical escape — 1,200 islands scattered across the Indian Ocean with the world\'s clearest waters. Wake up in an overwater villa, snorkel with manta rays, and watch the sunset from your private deck.',
+    hotels: [
+      { name: 'Soneva Fushi', priceRange: '$1500-3000/night', rating: 4.9 },
+      { name: 'Anantara Dhigu', priceRange: '$400-700/night', rating: 4.7 },
+      { name: 'Meeru Island Resort', priceRange: '$200-350/night', rating: 4.3 },
+    ],
+    activities: [
+      { name: 'Sunset Dolphin Cruise', duration: '2 hours', price: '$60' },
+      { name: 'Snorkeling with Mantas', duration: '3 hours', price: '$80' },
+      { name: 'Private Sandbank Picnic', duration: '4 hours', price: '$150' },
+      { name: 'Underwater Restaurant Dinner', duration: '2 hours', price: '$200' },
+    ],
   },
   {
     id: '21',
@@ -435,6 +631,20 @@ export const destinations: DiscoverDestination[] = [
     iconColor: '#8E44AD',
     description: 'Fairy-tale city with Gothic spires, baroque buildings, and legendary beer halls.',
     highlights: ['Charles Bridge', 'Old Town Square', 'Prague Castle'],
+    coordinates: { latitude: 50.0755, longitude: 14.4378 },
+    tags: ['city', 'culture', 'budget', 'romantic', 'beer', 'medieval'],
+    whyGo: 'Prague looks like it stepped out of a fairy tale. Cross the statue-lined Charles Bridge, explore the world\'s largest ancient castle, and drink the best beer in Europe for a fraction of Western prices.',
+    hotels: [
+      { name: 'Four Seasons Prague', priceRange: '$350-600/night', rating: 4.8 },
+      { name: 'Mosaic House', priceRange: '$80-150/night', rating: 4.5 },
+      { name: 'Czech Inn', priceRange: '$20-40/night', rating: 4.2 },
+    ],
+    activities: [
+      { name: 'Prague Castle Tour', duration: '3 hours', price: '$20' },
+      { name: 'Charles Bridge Walking Tour', duration: '2 hours', price: '$15' },
+      { name: 'Czech Beer Tasting', duration: '3 hours', price: '$40' },
+      { name: 'Day Trip to Cesky Krumlov', duration: 'Full day', price: '$55' },
+    ],
   },
   {
     id: '22',
@@ -449,7 +659,21 @@ export const destinations: DiscoverDestination[] = [
     icon: 'landmark',
     iconColor: '#9B59B6',
     description: 'Imperial grandeur meets coffeehouse culture in this classical music capital.',
-    highlights: ['Schönbrunn Palace', 'Vienna State Opera', 'Naschmarkt'],
+    highlights: ['Schonbrunn Palace', 'Vienna State Opera', 'Naschmarkt'],
+    coordinates: { latitude: 48.2082, longitude: 16.3738 },
+    tags: ['city', 'culture', 'romantic', 'music', 'imperial', 'coffeehouse'],
+    whyGo: 'Vienna is a city of grand palaces, legendary coffeehouses, and classical music heritage. Tour the opulent Schonbrunn Palace, catch a performance at the State Opera, and indulge in Sachertorte.',
+    hotels: [
+      { name: 'Hotel Sacher Wien', priceRange: '$400-700/night', rating: 4.8 },
+      { name: '25hours Hotel Vienna', priceRange: '$120-200/night', rating: 4.5 },
+      { name: 'Wombats City Hostel', priceRange: '$25-50/night', rating: 4.1 },
+    ],
+    activities: [
+      { name: 'Schonbrunn Palace Tour', duration: '2.5 hours', price: '$22' },
+      { name: 'Vienna State Opera Performance', duration: '3 hours', price: '$80' },
+      { name: 'Naschmarkt Food Walk', duration: '2 hours', price: '$35' },
+      { name: 'Danube River Cruise', duration: '2 hours', price: '$25' },
+    ],
   },
   {
     id: '23',
@@ -465,6 +689,20 @@ export const destinations: DiscoverDestination[] = [
     iconColor: '#E74C3C',
     description: 'Vertical city where East meets West, with harbor views and dim sum heaven.',
     highlights: ['Victoria Peak', 'Star Ferry', 'Temple Street'],
+    coordinates: { latitude: 22.3193, longitude: 114.1694 },
+    tags: ['city', 'food', 'family', 'skyline', 'harbor', 'dim sum'],
+    whyGo: 'Hong Kong is a dizzying vertical city of towering skyscrapers, traditional temples, and the world\'s best dim sum. Ride the Peak Tram for stunning harbor views, explore bustling night markets, and take the iconic Star Ferry.',
+    hotels: [
+      { name: 'The Peninsula Hong Kong', priceRange: '$500-900/night', rating: 4.9 },
+      { name: 'Hotel ICON', priceRange: '$150-250/night', rating: 4.6 },
+      { name: 'YHA Mei Ho House', priceRange: '$30-60/night', rating: 4.0 },
+    ],
+    activities: [
+      { name: 'Victoria Peak Tram Ride', duration: '2 hours', price: '$10' },
+      { name: 'Dim Sum Tasting Tour', duration: '3 hours', price: '$55' },
+      { name: 'Star Ferry & Harbor Walk', duration: '1.5 hours', price: '$3' },
+      { name: 'Lantau Island & Big Buddha', duration: 'Full day', price: '$25' },
+    ],
   },
   {
     id: '24',
@@ -480,6 +718,20 @@ export const destinations: DiscoverDestination[] = [
     iconColor: '#3498DB',
     description: 'Paris of South America with passionate tango, incredible steak, and colorful barrios.',
     highlights: ['La Boca', 'Recoleta Cemetery', 'San Telmo Market'],
+    coordinates: { latitude: -34.6037, longitude: -58.3816 },
+    tags: ['city', 'culture', 'food', 'budget', 'tango', 'nightlife'],
+    whyGo: 'Buenos Aires pulses with passion — from tango dancers in San Telmo to sizzling parrillas in Palermo. Explore colorful La Boca, browse antique markets, and experience the legendary nightlife of South America\'s most European city.',
+    hotels: [
+      { name: 'Alvear Palace Hotel', priceRange: '$300-500/night', rating: 4.8 },
+      { name: 'Mine Hotel Boutique', priceRange: '$80-150/night', rating: 4.5 },
+      { name: 'America del Sur Hostel', priceRange: '$15-30/night', rating: 4.2 },
+    ],
+    activities: [
+      { name: 'Tango Show & Dinner', duration: '3 hours', price: '$60' },
+      { name: 'San Telmo Market Walk', duration: '2 hours', price: 'Free' },
+      { name: 'Recoleta & Palermo Tour', duration: '4 hours', price: '$25' },
+      { name: 'Argentine Steak Experience', duration: '2 hours', price: '$35' },
+    ],
   },
   {
     id: '25',
@@ -495,6 +747,20 @@ export const destinations: DiscoverDestination[] = [
     iconColor: '#2ECC71',
     description: 'Thailand\'s largest island with stunning beaches, vibrant nightlife, and island hopping.',
     highlights: ['Phi Phi Islands', 'Patong Beach', 'Big Buddha'],
+    coordinates: { latitude: 7.8804, longitude: 98.3923 },
+    tags: ['beach', 'budget', 'family', 'island', 'nightlife', 'diving'],
+    whyGo: 'Phuket is Thailand\'s largest island and the gateway to some of Southeast Asia\'s finest beaches. Hop to the Phi Phi Islands, dive coral reefs, enjoy Thai massage on the sand, and feast on fresh seafood.',
+    hotels: [
+      { name: 'Trisara', priceRange: '$500-900/night', rating: 4.9 },
+      { name: 'The Nai Harn', priceRange: '$150-280/night', rating: 4.6 },
+      { name: 'Lub d Phuket Patong', priceRange: '$20-40/night', rating: 4.2 },
+    ],
+    activities: [
+      { name: 'Phi Phi Island Day Trip', duration: 'Full day', price: '$50' },
+      { name: 'Snorkeling & Diving', duration: '4 hours', price: '$65' },
+      { name: 'Thai Cooking Class', duration: '4 hours', price: '$35' },
+      { name: 'Phang Nga Bay Tour', duration: 'Full day', price: '$55' },
+    ],
   },
   {
     id: '26',
@@ -510,6 +776,20 @@ export const destinations: DiscoverDestination[] = [
     iconColor: '#34495E',
     description: 'Dramatic castle, medieval Old Town, and the world\'s largest arts festival.',
     highlights: ['Edinburgh Castle', 'Royal Mile', 'Arthur\'s Seat'],
+    coordinates: { latitude: 55.9533, longitude: -3.1883 },
+    tags: ['city', 'culture', 'history', 'festivals', 'whisky', 'medieval'],
+    whyGo: 'Edinburgh is a city of dramatic contrasts — a medieval Old Town perched on volcanic rock alongside elegant Georgian streets. Visit the iconic castle, hike Arthur\'s Seat, and discover the city that inspired Harry Potter.',
+    hotels: [
+      { name: 'The Balmoral', priceRange: '$350-600/night', rating: 4.8 },
+      { name: 'Kimpton Charlotte Square', priceRange: '$150-250/night', rating: 4.5 },
+      { name: 'Castle Rock Hostel', priceRange: '$20-40/night', rating: 4.2 },
+    ],
+    activities: [
+      { name: 'Edinburgh Castle Tour', duration: '2 hours', price: '$22' },
+      { name: 'Arthur\'s Seat Hike', duration: '2 hours', price: 'Free' },
+      { name: 'Scotch Whisky Experience', duration: '1.5 hours', price: '$20' },
+      { name: 'Underground Vaults Tour', duration: '1 hour', price: '$18' },
+    ],
   },
   {
     id: '27',
@@ -525,6 +805,20 @@ export const destinations: DiscoverDestination[] = [
     iconColor: '#1ABC9C',
     description: 'Caribbean beaches, ancient Mayan ruins, and world-class resorts.',
     highlights: ['Chichen Itza', 'Isla Mujeres', 'Cenotes'],
+    coordinates: { latitude: 21.1619, longitude: -86.8515 },
+    tags: ['beach', 'family', 'adventure', 'ruins', 'cenotes', 'caribbean'],
+    whyGo: 'Cancun combines pristine Caribbean beaches with ancient Mayan history. Swim in natural cenotes, explore the towering pyramid of Chichen Itza, and snorkel in the world\'s second-largest barrier reef.',
+    hotels: [
+      { name: 'Nizuc Resort & Spa', priceRange: '$400-700/night', rating: 4.8 },
+      { name: 'Hyatt Ziva Cancun', priceRange: '$200-350/night', rating: 4.6 },
+      { name: 'Hostel Mundo Joven', priceRange: '$20-40/night', rating: 4.1 },
+    ],
+    activities: [
+      { name: 'Chichen Itza Day Trip', duration: 'Full day', price: '$80' },
+      { name: 'Cenote Swimming Tour', duration: '4 hours', price: '$50' },
+      { name: 'Isla Mujeres Catamaran', duration: 'Full day', price: '$65' },
+      { name: 'Snorkeling at MUSA', duration: '3 hours', price: '$55' },
+    ],
   },
   {
     id: '28',
@@ -540,6 +834,20 @@ export const destinations: DiscoverDestination[] = [
     iconColor: '#D35400',
     description: 'Birthplace of the Renaissance with unmatched art, architecture, and Tuscan cuisine.',
     highlights: ['Uffizi Gallery', 'Duomo', 'Ponte Vecchio'],
+    coordinates: { latitude: 43.7696, longitude: 11.2558 },
+    tags: ['city', 'culture', 'food', 'romantic', 'art', 'renaissance'],
+    whyGo: 'Florence is a living museum — the birthplace of the Renaissance and home to masterpieces by Michelangelo, Botticelli, and Da Vinci. Climb the Duomo, cross the Ponte Vecchio, and pair Chianti with bistecca fiorentina.',
+    hotels: [
+      { name: 'The St. Regis Florence', priceRange: '$500-800/night', rating: 4.8 },
+      { name: 'Hotel Davanzati', priceRange: '$120-200/night', rating: 4.5 },
+      { name: 'Plus Florence', priceRange: '$25-50/night', rating: 4.1 },
+    ],
+    activities: [
+      { name: 'Uffizi Gallery Tour', duration: '2.5 hours', price: '$45' },
+      { name: 'Duomo Climb & Baptistry', duration: '2 hours', price: '$25' },
+      { name: 'Tuscan Wine & Cheese Tour', duration: 'Full day', price: '$95' },
+      { name: 'Leather Workshop Visit', duration: '1.5 hours', price: '$30' },
+    ],
   },
   {
     id: '29',
@@ -555,6 +863,20 @@ export const destinations: DiscoverDestination[] = [
     iconColor: '#E91E63',
     description: 'K-pop capital where ancient palaces meet cutting-edge technology and BBQ culture.',
     highlights: ['Gyeongbokgung', 'Bukchon Hanok', 'Myeongdong'],
+    coordinates: { latitude: 37.5665, longitude: 126.9780 },
+    tags: ['city', 'food', 'culture', 'k-pop', 'technology', 'palaces'],
+    whyGo: 'Seoul is a city where centuries-old palaces sit next to gleaming skyscrapers. Explore traditional hanok villages, feast on Korean BBQ, browse high-tech shopping districts, and experience the energy of K-pop culture firsthand.',
+    hotels: [
+      { name: 'The Shilla Seoul', priceRange: '$300-500/night', rating: 4.8 },
+      { name: 'L7 Myeongdong', priceRange: '$100-180/night', rating: 4.5 },
+      { name: 'Zzzip Guesthouse', priceRange: '$20-40/night', rating: 4.2 },
+    ],
+    activities: [
+      { name: 'Gyeongbokgung Palace Tour', duration: '2 hours', price: '$5' },
+      { name: 'Korean BBQ & Street Food Tour', duration: '3 hours', price: '$50' },
+      { name: 'DMZ Border Tour', duration: 'Full day', price: '$65' },
+      { name: 'Bukchon Hanok Village Walk', duration: '2 hours', price: 'Free' },
+    ],
   },
   {
     id: '30',
@@ -570,6 +892,20 @@ export const destinations: DiscoverDestination[] = [
     iconColor: '#E67E22',
     description: 'Medieval walled city on the Adriatic, famously the real-life King\'s Landing.',
     highlights: ['City Walls', 'Old Town', 'Lokrum Island'],
+    coordinates: { latitude: 42.6507, longitude: 18.0944 },
+    tags: ['city', 'beach', 'culture', 'medieval', 'coastal', 'history'],
+    whyGo: 'Dubrovnik\'s terracotta-roofed Old Town, encircled by imposing medieval walls, juts into the crystal-clear Adriatic. Walk the city walls for panoramic views, kayak along the coast, and island-hop to Lokrum.',
+    hotels: [
+      { name: 'Hotel Excelsior', priceRange: '$300-500/night', rating: 4.7 },
+      { name: 'Hotel Stari Grad', priceRange: '$120-200/night', rating: 4.5 },
+      { name: 'Old Town Hostel', priceRange: '$25-45/night', rating: 4.1 },
+    ],
+    activities: [
+      { name: 'City Walls Walk', duration: '2 hours', price: '$30' },
+      { name: 'Sea Kayaking Tour', duration: '3 hours', price: '$40' },
+      { name: 'Game of Thrones Tour', duration: '2.5 hours', price: '$35' },
+      { name: 'Lokrum Island Day Trip', duration: '4 hours', price: '$15' },
+    ],
   },
   {
     id: '31',
@@ -585,10 +921,24 @@ export const destinations: DiscoverDestination[] = [
     iconColor: '#C0392B',
     description: 'Chaotic charm with French colonial architecture, ancient temples, and incredible pho.',
     highlights: ['Old Quarter', 'Ho Chi Minh Mausoleum', 'Hoan Kiem Lake'],
+    coordinates: { latitude: 21.0278, longitude: 105.8342 },
+    tags: ['city', 'food', 'culture', 'budget', 'street food', 'colonial'],
+    whyGo: 'Hanoi is a city of captivating contrasts — French colonial boulevards meet ancient pagodas, and motorbike chaos gives way to serene lakes. The Old Quarter\'s street food is legendary, and Ha Long Bay is a day trip away.',
+    hotels: [
+      { name: 'Sofitel Legend Metropole', priceRange: '$250-400/night', rating: 4.8 },
+      { name: 'Essence Hanoi Hotel', priceRange: '$60-120/night', rating: 4.5 },
+      { name: 'Old Quarter View Hostel', priceRange: '$8-20/night', rating: 4.1 },
+    ],
+    activities: [
+      { name: 'Old Quarter Street Food Tour', duration: '3 hours', price: '$25' },
+      { name: 'Ha Long Bay Day Cruise', duration: 'Full day', price: '$65' },
+      { name: 'Water Puppet Show', duration: '1 hour', price: '$5' },
+      { name: 'Ho Chi Minh Mausoleum Visit', duration: '2 hours', price: 'Free' },
+    ],
   },
   {
     id: '32',
-    city: 'Costa Rica',
+    city: 'San Jose',
     country: 'Costa Rica',
     region: 'north-america',
     avgDailyCost: 100,
@@ -600,6 +950,20 @@ export const destinations: DiscoverDestination[] = [
     iconColor: '#27AE60',
     description: 'Pura Vida lifestyle with rainforests, volcanoes, and incredible biodiversity.',
     highlights: ['Arenal Volcano', 'Manuel Antonio', 'Monteverde'],
+    coordinates: { latitude: 9.9281, longitude: -84.0907 },
+    tags: ['nature', 'adventure', 'beach', 'family', 'rainforest', 'wildlife'],
+    whyGo: 'Costa Rica is a nature lover\'s paradise where you can zip-line through cloud forests, spot toucans and sloths, hike active volcanoes, and surf Pacific waves — all while embracing the Pura Vida way of life.',
+    hotels: [
+      { name: 'Nayara Gardens', priceRange: '$400-700/night', rating: 4.9 },
+      { name: 'Hotel Arenal Kioro', priceRange: '$150-250/night', rating: 4.5 },
+      { name: 'Selina Manuel Antonio', priceRange: '$25-50/night', rating: 4.2 },
+    ],
+    activities: [
+      { name: 'Arenal Volcano Hike', duration: '4 hours', price: '$50' },
+      { name: 'Monteverde Zip Line', duration: '3 hours', price: '$55' },
+      { name: 'Manuel Antonio Park', duration: 'Full day', price: '$20' },
+      { name: 'Sloth Sanctuary Visit', duration: '2 hours', price: '$30' },
+    ],
   },
   {
     id: '33',
@@ -615,6 +979,20 @@ export const destinations: DiscoverDestination[] = [
     iconColor: '#34495E',
     description: 'History, art, and legendary nightlife in Germany\'s creative capital.',
     highlights: ['Brandenburg Gate', 'East Side Gallery', 'Museum Island'],
+    coordinates: { latitude: 52.5200, longitude: 13.4050 },
+    tags: ['city', 'culture', 'budget', 'nightlife', 'history', 'art'],
+    whyGo: 'Berlin is a city defined by reinvention. From the haunting remains of the Wall to world-class contemporary art and Europe\'s most celebrated nightlife, Berlin rewards the curious with endless layers to explore.',
+    hotels: [
+      { name: 'Hotel Adlon Kempinski', priceRange: '$300-600/night', rating: 4.8 },
+      { name: '25hours Hotel Bikini', priceRange: '$100-180/night', rating: 4.5 },
+      { name: 'MEININGER Berlin East', priceRange: '$20-40/night', rating: 4.1 },
+    ],
+    activities: [
+      { name: 'Berlin Wall & Cold War Tour', duration: '3 hours', price: '$20' },
+      { name: 'Museum Island Pass', duration: 'Full day', price: '$22' },
+      { name: 'Street Art Tour', duration: '2.5 hours', price: '$18' },
+      { name: 'Potsdam Palaces Day Trip', duration: 'Full day', price: '$45' },
+    ],
   },
   {
     id: '34',
@@ -630,6 +1008,20 @@ export const destinations: DiscoverDestination[] = [
     iconColor: '#F39C12',
     description: 'Dramatic coastline with pastel villages clinging to cliffs above azure waters.',
     highlights: ['Positano', 'Ravello', 'Path of the Gods'],
+    coordinates: { latitude: 40.6340, longitude: 14.6027 },
+    tags: ['beach', 'romantic', 'luxury', 'food', 'coastal', 'scenic drive'],
+    whyGo: 'The Amalfi Coast is Italy at its most dramatic — pastel-colored villages tumble down vertiginous cliffs to the sparkling Tyrrhenian Sea. Drive the serpentine coastline, hike the Path of the Gods, and feast on limoncello and fresh seafood.',
+    hotels: [
+      { name: 'Le Sirenuse', priceRange: '$800-1500/night', rating: 4.9 },
+      { name: 'Hotel Santa Caterina', priceRange: '$300-500/night', rating: 4.7 },
+      { name: 'Hostel Brikette', priceRange: '$30-60/night', rating: 4.0 },
+    ],
+    activities: [
+      { name: 'Path of the Gods Hike', duration: '4 hours', price: 'Free' },
+      { name: 'Amalfi Coast Boat Tour', duration: 'Full day', price: '$90' },
+      { name: 'Ravello Villa Gardens', duration: '2 hours', price: '$12' },
+      { name: 'Cooking Class in Positano', duration: '4 hours', price: '$120' },
+    ],
   },
   {
     id: '35',
@@ -645,6 +1037,20 @@ export const destinations: DiscoverDestination[] = [
     iconColor: '#D4A574',
     description: 'Ancient wonders meet bustling modern city life along the Nile.',
     highlights: ['Pyramids of Giza', 'Egyptian Museum', 'Khan el-Khalili'],
+    coordinates: { latitude: 30.0444, longitude: 31.2357 },
+    tags: ['culture', 'adventure', 'budget', 'ancient', 'pyramids', 'history'],
+    whyGo: 'Cairo is a gateway to 5,000 years of human civilization. Stand before the Great Pyramids and Sphinx, explore the treasures of Tutankhamun, and navigate the vibrant bazaars of Khan el-Khalili.',
+    hotels: [
+      { name: 'Marriott Mena House', priceRange: '$200-400/night', rating: 4.7 },
+      { name: 'Steigenberger Hotel El Tahrir', priceRange: '$80-150/night', rating: 4.4 },
+      { name: 'Wake Up! Cairo', priceRange: '$10-25/night', rating: 4.0 },
+    ],
+    activities: [
+      { name: 'Pyramids & Sphinx Tour', duration: '4 hours', price: '$35' },
+      { name: 'Egyptian Museum Visit', duration: '3 hours', price: '$15' },
+      { name: 'Khan el-Khalili Bazaar Walk', duration: '2 hours', price: '$10' },
+      { name: 'Nile Dinner Cruise', duration: '3 hours', price: '$40' },
+    ],
   },
   {
     id: '36',
@@ -660,6 +1066,20 @@ export const destinations: DiscoverDestination[] = [
     iconColor: '#16A085',
     description: 'Mountains meet ocean in this stunning Pacific Northwest metropolis.',
     highlights: ['Stanley Park', 'Grouse Mountain', 'Granville Island'],
+    coordinates: { latitude: 49.2827, longitude: -123.1207 },
+    tags: ['city', 'nature', 'adventure', 'mountains', 'ocean', 'skiing'],
+    whyGo: 'Vancouver is where mountains meet the Pacific Ocean. Ski in the morning and sail in the afternoon, explore Stanley Park\'s old-growth forest, and enjoy one of North America\'s most diverse food scenes.',
+    hotels: [
+      { name: 'Fairmont Pacific Rim', priceRange: '$400-600/night', rating: 4.8 },
+      { name: 'OPUS Vancouver', priceRange: '$150-250/night', rating: 4.5 },
+      { name: 'HI Vancouver Central', priceRange: '$30-50/night', rating: 4.1 },
+    ],
+    activities: [
+      { name: 'Stanley Park Seawall Bike Ride', duration: '3 hours', price: '$35' },
+      { name: 'Capilano Suspension Bridge', duration: '2 hours', price: '$40' },
+      { name: 'Granville Island Market Tour', duration: '2 hours', price: '$20' },
+      { name: 'Grouse Mountain Skyride', duration: '4 hours', price: '$50' },
+    ],
   },
   {
     id: '37',
@@ -676,7 +1096,19 @@ export const destinations: DiscoverDestination[] = [
     description: 'Ancient rose-red city carved into dramatic desert cliffs.',
     highlights: ['The Treasury', 'The Monastery', 'Siq Canyon'],
     coordinates: { latitude: 30.3285, longitude: 35.4444 },
-    tags: ['culture', 'adventure', 'history', 'desert', 'ancient'],
+    tags: ['culture', 'adventure', 'history', 'desert', 'ancient', 'ruins'],
+    whyGo: 'Petra is one of the New Seven Wonders of the World. Walk through the narrow Siq canyon as the rose-red Treasury emerges before you — a 2,000-year-old Nabataean masterpiece carved into sandstone cliffs.',
+    hotels: [
+      { name: 'Movenpick Resort Petra', priceRange: '$150-250/night', rating: 4.6 },
+      { name: 'Petra Moon Hotel', priceRange: '$60-120/night', rating: 4.3 },
+      { name: 'Rocky Mountain Hotel', priceRange: '$25-50/night', rating: 4.0 },
+    ],
+    activities: [
+      { name: 'Petra Full Day Tour', duration: 'Full day', price: '$50' },
+      { name: 'Petra by Night', duration: '2 hours', price: '$20' },
+      { name: 'Monastery Hike', duration: '4 hours', price: '$15' },
+      { name: 'Wadi Rum Desert Tour', duration: 'Full day', price: '$65' },
+    ],
   },
   {
     id: '38',
@@ -692,6 +1124,20 @@ export const destinations: DiscoverDestination[] = [
     iconColor: '#F1C40F',
     description: 'Colorful colonial gem with Caribbean vibes, cobblestone streets, and salsa nights.',
     highlights: ['Old Town', 'Rosario Islands', 'Getsemani'],
+    coordinates: { latitude: 10.3910, longitude: -75.5364 },
+    tags: ['city', 'beach', 'culture', 'budget', 'colonial', 'caribbean'],
+    whyGo: 'Cartagena is Colombia\'s crown jewel — a UNESCO-listed walled city of colorful colonial buildings, bougainvillea-draped balconies, and vibrant plazas. Dance salsa in Getsemani and boat to the pristine Rosario Islands.',
+    hotels: [
+      { name: 'Hotel Santa Clara Sofitel', priceRange: '$250-400/night', rating: 4.7 },
+      { name: 'Casa del Coliseo', priceRange: '$80-150/night', rating: 4.5 },
+      { name: 'Media Luna Hostel', priceRange: '$15-30/night', rating: 4.2 },
+    ],
+    activities: [
+      { name: 'Old Town Walking Tour', duration: '3 hours', price: '$20' },
+      { name: 'Rosario Islands Boat Trip', duration: 'Full day', price: '$45' },
+      { name: 'Street Food Tour', duration: '3 hours', price: '$30' },
+      { name: 'Salsa Dancing Class', duration: '2 hours', price: '$20' },
+    ],
   },
   {
     id: '39',
@@ -707,6 +1153,20 @@ export const destinations: DiscoverDestination[] = [
     iconColor: '#5DADE2',
     description: 'Majestic peaks, pristine lakes, and charming alpine villages.',
     highlights: ['Zermatt', 'Jungfraujoch', 'Lake Geneva'],
+    coordinates: { latitude: 46.8182, longitude: 8.2275 },
+    tags: ['nature', 'adventure', 'luxury', 'mountains', 'skiing', 'hiking'],
+    whyGo: 'The Swiss Alps offer unmatched alpine beauty — snow-capped peaks, mirror-like lakes, and precision rail journeys through impossibly scenic valleys. Ski world-class slopes in winter and hike wildflower meadows in summer.',
+    hotels: [
+      { name: 'The Chedi Andermatt', priceRange: '$500-900/night', rating: 4.9 },
+      { name: 'Hotel Matterhorn Focus', priceRange: '$200-350/night', rating: 4.6 },
+      { name: 'Zermatt Youth Hostel', priceRange: '$40-70/night', rating: 4.1 },
+    ],
+    activities: [
+      { name: 'Jungfraujoch Train (Top of Europe)', duration: 'Full day', price: '$180' },
+      { name: 'Matterhorn Glacier Paradise', duration: '4 hours', price: '$90' },
+      { name: 'Lake Brienz Cruise', duration: '2 hours', price: '$35' },
+      { name: 'Grindelwald First Cliff Walk', duration: '3 hours', price: '$45' },
+    ],
   },
   {
     id: '40',
@@ -722,6 +1182,20 @@ export const destinations: DiscoverDestination[] = [
     iconColor: '#8B4513',
     description: 'Gateway to the magnificent temples of Angkor, the world\'s largest religious monument.',
     highlights: ['Angkor Wat', 'Ta Prohm', 'Bayon Temple'],
+    coordinates: { latitude: 13.3633, longitude: 103.8564 },
+    tags: ['culture', 'adventure', 'budget', 'temples', 'ancient', 'ruins'],
+    whyGo: 'Siem Reap is the base for exploring the awe-inspiring Angkor temple complex. Watch sunrise over Angkor Wat, explore tree-covered Ta Prohm, and discover over 1,000 temples spanning 400 square kilometers of jungle.',
+    hotels: [
+      { name: 'Park Hyatt Siem Reap', priceRange: '$200-400/night', rating: 4.8 },
+      { name: 'Shinta Mani Angkor', priceRange: '$80-150/night', rating: 4.6 },
+      { name: 'One Stop Hostel', priceRange: '$5-15/night', rating: 4.1 },
+    ],
+    activities: [
+      { name: 'Angkor Wat Sunrise Tour', duration: '5 hours', price: '$20' },
+      { name: 'Angkor 3-Day Temple Pass', duration: '3 days', price: '$62' },
+      { name: 'Tonle Sap Floating Village', duration: '3 hours', price: '$25' },
+      { name: 'Cambodian Cooking Class', duration: '4 hours', price: '$20' },
+    ],
   },
   {
     id: '41',
@@ -737,6 +1211,20 @@ export const destinations: DiscoverDestination[] = [
     iconColor: '#FF6B6B',
     description: 'Entertainment capital with beaches, hiking, and endless sunshine.',
     highlights: ['Hollywood', 'Santa Monica', 'Griffith Observatory'],
+    coordinates: { latitude: 34.0522, longitude: -118.2437 },
+    tags: ['city', 'beach', 'family', 'entertainment', 'hiking', 'sunshine'],
+    whyGo: 'Los Angeles is the capital of entertainment, sunshine, and laid-back coastal living. From Hollywood studios to Venice Beach boardwalk, Griffith Observatory sunset views to world-class dining, LA is a city of endless reinvention.',
+    hotels: [
+      { name: 'The Beverly Hills Hotel', priceRange: '$600-1000/night', rating: 4.8 },
+      { name: 'Santa Monica Proper', priceRange: '$200-350/night', rating: 4.5 },
+      { name: 'HI Los Angeles', priceRange: '$40-70/night', rating: 4.1 },
+    ],
+    activities: [
+      { name: 'Hollywood & Beverly Hills Tour', duration: '4 hours', price: '$50' },
+      { name: 'Griffith Observatory Hike', duration: '2 hours', price: 'Free' },
+      { name: 'Santa Monica & Venice Walk', duration: '3 hours', price: 'Free' },
+      { name: 'Universal Studios', duration: 'Full day', price: '$120' },
+    ],
   },
   {
     id: '42',
@@ -753,7 +1241,19 @@ export const destinations: DiscoverDestination[] = [
     description: 'Spice island paradise with pristine beaches and Stone Town\'s historic streets.',
     highlights: ['Stone Town', 'Prison Island', 'Spice Tours'],
     coordinates: { latitude: -6.1659, longitude: 39.2026 },
-    tags: ['beach', 'culture', 'romantic', 'tropical', 'island'],
+    tags: ['beach', 'culture', 'romantic', 'tropical', 'island', 'spices'],
+    whyGo: 'Zanzibar is a tropical archipelago off Tanzania\'s coast with white-sand beaches, turquoise waters, and the UNESCO-listed Stone Town. Explore spice plantations, swim with dolphins, and unwind at pristine beach resorts.',
+    hotels: [
+      { name: 'The Residence Zanzibar', priceRange: '$300-500/night', rating: 4.8 },
+      { name: 'Zuri Zanzibar', priceRange: '$120-200/night', rating: 4.5 },
+      { name: 'Lost & Found Hostel', priceRange: '$10-25/night', rating: 4.0 },
+    ],
+    activities: [
+      { name: 'Stone Town Walking Tour', duration: '3 hours', price: '$20' },
+      { name: 'Spice Plantation Tour', duration: '3 hours', price: '$25' },
+      { name: 'Dolphin Swimming Trip', duration: '4 hours', price: '$35' },
+      { name: 'Jozani Forest Monkeys', duration: '2 hours', price: '$10' },
+    ],
   },
   {
     id: '43',
@@ -769,6 +1269,20 @@ export const destinations: DiscoverDestination[] = [
     iconColor: '#FF9800',
     description: 'India\'s pulsating financial capital with Bollywood glamour and street food heaven.',
     highlights: ['Gateway of India', 'Marine Drive', 'Dharavi'],
+    coordinates: { latitude: 19.0760, longitude: 72.8777 },
+    tags: ['city', 'food', 'culture', 'budget', 'bollywood', 'street food'],
+    whyGo: 'Mumbai is India at its most intense and rewarding. The Gateway of India overlooks the Arabian Sea, Bollywood studios hum with energy, and the street food — from vada pav to pav bhaji — is legendary.',
+    hotels: [
+      { name: 'Taj Mahal Palace', priceRange: '$300-500/night', rating: 4.8 },
+      { name: 'ITC Grand Central', priceRange: '$100-200/night', rating: 4.5 },
+      { name: 'Backpacker Panda Colaba', priceRange: '$10-25/night', rating: 4.0 },
+    ],
+    activities: [
+      { name: 'Gateway of India & Elephanta Caves', duration: '5 hours', price: '$15' },
+      { name: 'Street Food Trail', duration: '3 hours', price: '$20' },
+      { name: 'Bollywood Studio Tour', duration: '4 hours', price: '$35' },
+      { name: 'Dharavi Walking Tour', duration: '2.5 hours', price: '$12' },
+    ],
   },
   {
     id: '44',
@@ -784,6 +1298,20 @@ export const destinations: DiscoverDestination[] = [
     iconColor: '#2ECC71',
     description: 'Fairytale lake with a church-topped island and a clifftop castle.',
     highlights: ['Bled Island', 'Bled Castle', 'Vintgar Gorge'],
+    coordinates: { latitude: 46.3683, longitude: 14.1146 },
+    tags: ['nature', 'romantic', 'adventure', 'lake', 'fairytale', 'alpine'],
+    whyGo: 'Lake Bled looks like it belongs in a fairy tale — an emerald-green lake with a tiny island church, a medieval clifftop castle, and the Julian Alps as a backdrop. Row to the island, hike the gorges, and taste the famous cream cake.',
+    hotels: [
+      { name: 'Vila Bled', priceRange: '$200-350/night', rating: 4.7 },
+      { name: 'Hotel Park Bled', priceRange: '$100-180/night', rating: 4.4 },
+      { name: 'Hostel Bled', priceRange: '$20-40/night', rating: 4.1 },
+    ],
+    activities: [
+      { name: 'Pletna Boat to Bled Island', duration: '1.5 hours', price: '$18' },
+      { name: 'Bled Castle Visit', duration: '1.5 hours', price: '$15' },
+      { name: 'Vintgar Gorge Walk', duration: '2 hours', price: '$12' },
+      { name: 'Julian Alps Hiking', duration: '5 hours', price: '$25' },
+    ],
   },
   {
     id: '45',
@@ -798,7 +1326,21 @@ export const destinations: DiscoverDestination[] = [
     icon: 'landmark',
     iconColor: '#E74C3C',
     description: 'Time-capsule city with vintage cars, salsa music, and faded colonial grandeur.',
-    highlights: ['Old Havana', 'Malecón', 'Classic Cars'],
+    highlights: ['Old Havana', 'Malecon', 'Classic Cars'],
+    coordinates: { latitude: 23.1136, longitude: -82.3666 },
+    tags: ['city', 'culture', 'budget', 'vintage', 'salsa', 'colonial'],
+    whyGo: 'Havana is a living time capsule — 1950s Chevrolets cruise past crumbling colonial facades while salsa music pours from every doorway. Explore Old Havana\'s plazas, sip mojitos at La Bodeguita, and stroll the seaside Malecon.',
+    hotels: [
+      { name: 'Hotel Nacional de Cuba', priceRange: '$150-250/night', rating: 4.5 },
+      { name: 'Iberostar Parque Central', priceRange: '$100-180/night', rating: 4.4 },
+      { name: 'Casa Particular (B&B)', priceRange: '$20-40/night', rating: 4.2 },
+    ],
+    activities: [
+      { name: 'Classic Car Tour of Havana', duration: '2 hours', price: '$40' },
+      { name: 'Old Havana Walking Tour', duration: '3 hours', price: '$15' },
+      { name: 'Salsa Dance Lesson', duration: '2 hours', price: '$20' },
+      { name: 'Vinales Valley Day Trip', duration: 'Full day', price: '$55' },
+    ],
   },
   {
     id: '46',
@@ -813,7 +1355,21 @@ export const destinations: DiscoverDestination[] = [
     icon: 'mountain',
     iconColor: '#3498DB',
     description: 'Wild frontier of glaciers, peaks, and endless steppes at the end of the world.',
-    highlights: ['Perito Moreno', 'Torres del Paine', 'El Chaltén'],
+    highlights: ['Perito Moreno', 'Torres del Paine', 'El Chalten'],
+    coordinates: { latitude: -50.3400, longitude: -72.2648 },
+    tags: ['nature', 'adventure', 'glaciers', 'mountains', 'trekking', 'wilderness'],
+    whyGo: 'Patagonia is one of the last great wildernesses — a vast expanse of glaciers, granite spires, and windswept steppes at the bottom of the world. Trek to Torres del Paine, watch Perito Moreno glacier calve, and feel truly remote.',
+    hotels: [
+      { name: 'Explora Patagonia', priceRange: '$600-1200/night', rating: 4.9 },
+      { name: 'Hotel Las Torres', priceRange: '$200-350/night', rating: 4.5 },
+      { name: 'Rancho Grande Hostel', priceRange: '$20-40/night', rating: 4.1 },
+    ],
+    activities: [
+      { name: 'Torres del Paine W Trek', duration: '5 days', price: '$300' },
+      { name: 'Perito Moreno Glacier Tour', duration: 'Full day', price: '$80' },
+      { name: 'Fitz Roy Hike', duration: 'Full day', price: '$30' },
+      { name: 'Glacier Kayaking', duration: '3 hours', price: '$75' },
+    ],
   },
   {
     id: '47',
@@ -829,10 +1385,24 @@ export const destinations: DiscoverDestination[] = [
     iconColor: '#E91E63',
     description: 'Hygge capital with world-class dining, design, and bicycle culture.',
     highlights: ['Nyhavn', 'Tivoli Gardens', 'The Little Mermaid'],
+    coordinates: { latitude: 55.6761, longitude: 12.5683 },
+    tags: ['city', 'food', 'culture', 'design', 'hygge', 'cycling'],
+    whyGo: 'Copenhagen is the epicenter of New Nordic cuisine, Scandinavian design, and the hygge lifestyle. Stroll the colorful Nyhavn harbor, visit the world\'s oldest amusement park at Tivoli, and bike through one of the world\'s most livable cities.',
+    hotels: [
+      { name: 'Hotel d\'Angleterre', priceRange: '$400-700/night', rating: 4.8 },
+      { name: 'Brochner Hotels', priceRange: '$150-250/night', rating: 4.5 },
+      { name: 'Copenhagen Downtown Hostel', priceRange: '$30-60/night', rating: 4.1 },
+    ],
+    activities: [
+      { name: 'Nyhavn & City Walking Tour', duration: '2.5 hours', price: '$25' },
+      { name: 'Tivoli Gardens Entry', duration: '4 hours', price: '$22' },
+      { name: 'Bike Tour of Copenhagen', duration: '3 hours', price: '$35' },
+      { name: 'Nordic Food & Market Tour', duration: '3 hours', price: '$75' },
+    ],
   },
   {
     id: '48',
-    city: 'Safari Kenya',
+    city: 'Masai Mara',
     country: 'Kenya',
     region: 'africa',
     avgDailyCost: 250,
@@ -844,6 +1414,20 @@ export const destinations: DiscoverDestination[] = [
     iconColor: '#8B4513',
     description: 'Witness the Great Migration and Big Five in the world\'s most famous savannas.',
     highlights: ['Masai Mara', 'Amboseli', 'Great Migration'],
+    coordinates: { latitude: -1.4061, longitude: 35.0173 },
+    tags: ['nature', 'adventure', 'family', 'safari', 'wildlife', 'migration'],
+    whyGo: 'Kenya\'s Masai Mara is the ultimate safari destination. Witness the Great Migration of over a million wildebeest, spot all of the Big Five, and stay in luxury tented camps under starlit African skies.',
+    hotels: [
+      { name: 'Angama Mara', priceRange: '$800-1500/night', rating: 4.9 },
+      { name: 'Mara Serena Safari Lodge', priceRange: '$250-400/night', rating: 4.6 },
+      { name: 'Mara Explorer Camp', priceRange: '$100-200/night', rating: 4.3 },
+    ],
+    activities: [
+      { name: 'Full-Day Game Drive', duration: 'Full day', price: '$100' },
+      { name: 'Hot Air Balloon Safari', duration: '3 hours', price: '$400' },
+      { name: 'Masai Village Visit', duration: '2 hours', price: '$25' },
+      { name: 'Walking Safari', duration: '4 hours', price: '$75' },
+    ],
   },
   {
     id: '49',
@@ -857,8 +1441,22 @@ export const destinations: DiscoverDestination[] = [
     imageUrl: 'https://images.unsplash.com/photo-1491166617655-0723a0999cfc?w=1600&h=900&fit=crop&q=80',
     icon: 'sun',
     iconColor: '#3498DB',
-    description: 'French Riviera glamour with pebble beaches, Belle Époque architecture, and art museums.',
+    description: 'French Riviera glamour with pebble beaches, Belle Epoque architecture, and art museums.',
     highlights: ['Promenade des Anglais', 'Old Town', 'Castle Hill'],
+    coordinates: { latitude: 43.7102, longitude: 7.2620 },
+    tags: ['beach', 'city', 'romantic', 'riviera', 'art', 'coastal'],
+    whyGo: 'Nice is the jewel of the French Riviera, with a stunning seaside promenade, a vibrant old town, and world-class art museums dedicated to Matisse and Chagall. The perfect base for exploring Monaco, Cannes, and the Cote d\'Azur.',
+    hotels: [
+      { name: 'Hotel Negresco', priceRange: '$300-500/night', rating: 4.7 },
+      { name: 'Hotel La Perouse', priceRange: '$150-250/night', rating: 4.5 },
+      { name: 'Villa Saint-Exupery', priceRange: '$25-45/night', rating: 4.2 },
+    ],
+    activities: [
+      { name: 'Promenade des Anglais Walk', duration: '1.5 hours', price: 'Free' },
+      { name: 'Old Town & Cours Saleya Market', duration: '2 hours', price: '$15' },
+      { name: 'Monaco & Eze Day Trip', duration: 'Full day', price: '$55' },
+      { name: 'Castle Hill Sunset', duration: '1 hour', price: 'Free' },
+    ],
   },
   {
     id: '50',
@@ -874,6 +1472,8 @@ export const destinations: DiscoverDestination[] = [
     iconColor: '#8B4513',
     description: 'Medieval gem with winding canals, chocolate shops, and Gothic architecture.',
     highlights: ['Market Square', 'Belfry Tower', 'Canal Cruises'],
+    coordinates: { latitude: 51.2093, longitude: 3.2247 },
+    tags: ['city', 'culture', 'romantic', 'medieval', 'chocolate', 'canals'],
     whyGo: 'Bruges is a perfectly preserved medieval city where canals wind past Gothic architecture. Indulge in Belgian chocolate, sample local beers, and wander cobblestone streets that feel like stepping back in time.',
     hotels: [
       { name: 'Hotel Dukes\' Palace', priceRange: '$250-400/night', rating: 4.7 },
@@ -889,7 +1489,7 @@ export const destinations: DiscoverDestination[] = [
   },
 ];
 
-export function getDestinationWithDefaults(dest: DiscoverDestination): DiscoverDestination & { whyGo: string; hotels: Hotel[]; activities: Activity[] } {
+export function getDestinationWithDefaults(dest: DiscoverDestination): DiscoverDestination {
   return {
     ...dest,
     whyGo: dest.whyGo || `Discover the beauty of ${dest.city}, ${dest.country}. ${dest.description} Perfect for ${dest.tripTypes.slice(0, 3).join(', ')} travelers.`,

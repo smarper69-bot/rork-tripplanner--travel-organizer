@@ -1,3 +1,5 @@
+import { destinations } from '@/mocks/destinations';
+
 export type ImageConfidence = 'high' | 'medium' | 'low';
 
 export interface ImageResult {
@@ -58,7 +60,9 @@ const CURATED_IMAGES: Record<string, string> = {
   'Nice': 'https://images.unsplash.com/photo-1491166617655-0723a0999cfc?w=800&h=500&fit=crop&q=80',
   'Bruges': 'https://images.unsplash.com/photo-1491557345352-5929e343eb89?w=800&h=500&fit=crop&q=80',
   'Costa Rica': 'https://images.unsplash.com/photo-1518183214770-9cffbec72538?w=800&h=500&fit=crop&q=80',
+  'San Jose': 'https://images.unsplash.com/photo-1518183214770-9cffbec72538?w=800&h=500&fit=crop&q=80',
   'Safari Kenya': 'https://images.unsplash.com/photo-1516426122078-c23e76319801?w=800&h=500&fit=crop&q=80',
+  'Masai Mara': 'https://images.unsplash.com/photo-1516426122078-c23e76319801?w=800&h=500&fit=crop&q=80',
   'Milan': 'https://images.unsplash.com/photo-1520440229-6469a149ac59?w=800&h=500&fit=crop&q=80',
   'Athens': 'https://images.unsplash.com/photo-1555993539-1732b0258235?w=800&h=500&fit=crop&q=80',
   'Zurich': 'https://images.unsplash.com/photo-1515488764276-beab7607c1e6?w=800&h=500&fit=crop&q=80',
@@ -238,6 +242,36 @@ function normalizeKey(str: string): string {
   return str.toLowerCase().trim().replace(/[^a-z0-9\s]/g, '');
 }
 
+function findFromMockDestinations(destination: string, country?: string): string | null {
+  const destNorm = normalizeKey(destination);
+  const countryNorm = country ? normalizeKey(country) : '';
+
+  for (const d of destinations) {
+    const cityNorm = normalizeKey(d.city);
+    if (cityNorm === destNorm) {
+      return d.imageUrl;
+    }
+  }
+
+  for (const d of destinations) {
+    const cityNorm = normalizeKey(d.city);
+    if (destNorm.includes(cityNorm) || cityNorm.includes(destNorm)) {
+      return d.imageUrl;
+    }
+  }
+
+  if (countryNorm) {
+    for (const d of destinations) {
+      const dCountryNorm = normalizeKey(d.country);
+      if (dCountryNorm === countryNorm) {
+        return d.imageUrl;
+      }
+    }
+  }
+
+  return null;
+}
+
 function findExactMatch(destination: string): string | null {
   const direct = CURATED_IMAGES[destination];
   if (direct) return direct;
@@ -299,6 +333,12 @@ export function getDestinationImageWithConfidence(
   if (fuzzy) {
     console.log('[DestinationImages] Fuzzy match for:', destination);
     return { url: fuzzy, confidence: 'high' };
+  }
+
+  const mockMatch = findFromMockDestinations(destination, country);
+  if (mockMatch) {
+    console.log('[DestinationImages] Mock data match for:', destination);
+    return { url: mockMatch, confidence: 'high' };
   }
 
   if (country) {
