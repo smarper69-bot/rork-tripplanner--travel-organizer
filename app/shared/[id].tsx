@@ -1,21 +1,25 @@
-import React, { useMemo, useEffect, useRef } from 'react';
+import React, { useMemo, useEffect, useRef, useCallback } from 'react';
 import {
   View, Text, StyleSheet, ScrollView, TouchableOpacity,
-  Image, Platform, ActivityIndicator, Animated, Linking,
+  Image, Platform, Animated, Linking, Pressable,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { LinearGradient } from 'expo-linear-gradient';
 import { useLocalSearchParams, useRouter, Stack } from 'expo-router';
 import {
   ArrowLeft, MapPin, Calendar, Users, Clock,
   DollarSign, Plane, ChevronRight, Download,
   Flower2, Church, Palmtree, Mountain, Sun, Landmark, Trees, Snowflake, Tent,
-  Camera, ListChecks, AlertCircle, ExternalLink,
+  AlertCircle, ExternalLink, Compass,
 } from 'lucide-react-native';
-import Colors from '@/constants/colors';
+import { useThemeColors, useIsDark } from '@/hooks/useThemeColors';
+import { ThemeColors } from '@/constants/themes';
 import { useTripsStore } from '@/store/useTripsStore';
 import { mockTrips } from '@/mocks/trips';
 import { TripIcon, StoredItineraryItem } from '@/types/trip';
 import { getDestinationImageHQ } from '@/utils/destinationImages';
+import { hapticLight } from '@/utils/haptics';
+
 
 interface TripPreview {
   name: string;
@@ -45,6 +49,40 @@ function parsePreviewFromParams(params: Record<string, string | string[] | undef
   };
 }
 
+function SkeletonBlock({ width, height, colors, style }: { width: number | string; height: number; colors: ThemeColors; style?: any }) {
+  const shimmer = useRef(new Animated.Value(0)).current;
+  useEffect(() => {
+    Animated.loop(
+      Animated.sequence([
+        Animated.timing(shimmer, { toValue: 1, duration: 1000, useNativeDriver: true }),
+        Animated.timing(shimmer, { toValue: 0, duration: 1000, useNativeDriver: true }),
+      ])
+    ).start();
+  }, [shimmer]);
+  const opacity = shimmer.interpolate({ inputRange: [0, 1], outputRange: [0.3, 0.7] });
+  return (
+    <Animated.View style={[{ width, height, borderRadius: 10, backgroundColor: colors.border, opacity }, style]} />
+  );
+}
+
+function AnimatedPressable({ children, onPress, style }: { children: React.ReactNode; onPress: () => void; style?: any }) {
+  const scale = useRef(new Animated.Value(1)).current;
+  const handlePressIn = useCallback(() => {
+    hapticLight();
+    Animated.spring(scale, { toValue: 0.97, useNativeDriver: true, speed: 50, bounciness: 4 }).start();
+  }, [scale]);
+  const handlePressOut = useCallback(() => {
+    Animated.spring(scale, { toValue: 1, useNativeDriver: true, speed: 50, bounciness: 4 }).start();
+  }, [scale]);
+  return (
+    <Pressable onPress={onPress} onPressIn={handlePressIn} onPressOut={handlePressOut}>
+      <Animated.View style={[style, { transform: [{ scale }] }]}>
+        {children}
+      </Animated.View>
+    </Pressable>
+  );
+}
+
 export default function SharedTripScreen() {
   const params = useLocalSearchParams<{
     id: string;
@@ -59,6 +97,8 @@ export default function SharedTripScreen() {
   }>();
   const { id } = params;
   const router = useRouter();
+  const colors = useThemeColors();
+  const isDark = useIsDark();
 
   const isHydrated = useTripsStore((s) => s.isHydrated);
   const storeTrips = useTripsStore((s) => s.trips);
@@ -66,14 +106,14 @@ export default function SharedTripScreen() {
   const allMemories = useTripsStore((s) => s.memories);
 
   const fadeAnim = useRef(new Animated.Value(0)).current;
+  const slideAnim = useRef(new Animated.Value(24)).current;
 
   useEffect(() => {
-    Animated.timing(fadeAnim, {
-      toValue: 1,
-      duration: 500,
-      useNativeDriver: true,
-    }).start();
-  }, [fadeAnim]);
+    Animated.parallel([
+      Animated.timing(fadeAnim, { toValue: 1, duration: 600, useNativeDriver: true }),
+      Animated.timing(slideAnim, { toValue: 0, duration: 600, useNativeDriver: true }),
+    ]).start();
+  }, [fadeAnim, slideAnim]);
 
   const trip = useMemo(() => {
     if (!isHydrated) return undefined;
@@ -112,6 +152,7 @@ export default function SharedTripScreen() {
   const hasLocalData = !!trip;
   const hasPreviewData = !!preview;
   const isLoading = !isHydrated;
+  const s = createStyles(colors, isDark);
 
   const handleOpenInApp = () => {
     if (Platform.OS === 'web') {
@@ -134,16 +175,16 @@ export default function SharedTripScreen() {
     return (
       <>
         <Stack.Screen options={{ headerShown: false }} />
-        <View style={styles.loadingContainer}>
-          <View style={styles.loadingContent}>
-            <View style={styles.logoRow}>
-              <View style={styles.logoMark}>
-                <Plane size={18} color="#fff" />
-              </View>
-              <Text style={styles.logoText}>TripNest</Text>
-            </View>
-            <ActivityIndicator size="large" color="#1A1A1A" style={{ marginTop: 32 }} />
-            <Text style={styles.loadingText}>Loading trip details...</Text>
+        <View style={s.container}>
+          <View style={s.skeletonHero}>
+            <SkeletonBlock width="100%" height={360} colors={colors} style={{ borderRadius: 0 }} />
+          </View>
+          <View style={s.skeletonBody}>
+            <SkeletonBlock width="60%" height={28} colors={colors} />
+            <SkeletonBlock width="40%" height={16} colors={colors} style={{ marginTop: 12 }} />
+            <SkeletonBlock width="100%" height={120} colors={colors} style={{ marginTop: 24, borderRadius: 16 }} />
+            <SkeletonBlock width="100%" height={80} colors={colors} style={{ marginTop: 16, borderRadius: 16 }} />
+            <SkeletonBlock width="100%" height={160} colors={colors} style={{ marginTop: 16, borderRadius: 20 }} />
           </View>
         </View>
       </>
@@ -154,26 +195,32 @@ export default function SharedTripScreen() {
     return (
       <>
         <Stack.Screen options={{ headerShown: false }} />
-        <SafeAreaView style={styles.notFoundContainer}>
-          <Animated.View style={[styles.notFoundContent, { opacity: fadeAnim }]}>
-            <View style={styles.logoRow}>
-              <View style={styles.logoMark}>
-                <Plane size={18} color="#fff" />
+        <View style={s.container}>
+          <SafeAreaView style={s.errorContainer}>
+            <Animated.View style={[s.errorContent, { opacity: fadeAnim, transform: [{ translateY: slideAnim }] }]}>
+              <View style={s.logoRow}>
+                <View style={[s.logoMark, { backgroundColor: colors.accent }]}>
+                  <Plane size={18} color="#fff" />
+                </View>
+                <Text style={[s.logoText, { color: colors.text }]}>TripNest</Text>
               </View>
-              <Text style={styles.logoText}>TripNest</Text>
-            </View>
-            <View style={styles.errorIconWrap}>
-              <AlertCircle size={40} color="#EF4444" />
-            </View>
-            <Text style={styles.notFoundTitle}>This trip link is invalid or expired</Text>
-            <Text style={styles.notFoundSub}>
-              The trip may have been removed, or this link is no longer active. Ask the trip owner to send a new link.
-            </Text>
-            <TouchableOpacity style={styles.notFoundBtn} onPress={() => router.replace('/')}>
-              <Text style={styles.notFoundBtnText}>Go to TripNest</Text>
-            </TouchableOpacity>
-          </Animated.View>
-        </SafeAreaView>
+              <View style={[s.errorIconWrap, { backgroundColor: colors.errorBg }]}>
+                <AlertCircle size={36} color={colors.error} />
+              </View>
+              <Text style={[s.errorTitle, { color: colors.text }]}>
+                This trip link is no longer available
+              </Text>
+              <Text style={[s.errorSub, { color: colors.textSecondary }]}>
+                The trip may have been removed or this link has expired. Ask the trip owner to send a new link.
+              </Text>
+              <AnimatedPressable onPress={() => router.replace('/')}>
+                <View style={[s.errorBtn, { backgroundColor: colors.accent }]}>
+                  <Text style={s.errorBtnText}>Go to TripNest</Text>
+                </View>
+              </AnimatedPressable>
+            </Animated.View>
+          </SafeAreaView>
+        </View>
       </>
     );
   }
@@ -181,25 +228,17 @@ export default function SharedTripScreen() {
   const formatDate = (date: string) => {
     try {
       return new Date(date).toLocaleDateString('en-US', {
-        month: 'short',
-        day: 'numeric',
-        year: 'numeric',
+        month: 'short', day: 'numeric', year: 'numeric',
       });
-    } catch {
-      return date;
-    }
+    } catch { return date; }
   };
 
   const formatShortDate = (date: string) => {
     try {
       return new Date(date).toLocaleDateString('en-US', {
-        weekday: 'short',
-        month: 'short',
-        day: 'numeric',
+        weekday: 'short', month: 'short', day: 'numeric',
       });
-    } catch {
-      return date;
-    }
+    } catch { return date; }
   };
 
   const calculateDays = () => {
@@ -210,9 +249,7 @@ export default function SharedTripScreen() {
       const start = new Date(startStr);
       const end = new Date(endStr);
       return Math.max(Math.ceil((end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24)), 1);
-    } catch {
-      return 0;
-    }
+    } catch { return 0; }
   };
 
   const displayName = trip?.name ?? preview?.name ?? 'Shared Trip';
@@ -222,11 +259,9 @@ export default function SharedTripScreen() {
   const displayEnd = trip?.endDate ?? preview?.endDate ?? '';
   const displayBudget = trip?.totalBudget ?? preview?.totalBudget ?? 0;
   const displayTravelers = trip?.collaborators?.length ?? preview?.travelers ?? 1;
-
   const tripDays = calculateDays();
   const IconComponent = trip ? getIconComponent(trip.icon) : Landmark;
   const coverImage = getDestinationImageHQ(displayDest, displayCountry);
-
   const allActivities = trip ? trip.itinerary.flatMap((day) => day.activities) : [];
 
   const groupedStoredItinerary = useMemo(() => {
@@ -250,40 +285,45 @@ export default function SharedTripScreen() {
   return (
     <>
       <Stack.Screen options={{ headerShown: false }} />
-      <View style={styles.container}>
+      <View style={s.container}>
         <ScrollView showsVerticalScrollIndicator={false} bounces={false}>
-          <View style={styles.heroSection}>
+          <View style={s.heroSection}>
             <Image
               source={{ uri: coverImage }}
-              style={styles.heroImage}
+              style={s.heroImage}
               defaultSource={{ uri: 'https://images.unsplash.com/photo-1488646953014-85cb44e25828?w=800&h=500&fit=crop&q=80' }}
             />
-            <View style={styles.heroOverlay} />
+            <LinearGradient
+              colors={['rgba(0,0,0,0.15)', 'rgba(0,0,0,0.05)', 'rgba(0,0,0,0.7)']}
+              locations={[0, 0.3, 1]}
+              style={StyleSheet.absoluteFillObject}
+            />
 
-            <SafeAreaView style={styles.heroContentWrap} edges={['top']}>
-              <View style={styles.topBar}>
-                <TouchableOpacity style={styles.backBtn} onPress={() => router.back()}>
+            <SafeAreaView style={s.heroTopWrap} edges={['top']}>
+              <View style={s.topBar}>
+                <TouchableOpacity style={s.topBarBtn} onPress={() => router.back()} activeOpacity={0.7}>
                   <ArrowLeft size={20} color="#fff" />
                 </TouchableOpacity>
-                <View style={styles.logoRow}>
-                  <View style={styles.logoMarkSmall}>
-                    <Plane size={14} color="#fff" />
+                <View style={s.topBarLogoRow}>
+                  <View style={s.topBarLogoMark}>
+                    <Plane size={13} color="#fff" />
                   </View>
-                  <Text style={styles.logoTextSmall}>TripNest</Text>
+                  <Text style={s.topBarLogoText}>TripNest</Text>
                 </View>
                 <View style={{ width: 40 }} />
               </View>
             </SafeAreaView>
 
-            <View style={styles.heroBottom}>
-              <View style={styles.sharedBadge}>
-                <Text style={styles.sharedBadgeText}>Shared Trip</Text>
+            <View style={s.heroBottom}>
+              <View style={s.sharedBadge}>
+                <Compass size={11} color="#fff" />
+                <Text style={s.sharedBadgeText}>Shared Trip</Text>
               </View>
-              <Text style={styles.heroTitle}>{displayName}</Text>
+              <Text style={s.heroTitle}>{displayName}</Text>
               {(displayDest || displayCountry) && (
-                <View style={styles.heroLocationRow}>
-                  <MapPin size={15} color="rgba(255,255,255,0.85)" />
-                  <Text style={styles.heroLocation}>
+                <View style={s.heroLocationRow}>
+                  <MapPin size={14} color="rgba(255,255,255,0.9)" />
+                  <Text style={s.heroLocation}>
                     {[displayDest, displayCountry].filter(Boolean).join(', ')}
                   </Text>
                 </View>
@@ -291,149 +331,110 @@ export default function SharedTripScreen() {
             </View>
           </View>
 
-          <Animated.View style={[styles.body, { opacity: fadeAnim }]}>
-            {(displayStart || displayBudget > 0) && (
-              <View style={styles.summaryCard}>
-                {displayStart && (
-                  <View style={styles.summaryRow}>
-                    <View style={styles.summaryItem}>
-                      <View style={[styles.summaryIcon, { backgroundColor: '#F0F0F0' }]}>
-                        <Calendar size={18} color="#1A1A1A" />
-                      </View>
-                      <View>
-                        <Text style={styles.summaryValue}>
-                          {formatDate(displayStart)}
-                        </Text>
-                        {tripDays > 0 && (
-                          <Text style={styles.summaryLabel}>
-                            {tripDays} day{tripDays !== 1 ? 's' : ''} trip
-                          </Text>
-                        )}
-                      </View>
+          <Animated.View style={[s.body, { opacity: fadeAnim, transform: [{ translateY: slideAnim }] }]}>
+            {(displayStart || displayBudget > 0 || tripDays > 0) && (
+              <View style={s.statsRow}>
+                {tripDays > 0 && (
+                  <View style={s.statCard}>
+                    <View style={[s.statIcon, { backgroundColor: isDark ? 'rgba(34,211,238,0.12)' : 'rgba(8,145,178,0.08)' }]}>
+                      <Clock size={18} color={colors.accent} />
                     </View>
+                    <Text style={[s.statValue, { color: colors.text }]}>{tripDays}</Text>
+                    <Text style={[s.statLabel, { color: colors.textMuted }]}>days</Text>
                   </View>
                 )}
-
-                {displayStart && displayEnd && (
-                  <>
-                    <View style={styles.summaryDivider} />
-                    <View style={styles.summaryRow}>
-                      <View style={styles.summaryItem}>
-                        <View style={[styles.summaryIcon, { backgroundColor: '#F0F0F0' }]}>
-                          <Clock size={18} color="#1A1A1A" />
-                        </View>
-                        <View>
-                          <Text style={styles.summaryValue}>
-                            {formatShortDate(displayStart)}
-                          </Text>
-                          <Text style={styles.summaryLabel}>
-                            to {formatShortDate(displayEnd)}
-                          </Text>
-                        </View>
-                      </View>
+                {displayTravelers > 0 && (
+                  <View style={s.statCard}>
+                    <View style={[s.statIcon, { backgroundColor: isDark ? 'rgba(34,211,238,0.12)' : 'rgba(8,145,178,0.08)' }]}>
+                      <Users size={18} color={colors.accent} />
                     </View>
-                  </>
+                    <Text style={[s.statValue, { color: colors.text }]}>{displayTravelers}</Text>
+                    <Text style={[s.statLabel, { color: colors.textMuted }]}>travelers</Text>
+                  </View>
                 )}
-
                 {displayBudget > 0 && (
-                  <>
-                    <View style={styles.summaryDivider} />
-                    <View style={styles.summaryRow}>
-                      <View style={styles.summaryItem}>
-                        <View style={[styles.summaryIcon, { backgroundColor: '#F0F0F0' }]}>
-                          <DollarSign size={18} color="#1A1A1A" />
-                        </View>
-                        <View>
-                          <Text style={styles.summaryValue}>
-                            ${displayBudget.toLocaleString()}
-                          </Text>
-                          <Text style={styles.summaryLabel}>Total budget</Text>
-                        </View>
-                      </View>
+                  <View style={s.statCard}>
+                    <View style={[s.statIcon, { backgroundColor: isDark ? 'rgba(34,211,238,0.12)' : 'rgba(8,145,178,0.08)' }]}>
+                      <DollarSign size={18} color={colors.accent} />
                     </View>
-                  </>
+                    <Text style={[s.statValue, { color: colors.text }]}>${displayBudget.toLocaleString()}</Text>
+                    <Text style={[s.statLabel, { color: colors.textMuted }]}>budget</Text>
+                  </View>
                 )}
               </View>
             )}
 
-            {hasLocalData && trip.collaborators.length > 0 && (
-              <View style={styles.section}>
-                <View style={styles.sectionHeader}>
-                  <Users size={16} color={Colors.text} />
-                  <Text style={styles.sectionTitle}>Travelers</Text>
-                  <Text style={styles.sectionCount}>{trip.collaborators.length}</Text>
+            {displayStart && (
+              <View style={[s.dateCard, { backgroundColor: colors.surface }]}>
+                <View style={[s.dateIconWrap, { backgroundColor: isDark ? colors.surfaceElevated : colors.cardBg }]}>
+                  <Calendar size={20} color={colors.accent} />
                 </View>
-                <View style={styles.travelersCard}>
+                <View style={s.dateInfo}>
+                  <Text style={[s.dateRange, { color: colors.text }]}>
+                    {formatShortDate(displayStart)}{displayEnd ? ` — ${formatShortDate(displayEnd)}` : ''}
+                  </Text>
+                  <Text style={[s.dateSub, { color: colors.textMuted }]}>
+                    {formatDate(displayStart)}{displayEnd ? ` to ${formatDate(displayEnd)}` : ''}
+                  </Text>
+                </View>
+              </View>
+            )}
+
+            {hasLocalData && trip.collaborators.length > 0 && (
+              <View style={s.section}>
+                <Text style={[s.sectionTitle, { color: colors.text }]}>Travelers</Text>
+                <View style={[s.travelersCard, { backgroundColor: colors.surface }]}>
                   {trip.collaborators.map((collab) => (
-                    <View key={collab.id} style={styles.travelerRow}>
+                    <View key={collab.id} style={[s.travelerRow, { borderBottomColor: colors.borderLight }]}>
                       {collab.avatar ? (
-                        <Image source={{ uri: collab.avatar }} style={styles.travelerAvatar} />
+                        <Image source={{ uri: collab.avatar }} style={s.travelerAvatar} />
                       ) : (
-                        <View style={[styles.travelerAvatar, styles.avatarPlaceholder]}>
-                          <Users size={16} color="#999" />
+                        <View style={[s.travelerAvatar, { backgroundColor: isDark ? colors.surfaceElevated : colors.cardBg, justifyContent: 'center' as const, alignItems: 'center' as const }]}>
+                          <Users size={16} color={colors.textMuted} />
                         </View>
                       )}
-                      <View style={styles.travelerInfo}>
-                        <Text style={styles.travelerName}>{collab.name}</Text>
-                        <Text style={styles.travelerRole}>
+                      <View style={s.travelerInfo}>
+                        <Text style={[s.travelerName, { color: colors.text }]}>{collab.name}</Text>
+                        <Text style={[s.travelerRole, { color: colors.textMuted }]}>
                           {collab.role === 'owner' ? 'Organizer' : collab.role === 'editor' ? 'Contributor' : 'Viewer'}
                         </Text>
                       </View>
+                      {collab.role === 'owner' && (
+                        <View style={[s.ownerBadge, { backgroundColor: isDark ? 'rgba(34,211,238,0.12)' : 'rgba(8,145,178,0.08)' }]}>
+                          <Text style={[s.ownerBadgeText, { color: colors.accent }]}>Owner</Text>
+                        </View>
+                      )}
                     </View>
                   ))}
                 </View>
               </View>
             )}
 
-            {!hasLocalData && displayTravelers > 1 && (
-              <View style={styles.section}>
-                <View style={styles.sectionHeader}>
-                  <Users size={16} color={Colors.text} />
-                  <Text style={styles.sectionTitle}>Travelers</Text>
-                  <Text style={styles.sectionCount}>{displayTravelers}</Text>
-                </View>
-                <View style={styles.travelersCard}>
-                  <View style={styles.travelerRow}>
-                    <View style={[styles.travelerAvatar, styles.avatarPlaceholder]}>
-                      <Users size={16} color="#999" />
-                    </View>
-                    <View style={styles.travelerInfo}>
-                      <Text style={styles.travelerName}>{displayTravelers} travelers on this trip</Text>
-                      <Text style={styles.travelerRole}>Open in app to see details</Text>
-                    </View>
-                  </View>
-                </View>
-              </View>
-            )}
-
             {hasLocalData && hasItinerary && (
-              <View style={styles.section}>
-                <View style={styles.sectionHeader}>
-                  <ListChecks size={16} color={Colors.text} />
-                  <Text style={styles.sectionTitle}>Itinerary Preview</Text>
-                </View>
+              <View style={s.section}>
+                <Text style={[s.sectionTitle, { color: colors.text }]}>Itinerary Preview</Text>
 
                 {trip.itinerary.slice(0, 3).map((day, dayIndex) => (
-                  <View key={day.id} style={styles.itineraryDayCard}>
-                    <View style={styles.dayBadge}>
-                      <Text style={styles.dayBadgeText}>Day {dayIndex + 1}</Text>
+                  <View key={day.id} style={[s.itineraryDayCard, { backgroundColor: colors.surface }]}>
+                    <View style={[s.dayBadge, { backgroundColor: colors.accent }]}>
+                      <Text style={s.dayBadgeText}>Day {dayIndex + 1}</Text>
                     </View>
                     {day.activities.slice(0, 3).map((activity) => (
-                      <View key={activity.id} style={styles.activityRow}>
-                        <View style={styles.activityTimeDot} />
-                        <View style={styles.activityContent}>
-                          <Text style={styles.activityTitle}>{activity.title}</Text>
+                      <View key={activity.id} style={s.activityRow}>
+                        <View style={[s.activityTimeDot, { backgroundColor: colors.accent }]} />
+                        <View style={s.activityContent}>
+                          <Text style={[s.activityTitle, { color: colors.text }]}>{activity.title}</Text>
                           {activity.location && (
-                            <Text style={styles.activityLocation}>{activity.location}</Text>
+                            <Text style={[s.activityLocation, { color: colors.textMuted }]}>{activity.location}</Text>
                           )}
                         </View>
                         {activity.startTime && (
-                          <Text style={styles.activityTime}>{activity.startTime}</Text>
+                          <Text style={[s.activityTime, { color: colors.textSecondary }]}>{activity.startTime}</Text>
                         )}
                       </View>
                     ))}
                     {day.activities.length > 3 && (
-                      <Text style={styles.moreText}>
+                      <Text style={[s.moreText, { color: colors.textMuted }]}>
                         +{day.activities.length - 3} more activities
                       </Text>
                     )}
@@ -441,25 +442,23 @@ export default function SharedTripScreen() {
                 ))}
 
                 {groupedStoredItinerary.slice(0, 3).map((group) => (
-                  <View key={group.date} style={styles.itineraryDayCard}>
-                    <View style={styles.dayBadge}>
-                      <Text style={styles.dayBadgeText}>
-                        {formatShortDate(group.date)}
-                      </Text>
+                  <View key={group.date} style={[s.itineraryDayCard, { backgroundColor: colors.surface }]}>
+                    <View style={[s.dayBadge, { backgroundColor: colors.accent }]}>
+                      <Text style={s.dayBadgeText}>{formatShortDate(group.date)}</Text>
                     </View>
                     {group.items.slice(0, 3).map((item) => (
-                      <View key={item.id} style={styles.activityRow}>
-                        <View style={styles.activityTimeDot} />
-                        <View style={styles.activityContent}>
-                          <Text style={styles.activityTitle}>{item.title}</Text>
+                      <View key={item.id} style={s.activityRow}>
+                        <View style={[s.activityTimeDot, { backgroundColor: colors.accent }]} />
+                        <View style={s.activityContent}>
+                          <Text style={[s.activityTitle, { color: colors.text }]}>{item.title}</Text>
                           {item.notes && (
-                            <Text style={styles.activityLocation} numberOfLines={1}>
+                            <Text style={[s.activityLocation, { color: colors.textMuted }]} numberOfLines={1}>
                               {item.notes}
                             </Text>
                           )}
                         </View>
                         {item.time && (
-                          <Text style={styles.activityTime}>{item.time}</Text>
+                          <Text style={[s.activityTime, { color: colors.textSecondary }]}>{item.time}</Text>
                         )}
                       </View>
                     ))}
@@ -467,8 +466,8 @@ export default function SharedTripScreen() {
                 ))}
 
                 {(trip.itinerary.length > 3 || groupedStoredItinerary.length > 3) && (
-                  <View style={styles.fadeHint}>
-                    <Text style={styles.fadeHintText}>
+                  <View style={s.fadeHint}>
+                    <Text style={[s.fadeHintText, { color: colors.textMuted }]}>
                       Open in TripNest to see the full itinerary
                     </Text>
                   </View>
@@ -477,25 +476,26 @@ export default function SharedTripScreen() {
             )}
 
             {hasLocalData && hasMemories && (
-              <View style={styles.section}>
-                <View style={styles.sectionHeader}>
-                  <Camera size={16} color={Colors.text} />
-                  <Text style={styles.sectionTitle}>Memories</Text>
-                  <Text style={styles.sectionCount}>{tripMemories.length}</Text>
+              <View style={s.section}>
+                <View style={s.sectionHeaderRow}>
+                  <Text style={[s.sectionTitle, { color: colors.text }]}>Memories</Text>
+                  <View style={[s.countBadge, { backgroundColor: isDark ? colors.surfaceElevated : colors.cardBg }]}>
+                    <Text style={[s.countBadgeText, { color: colors.textSecondary }]}>{tripMemories.length}</Text>
+                  </View>
                 </View>
                 <ScrollView
                   horizontal
                   showsHorizontalScrollIndicator={false}
-                  contentContainerStyle={styles.memoriesScroll}
+                  contentContainerStyle={s.memoriesScroll}
                 >
                   {tripMemories.slice(0, 6).map((memory) => (
-                    <View key={memory.id} style={styles.memoryThumb}>
-                      <Image source={{ uri: memory.uri }} style={styles.memoryThumbImage} />
+                    <View key={memory.id} style={s.memoryThumb}>
+                      <Image source={{ uri: memory.uri }} style={s.memoryThumbImage} />
                     </View>
                   ))}
                   {tripMemories.length > 6 && (
-                    <View style={styles.memoryMoreThumb}>
-                      <Text style={styles.memoryMoreText}>
+                    <View style={[s.memoryMoreThumb, { backgroundColor: isDark ? colors.surfaceElevated : colors.cardBg }]}>
+                      <Text style={[s.memoryMoreText, { color: colors.textSecondary }]}>
                         +{tripMemories.length - 6}
                       </Text>
                     </View>
@@ -504,59 +504,51 @@ export default function SharedTripScreen() {
               </View>
             )}
 
-            <View style={styles.ctaSection}>
-              <View style={styles.ctaCard}>
-                <View style={styles.ctaIconContainer}>
-                  <IconComponent size={40} color={trip?.iconColor ?? '#1A1A1A'} />
-                </View>
-                <Text style={styles.ctaTitle}>
-                  {hasLocalData ? 'Want to join this trip?' : 'View full trip details'}
-                </Text>
-                <Text style={styles.ctaSub}>
-                  {hasLocalData
-                    ? 'Open in the TripNest app to view all details, collaborate, and start planning.'
-                    : 'Open in the TripNest app to see the full itinerary, collaborate with travelers, and plan together.'
-                  }
-                </Text>
+            <View style={[s.ctaCard, { backgroundColor: colors.surface }]}>
+              <View style={[s.ctaIconWrap, { backgroundColor: isDark ? 'rgba(34,211,238,0.12)' : 'rgba(8,145,178,0.08)' }]}>
+                <IconComponent size={32} color={colors.accent} />
+              </View>
+              <Text style={[s.ctaTitle, { color: colors.text }]}>
+                {hasLocalData ? 'Want to join this trip?' : 'View full trip details'}
+              </Text>
+              <Text style={[s.ctaSub, { color: colors.textSecondary }]}>
+                {hasLocalData
+                  ? 'Open in the TripNest app to view all details, collaborate, and start planning.'
+                  : 'Open in the TripNest app to see the full itinerary, collaborate with travelers, and plan together.'
+                }
+              </Text>
 
-                <TouchableOpacity
-                  style={styles.ctaPrimaryBtn}
-                  activeOpacity={0.8}
-                  onPress={handleOpenInApp}
-                >
+              <AnimatedPressable onPress={handleOpenInApp} style={{ width: '100%' as const }}>
+                <View style={[s.ctaPrimaryBtn, { backgroundColor: colors.accent }]}>
                   {hasLocalData ? (
                     <Plane size={18} color="#fff" />
                   ) : (
                     <ExternalLink size={18} color="#fff" />
                   )}
-                  <Text style={styles.ctaPrimaryText}>Open in TripNest</Text>
+                  <Text style={s.ctaPrimaryText}>Open in TripNest</Text>
                   <ChevronRight size={18} color="#fff" />
-                </TouchableOpacity>
+                </View>
+              </AnimatedPressable>
 
-                <TouchableOpacity
-                  style={styles.ctaSecondaryBtn}
-                  activeOpacity={0.7}
-                  onPress={() => {
-                    console.log('[SharedTrip] Download tapped');
-                  }}
-                >
-                  <Download size={18} color="#1A1A1A" />
-                  <Text style={styles.ctaSecondaryText}>Download the App</Text>
-                </TouchableOpacity>
-              </View>
+              <AnimatedPressable onPress={() => console.log('[SharedTrip] Download tapped')} style={{ width: '100%' as const }}>
+                <View style={[s.ctaSecondaryBtn, { backgroundColor: isDark ? colors.surfaceElevated : colors.cardBg }]}>
+                  <Download size={18} color={colors.text} />
+                  <Text style={[s.ctaSecondaryText, { color: colors.text }]}>Download the App</Text>
+                </View>
+              </AnimatedPressable>
             </View>
 
-            <View style={styles.footer}>
-              <View style={styles.footerLogoRow}>
-                <View style={styles.footerLogoMark}>
-                  <Plane size={12} color="#fff" />
+            <View style={[s.footer, { borderTopColor: colors.border }]}>
+              <View style={s.footerLogoRow}>
+                <View style={[s.footerLogoMark, { backgroundColor: colors.accent }]}>
+                  <Plane size={11} color="#fff" />
                 </View>
-                <Text style={styles.footerLogoText}>TripNest</Text>
+                <Text style={[s.footerLogoText, { color: colors.text }]}>TripNest</Text>
               </View>
-              <Text style={styles.footerText}>
+              <Text style={[s.footerText, { color: colors.textMuted }]}>
                 Plan trips together. Travel smarter.
               </Text>
-              <Text style={styles.footerDisclaimer}>
+              <Text style={[s.footerDisclaimer, { color: colors.textMuted, opacity: 0.6 }]}>
                 This is a read-only view of a shared trip.
               </Text>
             </View>
@@ -567,105 +559,86 @@ export default function SharedTripScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+const createStyles = (colors: ThemeColors, isDark: boolean) => StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#FAFAFA',
+    backgroundColor: colors.background,
   },
-  loadingContainer: {
+  skeletonHero: {
+    width: '100%',
+  },
+  skeletonBody: {
+    padding: 24,
+  },
+  errorContainer: {
     flex: 1,
-    backgroundColor: '#FAFAFA',
     justifyContent: 'center',
     alignItems: 'center',
   },
-  loadingContent: {
+  errorContent: {
     alignItems: 'center',
     paddingHorizontal: 40,
-  },
-  loadingText: {
-    fontSize: 15,
-    color: '#888',
-    marginTop: 16,
-  },
-  notFoundContainer: {
-    flex: 1,
-    backgroundColor: '#FAFAFA',
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  notFoundContent: {
-    alignItems: 'center',
-    paddingHorizontal: 40,
-  },
-  errorIconWrap: {
-    width: 72,
-    height: 72,
-    borderRadius: 36,
-    backgroundColor: '#FEE2E2',
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginTop: 28,
-    marginBottom: 20,
   },
   logoRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 8,
+    gap: 10,
+    marginBottom: 4,
   },
   logoMark: {
-    width: 36,
-    height: 36,
-    borderRadius: 10,
-    backgroundColor: '#1A1A1A',
+    width: 38,
+    height: 38,
+    borderRadius: 11,
     justifyContent: 'center',
     alignItems: 'center',
   },
   logoText: {
     fontSize: 22,
     fontWeight: '800' as const,
-    color: '#1A1A1A',
     letterSpacing: -0.5,
   },
-  notFoundTitle: {
+  errorIconWrap: {
+    width: 72,
+    height: 72,
+    borderRadius: 36,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginTop: 28,
+    marginBottom: 20,
+  },
+  errorTitle: {
     fontSize: 20,
     fontWeight: '700' as const,
-    color: '#1A1A1A',
     marginBottom: 8,
     textAlign: 'center',
   },
-  notFoundSub: {
+  errorSub: {
     fontSize: 15,
-    color: '#888',
     textAlign: 'center',
     lineHeight: 22,
     marginBottom: 28,
   },
-  notFoundBtn: {
-    paddingHorizontal: 28,
-    paddingVertical: 14,
-    backgroundColor: '#1A1A1A',
-    borderRadius: 12,
+  errorBtn: {
+    paddingHorizontal: 32,
+    paddingVertical: 15,
+    borderRadius: 14,
   },
-  notFoundBtnText: {
-    fontSize: 15,
-    fontWeight: '600' as const,
+  errorBtnText: {
+    fontSize: 16,
+    fontWeight: '700' as const,
     color: '#fff',
   },
   heroSection: {
-    height: 340,
+    height: 360,
     position: 'relative',
   },
   heroImage: {
     width: '100%',
     height: '100%',
     resizeMode: 'cover',
-    backgroundColor: '#E0E0E0',
+    backgroundColor: colors.border,
   },
-  heroOverlay: {
-    ...StyleSheet.absoluteFillObject,
-    backgroundColor: 'rgba(0,0,0,0.35)',
-  },
-  heroContentWrap: {
+  heroTopWrap: {
     position: 'absolute',
     top: 0,
     left: 0,
@@ -678,24 +651,29 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
     paddingTop: 8,
   },
-  backBtn: {
+  topBarBtn: {
     width: 40,
     height: 40,
     borderRadius: 20,
-    backgroundColor: 'rgba(0,0,0,0.3)',
+    backgroundColor: 'rgba(0,0,0,0.25)',
     justifyContent: 'center',
     alignItems: 'center',
   },
-  logoMarkSmall: {
-    width: 28,
-    height: 28,
-    borderRadius: 8,
+  topBarLogoRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+  },
+  topBarLogoMark: {
+    width: 26,
+    height: 26,
+    borderRadius: 7,
     backgroundColor: 'rgba(255,255,255,0.2)',
     justifyContent: 'center',
     alignItems: 'center',
   },
-  logoTextSmall: {
-    fontSize: 17,
+  topBarLogoText: {
+    fontSize: 16,
     fontWeight: '800' as const,
     color: '#fff',
     letterSpacing: -0.3,
@@ -710,21 +688,24 @@ const styles = StyleSheet.create({
   },
   sharedBadge: {
     alignSelf: 'flex-start',
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 5,
     paddingHorizontal: 10,
-    paddingVertical: 4,
-    backgroundColor: 'rgba(255,255,255,0.2)',
-    borderRadius: 6,
+    paddingVertical: 5,
+    backgroundColor: 'rgba(255,255,255,0.18)',
+    borderRadius: 8,
     marginBottom: 10,
   },
   sharedBadgeText: {
     fontSize: 11,
-    fontWeight: '600' as const,
+    fontWeight: '700' as const,
     color: '#fff',
-    letterSpacing: 0.5,
+    letterSpacing: 0.6,
     textTransform: 'uppercase' as const,
   },
   heroTitle: {
-    fontSize: 30,
+    fontSize: 32,
     fontWeight: '800' as const,
     color: '#fff',
     marginBottom: 8,
@@ -733,111 +714,134 @@ const styles = StyleSheet.create({
   heroLocationRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 6,
+    gap: 5,
   },
   heroLocation: {
     fontSize: 15,
     fontWeight: '500' as const,
-    color: 'rgba(255,255,255,0.85)',
+    color: 'rgba(255,255,255,0.9)',
   },
   body: {
     paddingHorizontal: 20,
     paddingTop: 20,
     paddingBottom: 40,
   },
-  summaryCard: {
-    backgroundColor: '#fff',
+  statsRow: {
+    flexDirection: 'row',
+    gap: 10,
+    marginBottom: 16,
+  },
+  statCard: {
+    flex: 1,
+    backgroundColor: colors.surface,
     borderRadius: 16,
-    padding: 18,
-    marginBottom: 20,
+    padding: 14,
+    alignItems: 'center',
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.05,
-    shadowRadius: 8,
-    elevation: 2,
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: isDark ? 0 : 0.04,
+    shadowRadius: 6,
+    elevation: isDark ? 0 : 1,
+    borderWidth: isDark ? 1 : 0,
+    borderColor: colors.border,
   },
-  summaryRow: {
-    paddingVertical: 4,
+  statIcon: {
+    width: 40,
+    height: 40,
+    borderRadius: 12,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: 8,
   },
-  summaryItem: {
+  statValue: {
+    fontSize: 16,
+    fontWeight: '700' as const,
+    marginBottom: 2,
+  },
+  statLabel: {
+    fontSize: 12,
+    fontWeight: '500' as const,
+  },
+  dateCard: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 14,
+    borderRadius: 16,
+    padding: 16,
+    marginBottom: 16,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: isDark ? 0 : 0.04,
+    shadowRadius: 6,
+    elevation: isDark ? 0 : 1,
+    borderWidth: isDark ? 1 : 0,
+    borderColor: colors.border,
   },
-  summaryIcon: {
-    width: 40,
-    height: 40,
-    borderRadius: 10,
+  dateIconWrap: {
+    width: 44,
+    height: 44,
+    borderRadius: 12,
     justifyContent: 'center',
     alignItems: 'center',
   },
-  summaryValue: {
+  dateInfo: {
+    flex: 1,
+  },
+  dateRange: {
     fontSize: 15,
     fontWeight: '600' as const,
-    color: '#1A1A1A',
+    marginBottom: 2,
   },
-  summaryLabel: {
+  dateSub: {
     fontSize: 13,
-    color: '#888',
-    marginTop: 1,
-  },
-  summaryDivider: {
-    height: 1,
-    backgroundColor: '#F0F0F0',
-    marginVertical: 12,
   },
   section: {
     marginBottom: 20,
   },
-  sectionHeader: {
+  sectionHeaderRow: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 8,
-    marginBottom: 14,
+    marginBottom: 12,
   },
   sectionTitle: {
-    fontSize: 16,
+    fontSize: 17,
     fontWeight: '700' as const,
-    color: '#1A1A1A',
-    flex: 1,
+    marginBottom: 12,
   },
-  sectionCount: {
-    fontSize: 13,
-    fontWeight: '600' as const,
-    color: '#888',
-    backgroundColor: '#F0F0F0',
+  countBadge: {
     paddingHorizontal: 8,
     paddingVertical: 2,
     borderRadius: 8,
-    overflow: 'hidden',
+    marginBottom: 12,
+  },
+  countBadgeText: {
+    fontSize: 13,
+    fontWeight: '600' as const,
   },
   travelersCard: {
-    backgroundColor: '#fff',
     borderRadius: 16,
-    padding: 6,
+    overflow: 'hidden',
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.05,
-    shadowRadius: 8,
-    elevation: 2,
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: isDark ? 0 : 0.04,
+    shadowRadius: 6,
+    elevation: isDark ? 0 : 1,
+    borderWidth: isDark ? 1 : 0,
+    borderColor: colors.border,
   },
   travelerRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingHorizontal: 14,
-    paddingVertical: 12,
+    paddingHorizontal: 16,
+    paddingVertical: 14,
+    borderBottomWidth: 1,
   },
   travelerAvatar: {
     width: 42,
     height: 42,
     borderRadius: 21,
     marginRight: 14,
-    backgroundColor: '#F0F0F0',
-  },
-  avatarPlaceholder: {
-    justifyContent: 'center',
-    alignItems: 'center',
-    backgroundColor: '#ECECEC',
   },
   travelerInfo: {
     flex: 1,
@@ -845,30 +849,37 @@ const styles = StyleSheet.create({
   travelerName: {
     fontSize: 15,
     fontWeight: '600' as const,
-    color: '#1A1A1A',
   },
   travelerRole: {
     fontSize: 13,
-    color: '#999',
     marginTop: 1,
   },
+  ownerBadge: {
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    borderRadius: 6,
+  },
+  ownerBadgeText: {
+    fontSize: 11,
+    fontWeight: '700' as const,
+  },
   itineraryDayCard: {
-    backgroundColor: '#fff',
-    borderRadius: 14,
+    borderRadius: 16,
     padding: 16,
     marginBottom: 10,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.04,
+    shadowOpacity: isDark ? 0 : 0.04,
     shadowRadius: 6,
-    elevation: 1,
+    elevation: isDark ? 0 : 1,
+    borderWidth: isDark ? 1 : 0,
+    borderColor: colors.border,
   },
   dayBadge: {
     alignSelf: 'flex-start',
-    backgroundColor: '#1A1A1A',
     paddingHorizontal: 10,
     paddingVertical: 4,
-    borderRadius: 6,
+    borderRadius: 8,
     marginBottom: 14,
   },
   dayBadgeText: {
@@ -886,7 +897,6 @@ const styles = StyleSheet.create({
     width: 8,
     height: 8,
     borderRadius: 4,
-    backgroundColor: '#D0D0D0',
     marginTop: 6,
   },
   activityContent: {
@@ -895,21 +905,17 @@ const styles = StyleSheet.create({
   activityTitle: {
     fontSize: 14,
     fontWeight: '500' as const,
-    color: '#1A1A1A',
   },
   activityLocation: {
     fontSize: 12,
-    color: '#999',
     marginTop: 2,
   },
   activityTime: {
     fontSize: 12,
     fontWeight: '600' as const,
-    color: '#888',
   },
   moreText: {
     fontSize: 12,
-    color: '#999',
     marginTop: 4,
     marginLeft: 20,
   },
@@ -919,7 +925,6 @@ const styles = StyleSheet.create({
   },
   fadeHintText: {
     fontSize: 13,
-    color: '#999',
     fontStyle: 'italic' as const,
   },
   memoriesScroll: {
@@ -930,7 +935,7 @@ const styles = StyleSheet.create({
     height: 110,
     borderRadius: 14,
     overflow: 'hidden',
-    backgroundColor: '#F0F0F0',
+    backgroundColor: colors.border,
   },
   memoryThumbImage: {
     width: '100%',
@@ -941,35 +946,31 @@ const styles = StyleSheet.create({
     width: 110,
     height: 110,
     borderRadius: 14,
-    backgroundColor: '#E8E8E8',
     justifyContent: 'center',
     alignItems: 'center',
   },
   memoryMoreText: {
     fontSize: 18,
     fontWeight: '700' as const,
-    color: '#888',
-  },
-  ctaSection: {
-    marginTop: 12,
-    marginBottom: 24,
   },
   ctaCard: {
-    backgroundColor: '#fff',
     borderRadius: 20,
     padding: 28,
     alignItems: 'center',
+    marginTop: 8,
+    marginBottom: 24,
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.08,
-    shadowRadius: 16,
-    elevation: 4,
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: isDark ? 0 : 0.06,
+    shadowRadius: 12,
+    elevation: isDark ? 0 : 3,
+    borderWidth: isDark ? 1 : 0,
+    borderColor: colors.border,
   },
-  ctaIconContainer: {
-    width: 72,
-    height: 72,
+  ctaIconWrap: {
+    width: 68,
+    height: 68,
     borderRadius: 20,
-    backgroundColor: '#F5F5F5',
     justifyContent: 'center',
     alignItems: 'center',
     marginBottom: 18,
@@ -977,29 +978,26 @@ const styles = StyleSheet.create({
   ctaTitle: {
     fontSize: 20,
     fontWeight: '700' as const,
-    color: '#1A1A1A',
     marginBottom: 8,
     textAlign: 'center',
   },
   ctaSub: {
     fontSize: 14,
-    color: '#888',
     textAlign: 'center',
     lineHeight: 21,
     marginBottom: 24,
-    paddingHorizontal: 10,
+    paddingHorizontal: 8,
   },
   ctaPrimaryBtn: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
     gap: 10,
-    backgroundColor: '#1A1A1A',
     paddingVertical: 16,
-    paddingHorizontal: 32,
+    paddingHorizontal: 28,
     borderRadius: 14,
     width: '100%',
-    marginBottom: 12,
+    marginBottom: 10,
   },
   ctaPrimaryText: {
     fontSize: 16,
@@ -1011,7 +1009,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     gap: 10,
-    backgroundColor: '#F5F5F5',
     paddingVertical: 14,
     paddingHorizontal: 28,
     borderRadius: 14,
@@ -1020,13 +1017,11 @@ const styles = StyleSheet.create({
   ctaSecondaryText: {
     fontSize: 15,
     fontWeight: '600' as const,
-    color: '#1A1A1A',
   },
   footer: {
     alignItems: 'center',
     paddingVertical: 24,
     borderTopWidth: 1,
-    borderTopColor: '#EDEDED',
   },
   footerLogoRow: {
     flexDirection: 'row',
@@ -1035,26 +1030,22 @@ const styles = StyleSheet.create({
     marginBottom: 8,
   },
   footerLogoMark: {
-    width: 24,
-    height: 24,
+    width: 22,
+    height: 22,
     borderRadius: 6,
-    backgroundColor: '#1A1A1A',
     justifyContent: 'center',
     alignItems: 'center',
   },
   footerLogoText: {
-    fontSize: 15,
+    fontSize: 14,
     fontWeight: '800' as const,
-    color: '#1A1A1A',
     letterSpacing: -0.3,
   },
   footerText: {
     fontSize: 13,
-    color: '#888',
     marginBottom: 4,
   },
   footerDisclaimer: {
     fontSize: 11,
-    color: '#BBB',
   },
 });
