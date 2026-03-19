@@ -8,7 +8,8 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { useLocalSearchParams, useRouter, Stack } from 'expo-router';
 import {
   MapPin, Calendar, Users, Plane, UserPlus, Check, Home,
-  Clock, DollarSign, Download, ExternalLink, AlertCircle, Compass,
+  Clock, DollarSign, Download, ExternalLink, AlertCircle,
+  ChevronRight, Globe, Sparkles, Shield,
 } from 'lucide-react-native';
 import { useThemeColors, useIsDark } from '@/hooks/useThemeColors';
 import { ThemeColors } from '@/constants/themes';
@@ -29,18 +30,10 @@ interface TripPreview {
   ownerName: string;
 }
 
-function formatDate(date: string) {
-  try {
-    return new Date(date).toLocaleDateString('en-US', {
-      month: 'short', day: 'numeric', year: 'numeric',
-    });
-  } catch { return date; }
-}
-
 function formatShortDate(date: string) {
   try {
     return new Date(date).toLocaleDateString('en-US', {
-      weekday: 'short', month: 'short', day: 'numeric',
+      month: 'short', day: 'numeric',
     });
   } catch { return date; }
 }
@@ -70,28 +63,28 @@ function parsePreviewFromParams(params: Record<string, string | string[] | undef
   };
 }
 
-function SkeletonBlock({ width, height, colors, style }: { width: number | string; height: number; colors: ThemeColors; style?: any }) {
+function SkeletonPulse({ width, height, colors, style }: { width: number | string; height: number; colors: ThemeColors; style?: any }) {
   const shimmer = useRef(new Animated.Value(0)).current;
   useEffect(() => {
     Animated.loop(
       Animated.sequence([
-        Animated.timing(shimmer, { toValue: 1, duration: 1000, useNativeDriver: true }),
-        Animated.timing(shimmer, { toValue: 0, duration: 1000, useNativeDriver: true }),
+        Animated.timing(shimmer, { toValue: 1, duration: 1200, useNativeDriver: true }),
+        Animated.timing(shimmer, { toValue: 0, duration: 1200, useNativeDriver: true }),
       ])
     ).start();
   }, [shimmer]);
-  const opacity = shimmer.interpolate({ inputRange: [0, 1], outputRange: [0.3, 0.7] });
+  const opacity = shimmer.interpolate({ inputRange: [0, 1], outputRange: [0.25, 0.55] });
   return (
-    <Animated.View style={[{ width, height, borderRadius: 10, backgroundColor: colors.border, opacity }, style]} />
+    <Animated.View style={[{ width, height, borderRadius: 12, backgroundColor: colors.border, opacity }, style]} />
   );
 }
 
-function AnimatedPressable({ children, onPress, style, disabled, testID }: { children: React.ReactNode; onPress: () => void; style?: any; disabled?: boolean; testID?: string }) {
+function PressableScale({ children, onPress, style, disabled, testID }: { children: React.ReactNode; onPress: () => void; style?: any; disabled?: boolean; testID?: string }) {
   const scale = useRef(new Animated.Value(1)).current;
   const handlePressIn = useCallback(() => {
     if (disabled) return;
     hapticLight();
-    Animated.spring(scale, { toValue: 0.97, useNativeDriver: true, speed: 50, bounciness: 4 }).start();
+    Animated.spring(scale, { toValue: 0.965, useNativeDriver: true, speed: 50, bounciness: 4 }).start();
   }, [scale, disabled]);
   const handlePressOut = useCallback(() => {
     Animated.spring(scale, { toValue: 1, useNativeDriver: true, speed: 50, bounciness: 4 }).start();
@@ -129,15 +122,21 @@ export default function JoinTripByIdScreen() {
   const joinTripById = useTripsStore((s) => s.joinTripById);
 
   const fadeAnim = useRef(new Animated.Value(0)).current;
-  const slideAnim = useRef(new Animated.Value(24)).current;
+  const slideAnim = useRef(new Animated.Value(30)).current;
+  const heroFade = useRef(new Animated.Value(0)).current;
   const successScale = useRef(new Animated.Value(0)).current;
+  const successFade = useRef(new Animated.Value(0)).current;
+  const inputFocus = useRef(new Animated.Value(0)).current;
 
   useEffect(() => {
-    Animated.parallel([
-      Animated.timing(fadeAnim, { toValue: 1, duration: 600, useNativeDriver: true }),
-      Animated.timing(slideAnim, { toValue: 0, duration: 600, useNativeDriver: true }),
+    Animated.sequence([
+      Animated.timing(heroFade, { toValue: 1, duration: 500, useNativeDriver: true }),
+      Animated.parallel([
+        Animated.timing(fadeAnim, { toValue: 1, duration: 500, useNativeDriver: true }),
+        Animated.spring(slideAnim, { toValue: 0, useNativeDriver: true, speed: 14, bounciness: 4 }),
+      ]),
     ]).start();
-  }, [fadeAnim, slideAnim]);
+  }, [heroFade, fadeAnim, slideAnim]);
 
   const trip: Trip | undefined = useMemo(() => {
     if (!tripId || !isHydrated) return undefined;
@@ -163,12 +162,10 @@ export default function JoinTripByIdScreen() {
     if (result) {
       hapticSuccess();
       setJoined(true);
-      Animated.spring(successScale, {
-        toValue: 1,
-        useNativeDriver: true,
-        speed: 12,
-        bounciness: 8,
-      }).start();
+      Animated.parallel([
+        Animated.spring(successScale, { toValue: 1, useNativeDriver: true, speed: 12, bounciness: 8 }),
+        Animated.timing(successFade, { toValue: 1, duration: 400, useNativeDriver: true }),
+      ]).start();
       console.log('[JoinTrip] Successfully joined trip:', tripId);
     } else {
       Alert.alert('Error', 'Could not join this trip. It may no longer exist.');
@@ -202,23 +199,37 @@ export default function JoinTripByIdScreen() {
     }
   };
 
+  const handleInputFocus = useCallback(() => {
+    Animated.timing(inputFocus, { toValue: 1, duration: 200, useNativeDriver: false }).start();
+  }, [inputFocus]);
+
+  const handleInputBlur = useCallback(() => {
+    Animated.timing(inputFocus, { toValue: 0, duration: 200, useNativeDriver: false }).start();
+  }, [inputFocus]);
+
+  const inputBorderColor = inputFocus.interpolate({
+    inputRange: [0, 1],
+    outputRange: [colors.border, colors.accent],
+  });
+
   if (isLoading) {
     return (
       <>
         <Stack.Screen options={{ headerShown: false }} />
         <View style={s.container}>
           <View style={s.skeletonHero}>
-            <SkeletonBlock width="100%" height={340} colors={colors} style={{ borderRadius: 0 }} />
+            <SkeletonPulse width="100%" height={380} colors={colors} style={{ borderRadius: 0 }} />
           </View>
           <View style={s.skeletonBody}>
-            <SkeletonBlock width="60%" height={28} colors={colors} />
-            <SkeletonBlock width="40%" height={16} colors={colors} style={{ marginTop: 12 }} />
-            <View style={{ flexDirection: 'row' as const, gap: 10, marginTop: 20 }}>
-              <SkeletonBlock width="32%" height={90} colors={colors} style={{ borderRadius: 16 }} />
-              <SkeletonBlock width="32%" height={90} colors={colors} style={{ borderRadius: 16 }} />
-              <SkeletonBlock width="32%" height={90} colors={colors} style={{ borderRadius: 16 }} />
+            <SkeletonPulse width="70%" height={26} colors={colors} />
+            <SkeletonPulse width="45%" height={16} colors={colors} style={{ marginTop: 10 }} />
+            <View style={{ flexDirection: 'row' as const, gap: 10, marginTop: 24 }}>
+              <SkeletonPulse width="31%" height={96} colors={colors} style={{ borderRadius: 16 }} />
+              <SkeletonPulse width="31%" height={96} colors={colors} style={{ borderRadius: 16 }} />
+              <SkeletonPulse width="31%" height={96} colors={colors} style={{ borderRadius: 16 }} />
             </View>
-            <SkeletonBlock width="100%" height={180} colors={colors} style={{ marginTop: 20, borderRadius: 20 }} />
+            <SkeletonPulse width="100%" height={72} colors={colors} style={{ marginTop: 18, borderRadius: 16 }} />
+            <SkeletonPulse width="100%" height={200} colors={colors} style={{ marginTop: 18, borderRadius: 20 }} />
           </View>
         </View>
       </>
@@ -230,23 +241,36 @@ export default function JoinTripByIdScreen() {
       <>
         <Stack.Screen options={{ headerShown: false }} />
         <View style={s.container}>
+          <LinearGradient
+            colors={isDark ? ['#0F0F0F', '#1A2A2F', '#0F0F0F'] : ['#F0FDFA', '#E0F7FA', '#F8F8F8']}
+            style={StyleSheet.absoluteFillObject}
+          />
           <SafeAreaView style={s.centerContainer}>
-            <Animated.View style={[s.centerContent, { opacity: fadeAnim, transform: [{ translateY: slideAnim }] }]}>
-              <Animated.View style={[s.successIconWrap, { transform: [{ scale: successScale }] }]}>
-                <View style={s.successIcon}>
-                  <Check size={32} color="#fff" />
-                </View>
+            <Animated.View style={[s.centerContent, { opacity: successFade }]}>
+              <Animated.View style={[s.successCheckWrap, { transform: [{ scale: successScale }] }]}>
+                <LinearGradient
+                  colors={['#059669', '#10B981']}
+                  style={s.successCheckGradient}
+                >
+                  <Check size={36} color="#fff" strokeWidth={3} />
+                </LinearGradient>
               </Animated.View>
               <Text style={[s.successTitle, { color: colors.text }]}>You're in!</Text>
               <Text style={[s.successSub, { color: colors.textSecondary }]}>
-                You've joined "{trip.name}". You can now view and edit this trip.
+                You've joined "{trip.name}". Start exploring the itinerary and collaborate with your group.
               </Text>
-              <AnimatedPressable onPress={handleOpenTrip} style={{ width: '100%' as const, maxWidth: 320 }}>
-                <View style={[s.primaryBtn, { backgroundColor: colors.accent }]}>
+              <PressableScale onPress={handleOpenTrip} style={s.fullWidthBtn}>
+                <LinearGradient
+                  colors={isDark ? ['#0891B2', '#0E7490'] : ['#0891B2', '#0891B2']}
+                  style={s.gradientBtn}
+                  start={{ x: 0, y: 0 }}
+                  end={{ x: 1, y: 0 }}
+                >
                   <Plane size={18} color="#fff" />
-                  <Text style={s.primaryBtnText}>Open Trip</Text>
-                </View>
-              </AnimatedPressable>
+                  <Text style={s.gradientBtnText}>Open Trip</Text>
+                  <ChevronRight size={18} color="rgba(255,255,255,0.7)" />
+                </LinearGradient>
+              </PressableScale>
               <TouchableOpacity style={s.ghostBtn} onPress={handleGoHome} activeOpacity={0.6}>
                 <Text style={[s.ghostBtnText, { color: colors.textMuted }]}>Back to Home</Text>
               </TouchableOpacity>
@@ -262,29 +286,33 @@ export default function JoinTripByIdScreen() {
       <>
         <Stack.Screen options={{ headerShown: false }} />
         <View style={s.container}>
+          <LinearGradient
+            colors={isDark ? ['#0F0F0F', '#1A1A1A'] : ['#F8F8F8', '#FFFFFF']}
+            style={StyleSheet.absoluteFillObject}
+          />
           <SafeAreaView style={s.centerContainer}>
             <Animated.View style={[s.centerContent, { opacity: fadeAnim, transform: [{ translateY: slideAnim }] }]}>
-              <View style={s.logoRow}>
-                <View style={[s.logoMark, { backgroundColor: colors.accent }]}>
-                  <Plane size={18} color="#fff" />
+              <View style={s.brandRow}>
+                <View style={[s.brandMark, { backgroundColor: colors.accent }]}>
+                  <Plane size={16} color="#fff" />
                 </View>
-                <Text style={[s.logoText, { color: colors.text }]}>TripNest</Text>
+                <Text style={[s.brandText, { color: colors.text }]}>TripNest</Text>
               </View>
-              <View style={[s.errorIconWrap, { backgroundColor: colors.errorBg }]}>
-                <AlertCircle size={36} color={colors.error} />
+              <View style={[s.errorIconCircle, { backgroundColor: isDark ? 'rgba(239,68,68,0.12)' : '#FEE2E2' }]}>
+                <AlertCircle size={32} color={colors.error} />
               </View>
               <Text style={[s.errorTitle, { color: colors.text }]}>
                 This trip link is no longer available
               </Text>
               <Text style={[s.errorSub, { color: colors.textSecondary }]}>
-                The trip may have been removed, or this link is no longer active. Ask the trip owner to send a new invite.
+                The trip may have been removed or the link has expired. Ask the organizer to send a new invite.
               </Text>
-              <AnimatedPressable onPress={handleGoHome} style={{ width: '100%' as const, maxWidth: 320 }}>
-                <View style={[s.primaryBtn, { backgroundColor: colors.accent }]}>
+              <PressableScale onPress={handleGoHome} style={s.fullWidthBtn}>
+                <View style={[s.solidBtn, { backgroundColor: colors.accent }]}>
                   <Home size={16} color="#fff" />
-                  <Text style={s.primaryBtnText}>Go to TripNest</Text>
+                  <Text style={s.solidBtnText}>Go to TripNest</Text>
                 </View>
-              </AnimatedPressable>
+              </PressableScale>
             </Animated.View>
           </SafeAreaView>
         </View>
@@ -303,61 +331,70 @@ export default function JoinTripByIdScreen() {
   const coverImage = getDestinationImageHQ(displayDest, displayCountry);
   const tripDays = displayStart && displayEnd ? calculateDays(displayStart, displayEnd) : 0;
   const owner = trip?.collaborators?.find((c) => c.role === 'owner');
+  const locationStr = [displayDest, displayCountry].filter(Boolean).join(', ');
 
   return (
     <>
       <Stack.Screen options={{ headerShown: false }} />
       <View style={s.container}>
         <ScrollView showsVerticalScrollIndicator={false} bounces={false}>
-          <View style={s.heroSection}>
-            <Image
-              source={{ uri: coverImage }}
-              style={s.heroImage}
-              defaultSource={{ uri: 'https://images.unsplash.com/photo-1488646953014-85cb44e25828?w=800&h=500&fit=crop&q=80' }}
-            />
-            <LinearGradient
-              colors={['rgba(0,0,0,0.15)', 'rgba(0,0,0,0.05)', 'rgba(0,0,0,0.72)']}
-              locations={[0, 0.3, 1]}
-              style={StyleSheet.absoluteFillObject}
-            />
+          <Animated.View style={{ opacity: heroFade }}>
+            <View style={s.heroSection}>
+              <Image
+                source={{ uri: coverImage }}
+                style={s.heroImage}
+                defaultSource={{ uri: 'https://images.unsplash.com/photo-1488646953014-85cb44e25828?w=800&h=500&fit=crop&q=80' }}
+              />
+              <LinearGradient
+                colors={['rgba(0,0,0,0.08)', 'rgba(0,0,0,0.02)', 'rgba(0,0,0,0.65)', 'rgba(0,0,0,0.85)']}
+                locations={[0, 0.25, 0.7, 1]}
+                style={StyleSheet.absoluteFillObject}
+              />
 
-            <SafeAreaView style={s.heroTopWrap} edges={['top']}>
-              <View style={s.topBar}>
-                <View style={{ width: 40 }} />
-                <View style={s.topBarLogoRow}>
-                  <View style={s.topBarLogoMark}>
-                    <Plane size={13} color="#fff" />
+              <SafeAreaView style={s.heroTopWrap} edges={['top']}>
+                <View style={s.topBar}>
+                  <View style={{ width: 40 }} />
+                  <View style={s.topBarBrand}>
+                    <View style={s.topBarBrandMark}>
+                      <Plane size={12} color="#fff" />
+                    </View>
+                    <Text style={s.topBarBrandText}>TripNest</Text>
                   </View>
-                  <Text style={s.topBarLogoText}>TripNest</Text>
+                  <View style={{ width: 40 }} />
                 </View>
-                <View style={{ width: 40 }} />
-              </View>
-            </SafeAreaView>
+              </SafeAreaView>
 
-            <View style={s.heroBottom}>
-              <View style={s.inviteBadge}>
-                <UserPlus size={11} color="#fff" />
-                <Text style={s.inviteBadgeText}>Trip Invitation</Text>
-              </View>
-              <Text style={s.heroTitle}>{displayName}</Text>
-              {(displayDest || displayCountry) && (
-                <View style={s.heroLocationRow}>
-                  <MapPin size={14} color="rgba(255,255,255,0.9)" />
-                  <Text style={s.heroLocation}>
-                    {[displayDest, displayCountry].filter(Boolean).join(', ')}
-                  </Text>
+              <View style={s.heroBottom}>
+                <View style={s.inviteChip}>
+                  <UserPlus size={10} color="#fff" />
+                  <Text style={s.inviteChipText}>Trip Invitation</Text>
                 </View>
-              )}
+                <Text style={s.heroTitle} numberOfLines={2}>{displayName}</Text>
+                {locationStr ? (
+                  <View style={s.heroLocationRow}>
+                    <MapPin size={13} color="rgba(255,255,255,0.85)" />
+                    <Text style={s.heroLocation}>{locationStr}</Text>
+                  </View>
+                ) : null}
+                {displayStart ? (
+                  <View style={s.heroDateRow}>
+                    <Calendar size={13} color="rgba(255,255,255,0.7)" />
+                    <Text style={s.heroDate}>
+                      {formatShortDate(displayStart)}{displayEnd ? ` – ${formatShortDate(displayEnd)}` : ''}
+                    </Text>
+                  </View>
+                ) : null}
+              </View>
             </View>
-          </View>
+          </Animated.View>
 
           <Animated.View style={[s.body, { opacity: fadeAnim, transform: [{ translateY: slideAnim }] }]}>
             {(tripDays > 0 || displayTravelers > 0 || displayBudget > 0) && (
               <View style={s.statsRow}>
                 {tripDays > 0 && (
                   <View style={[s.statCard, { backgroundColor: colors.surface, borderColor: colors.border }]}>
-                    <View style={[s.statIcon, { backgroundColor: isDark ? 'rgba(34,211,238,0.12)' : 'rgba(8,145,178,0.08)' }]}>
-                      <Clock size={18} color={colors.accent} />
+                    <View style={[s.statIconWrap, { backgroundColor: isDark ? 'rgba(34,211,238,0.1)' : 'rgba(8,145,178,0.06)' }]}>
+                      <Clock size={16} color={colors.accent} />
                     </View>
                     <Text style={[s.statValue, { color: colors.text }]}>{tripDays}</Text>
                     <Text style={[s.statLabel, { color: colors.textMuted }]}>days</Text>
@@ -365,8 +402,8 @@ export default function JoinTripByIdScreen() {
                 )}
                 {displayTravelers > 0 && (
                   <View style={[s.statCard, { backgroundColor: colors.surface, borderColor: colors.border }]}>
-                    <View style={[s.statIcon, { backgroundColor: isDark ? 'rgba(34,211,238,0.12)' : 'rgba(8,145,178,0.08)' }]}>
-                      <Users size={18} color={colors.accent} />
+                    <View style={[s.statIconWrap, { backgroundColor: isDark ? 'rgba(34,211,238,0.1)' : 'rgba(8,145,178,0.06)' }]}>
+                      <Users size={16} color={colors.accent} />
                     </View>
                     <Text style={[s.statValue, { color: colors.text }]}>{displayTravelers}</Text>
                     <Text style={[s.statLabel, { color: colors.textMuted }]}>travelers</Text>
@@ -374,8 +411,8 @@ export default function JoinTripByIdScreen() {
                 )}
                 {displayBudget > 0 && (
                   <View style={[s.statCard, { backgroundColor: colors.surface, borderColor: colors.border }]}>
-                    <View style={[s.statIcon, { backgroundColor: isDark ? 'rgba(34,211,238,0.12)' : 'rgba(8,145,178,0.08)' }]}>
-                      <DollarSign size={18} color={colors.accent} />
+                    <View style={[s.statIconWrap, { backgroundColor: isDark ? 'rgba(34,211,238,0.1)' : 'rgba(8,145,178,0.06)' }]}>
+                      <DollarSign size={16} color={colors.accent} />
                     </View>
                     <Text style={[s.statValue, { color: colors.text }]}>${displayBudget.toLocaleString()}</Text>
                     <Text style={[s.statLabel, { color: colors.textMuted }]}>budget</Text>
@@ -384,70 +421,28 @@ export default function JoinTripByIdScreen() {
               </View>
             )}
 
-            {displayStart && (
-              <View style={[s.dateCard, { backgroundColor: colors.surface, borderColor: colors.border }]}>
-                <View style={[s.dateIconWrap, { backgroundColor: isDark ? colors.surfaceElevated : colors.cardBg }]}>
-                  <Calendar size={20} color={colors.accent} />
-                </View>
-                <View style={s.dateInfo}>
-                  <Text style={[s.dateRange, { color: colors.text }]}>
-                    {formatShortDate(displayStart)}{displayEnd ? ` — ${formatShortDate(displayEnd)}` : ''}
-                  </Text>
-                  <Text style={[s.dateSub, { color: colors.textMuted }]}>
-                    {formatDate(displayStart)}{displayEnd ? ` to ${formatDate(displayEnd)}` : ''}
-                  </Text>
-                </View>
-              </View>
-            )}
-
             {(owner || displayOwner) && (
-              <View style={[s.organizerCard, { backgroundColor: colors.surface, borderColor: colors.border }]}>
+              <View style={[s.organizerRow, { backgroundColor: colors.surface, borderColor: colors.border }]}>
                 {owner?.avatar ? (
                   <Image source={{ uri: owner.avatar }} style={s.organizerAvatar} />
                 ) : (
                   <View style={[s.organizerAvatar, { backgroundColor: isDark ? colors.surfaceElevated : colors.cardBg, justifyContent: 'center' as const, alignItems: 'center' as const }]}>
-                    <Users size={20} color={colors.textMuted} />
+                    <Users size={18} color={colors.textMuted} />
                   </View>
                 )}
                 <View style={s.organizerInfo}>
                   <Text style={[s.organizerLabel, { color: colors.textMuted }]}>Organized by</Text>
-                  <Text style={[s.organizerName, { color: colors.text }]}>
-                    {owner?.name ?? displayOwner}
-                  </Text>
-                </View>
-              </View>
-            )}
-
-            {displayTravelers > 1 && trip?.collaborators && (
-              <View style={[s.travelersCard, { backgroundColor: colors.surface, borderColor: colors.border }]}>
-                <View style={s.travelersHeader}>
-                  <Users size={15} color={colors.text} />
-                  <Text style={[s.travelersTitle, { color: colors.text }]}>
-                    {displayTravelers} traveler{displayTravelers !== 1 ? 's' : ''}
-                  </Text>
-                </View>
-                <View style={s.avatarRow}>
-                  {trip.collaborators.slice(0, 5).map((collab) =>
-                    collab.avatar ? (
-                      <Image key={collab.id} source={{ uri: collab.avatar }} style={s.smallAvatar} />
-                    ) : (
-                      <View key={collab.id} style={[s.smallAvatar, { backgroundColor: isDark ? colors.surfaceElevated : colors.cardBg, justifyContent: 'center' as const, alignItems: 'center' as const }]}>
-                        <Users size={14} color={colors.textMuted} />
-                      </View>
-                    )
-                  )}
-                  {trip.collaborators.length > 5 && (
-                    <View style={[s.moreAvatars, { backgroundColor: isDark ? colors.surfaceElevated : colors.cardBg }]}>
-                      <Text style={[s.moreAvatarsText, { color: colors.textSecondary }]}>+{trip.collaborators.length - 5}</Text>
-                    </View>
-                  )}
+                  <Text style={[s.organizerName, { color: colors.text }]}>{owner?.name ?? displayOwner}</Text>
                 </View>
               </View>
             )}
 
             {hasLocalData && trip.itinerary.length > 0 && (
               <View style={s.previewSection}>
-                <Text style={[s.previewTitle, { color: colors.text }]}>Itinerary Preview</Text>
+                <View style={s.previewHeader}>
+                  <Sparkles size={15} color={colors.accent} />
+                  <Text style={[s.previewTitle, { color: colors.text }]}>Itinerary Preview</Text>
+                </View>
                 {trip.itinerary.slice(0, 2).map((day, dayIndex) => (
                   <View key={day.id} style={[s.dayCard, { backgroundColor: colors.surface, borderColor: colors.border }]}>
                     <View style={[s.dayBadge, { backgroundColor: colors.accent }]}>
@@ -482,90 +477,143 @@ export default function JoinTripByIdScreen() {
               </View>
             )}
 
-            {hasLocalData ? (
-              <View style={[s.joinCard, { backgroundColor: colors.surface, borderColor: colors.border }]}>
-                <Text style={[s.joinCardTitle, { color: colors.text }]}>Join this trip</Text>
-                <Text style={[s.joinCardSub, { color: colors.textSecondary }]}>
-                  Enter your name to join as a collaborator. You'll be able to view and edit the trip.
+            {hasLocalData && displayTravelers > 1 && trip.collaborators && (
+              <View style={[s.travelersRow, { backgroundColor: colors.surface, borderColor: colors.border }]}>
+                <View style={s.travelersAvatarStack}>
+                  {trip.collaborators.slice(0, 4).map((collab, i) =>
+                    collab.avatar ? (
+                      <Image
+                        key={collab.id}
+                        source={{ uri: collab.avatar }}
+                        style={[s.stackedAvatar, { marginLeft: i > 0 ? -10 : 0, zIndex: 10 - i }]}
+                      />
+                    ) : (
+                      <View
+                        key={collab.id}
+                        style={[s.stackedAvatar, s.stackedAvatarPlaceholder, {
+                          marginLeft: i > 0 ? -10 : 0,
+                          zIndex: 10 - i,
+                          backgroundColor: isDark ? colors.surfaceElevated : colors.cardBg,
+                        }]}
+                      >
+                        <Users size={12} color={colors.textMuted} />
+                      </View>
+                    )
+                  )}
+                  {trip.collaborators.length > 4 && (
+                    <View style={[s.stackedAvatar, s.stackedAvatarMore, { marginLeft: -10, backgroundColor: isDark ? colors.surfaceElevated : colors.cardBg }]}>
+                      <Text style={[s.stackedAvatarMoreText, { color: colors.textSecondary }]}>+{trip.collaborators.length - 4}</Text>
+                    </View>
+                  )}
+                </View>
+                <Text style={[s.travelersText, { color: colors.textSecondary }]}>
+                  {displayTravelers} traveler{displayTravelers !== 1 ? 's' : ''} going
                 </Text>
-                <TextInput
-                  style={[s.nameInput, { backgroundColor: colors.inputBackground, color: colors.text, borderColor: colors.border }]}
-                  placeholder="Your name"
-                  placeholderTextColor={colors.textMuted}
-                  value={userName}
-                  onChangeText={setUserName}
-                  autoCapitalize="words"
-                  returnKeyType="done"
-                  onSubmitEditing={handleJoin}
-                  testID="join-trip-name-input"
-                />
-                <AnimatedPressable
+              </View>
+            )}
+
+            {hasLocalData ? (
+              <View style={[s.joinSection, { backgroundColor: colors.surface, borderColor: colors.border }]}>
+                <Text style={[s.joinTitle, { color: colors.text }]}>Join this trip</Text>
+                <Text style={[s.joinSub, { color: colors.textSecondary }]}>
+                  Enter your name to join as a collaborator and start planning together.
+                </Text>
+                <Animated.View style={[s.inputWrap, { borderColor: inputBorderColor }]}>
+                  <TextInput
+                    style={[s.nameInput, { backgroundColor: colors.inputBackground, color: colors.text }]}
+                    placeholder="Your name"
+                    placeholderTextColor={colors.textMuted}
+                    value={userName}
+                    onChangeText={setUserName}
+                    autoCapitalize="words"
+                    returnKeyType="done"
+                    onSubmitEditing={handleJoin}
+                    onFocus={handleInputFocus}
+                    onBlur={handleInputBlur}
+                    testID="join-trip-name-input"
+                  />
+                </Animated.View>
+                <PressableScale
                   onPress={handleJoin}
                   disabled={!userName.trim()}
-                  style={{ width: '100%' as const }}
+                  style={s.fullWidthBtn}
                   testID="join-trip-button"
                 >
-                  <View style={[s.joinBtn, { backgroundColor: colors.accent }, !userName.trim() && s.joinBtnDisabled]}>
-                    <UserPlus size={18} color="#fff" />
-                    <Text style={s.joinBtnText}>Join Trip</Text>
-                  </View>
-                </AnimatedPressable>
+                  <LinearGradient
+                    colors={userName.trim() ? (isDark ? ['#0891B2', '#0E7490'] : ['#0891B2', '#0891B2']) : [colors.border, colors.border]}
+                    style={[s.gradientBtn, !userName.trim() && { opacity: 0.5 }]}
+                    start={{ x: 0, y: 0 }}
+                    end={{ x: 1, y: 0 }}
+                  >
+                    <UserPlus size={18} color={userName.trim() ? '#fff' : colors.textMuted} />
+                    <Text style={[s.gradientBtnText, !userName.trim() && { color: colors.textMuted }]}>Join Trip</Text>
+                  </LinearGradient>
+                </PressableScale>
+
+                <View style={s.trustRow}>
+                  <Shield size={12} color={colors.textMuted} />
+                  <Text style={[s.trustText, { color: colors.textMuted }]}>You can leave anytime</Text>
+                </View>
               </View>
             ) : (
-              <View style={[s.joinCard, { backgroundColor: colors.surface, borderColor: colors.border }]}>
-                <View style={[s.webPreviewIcon, { backgroundColor: isDark ? 'rgba(34,211,238,0.12)' : 'rgba(8,145,178,0.08)' }]}>
-                  <Compass size={28} color={colors.accent} />
+              <View style={[s.joinSection, { backgroundColor: colors.surface, borderColor: colors.border }]}>
+                <View style={[s.webIconWrap, { backgroundColor: isDark ? 'rgba(34,211,238,0.1)' : 'rgba(8,145,178,0.06)' }]}>
+                  <Globe size={28} color={colors.accent} />
                 </View>
-                <Text style={[s.joinCardTitle, { color: colors.text }]}>Join this trip on TripNest</Text>
-                <Text style={[s.joinCardSub, { color: colors.textSecondary }]}>
-                  Open this trip in the TripNest app to join as a collaborator, view the full itinerary, and start planning together.
+                <Text style={[s.joinTitle, { color: colors.text }]}>Continue in TripNest</Text>
+                <Text style={[s.joinSub, { color: colors.textSecondary }]}>
+                  Open this trip in the TripNest app to join, view the full itinerary, and plan together.
                 </Text>
 
-                <AnimatedPressable onPress={handleOpenInApp} style={{ width: '100%' as const }} testID="open-in-app-button">
-                  <View style={[s.joinBtn, { backgroundColor: colors.accent }]}>
+                <PressableScale onPress={handleOpenInApp} style={s.fullWidthBtn} testID="open-in-app-button">
+                  <LinearGradient
+                    colors={isDark ? ['#0891B2', '#0E7490'] : ['#0891B2', '#0891B2']}
+                    style={s.gradientBtn}
+                    start={{ x: 0, y: 0 }}
+                    end={{ x: 1, y: 0 }}
+                  >
                     <ExternalLink size={18} color="#fff" />
-                    <Text style={s.joinBtnText}>Open in App</Text>
-                  </View>
-                </AnimatedPressable>
+                    <Text style={s.gradientBtnText}>Open in App</Text>
+                    <ChevronRight size={18} color="rgba(255,255,255,0.6)" />
+                  </LinearGradient>
+                </PressableScale>
 
-                <AnimatedPressable onPress={() => console.log('[JoinTrip] Download tapped')} style={{ width: '100%' as const }}>
-                  <View style={[s.downloadBtn, { backgroundColor: isDark ? colors.surfaceElevated : colors.cardBg }]}>
-                    <Download size={18} color={colors.text} />
-                    <Text style={[s.downloadBtnText, { color: colors.text }]}>Download TripNest</Text>
+                <PressableScale onPress={() => console.log('[JoinTrip] Download tapped')} style={s.fullWidthBtn}>
+                  <View style={[s.outlineBtn, { backgroundColor: isDark ? colors.surfaceElevated : colors.cardBg }]}>
+                    <Download size={16} color={colors.text} />
+                    <Text style={[s.outlineBtnText, { color: colors.text }]}>Download TripNest</Text>
                   </View>
-                </AnimatedPressable>
+                </PressableScale>
               </View>
             )}
 
             {hasLocalData && (
-              <View style={s.ctaSection}>
-                <AnimatedPressable
-                  onPress={() => {
-                    if (Platform.OS === 'web') {
-                      console.log('[JoinTrip] Download tapped (web)');
-                    } else {
-                      handleOpenTrip();
-                    }
-                  }}
-                  style={{ width: '100%' as const }}
-                >
-                  <View style={[s.downloadBtn, { backgroundColor: isDark ? colors.surfaceElevated : colors.cardBg }]}>
-                    <Download size={18} color={colors.text} />
-                    <Text style={[s.downloadBtnText, { color: colors.text }]}>Download TripNest App</Text>
-                  </View>
-                </AnimatedPressable>
-              </View>
+              <PressableScale
+                onPress={() => {
+                  if (Platform.OS === 'web') {
+                    console.log('[JoinTrip] Download tapped (web)');
+                  } else {
+                    handleOpenTrip();
+                  }
+                }}
+                style={s.fullWidthBtn}
+              >
+                <View style={[s.outlineBtn, { backgroundColor: isDark ? colors.surfaceElevated : colors.cardBg }]}>
+                  <Download size={16} color={colors.text} />
+                  <Text style={[s.outlineBtnText, { color: colors.text }]}>Get the TripNest App</Text>
+                </View>
+              </PressableScale>
             )}
 
             <View style={[s.footer, { borderTopColor: colors.border }]}>
-              <View style={s.footerLogoRow}>
-                <View style={[s.footerLogoMark, { backgroundColor: colors.accent }]}>
-                  <Plane size={11} color="#fff" />
+              <View style={s.footerBrandRow}>
+                <View style={[s.footerBrandMark, { backgroundColor: colors.accent }]}>
+                  <Plane size={10} color="#fff" />
                 </View>
-                <Text style={[s.footerLogoText, { color: colors.text }]}>TripNest</Text>
+                <Text style={[s.footerBrandText, { color: colors.text }]}>TripNest</Text>
               </View>
               <Text style={[s.footerText, { color: colors.textMuted }]}>
-                Plan trips together. Travel smarter.
+                Plan trips together · Travel smarter
               </Text>
             </View>
           </Animated.View>
@@ -584,7 +632,7 @@ const createStyles = (colors: ThemeColors, isDark: boolean) => StyleSheet.create
     width: '100%',
   },
   skeletonBody: {
-    padding: 24,
+    padding: 20,
   },
   centerContainer: {
     flex: 1,
@@ -593,30 +641,32 @@ const createStyles = (colors: ThemeColors, isDark: boolean) => StyleSheet.create
   },
   centerContent: {
     alignItems: 'center',
-    paddingHorizontal: 40,
+    paddingHorizontal: 36,
+    maxWidth: 400,
+    width: '100%',
   },
-  logoRow: {
+  brandRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 10,
-    marginBottom: 4,
+    gap: 8,
+    marginBottom: 8,
   },
-  logoMark: {
-    width: 38,
-    height: 38,
-    borderRadius: 11,
+  brandMark: {
+    width: 34,
+    height: 34,
+    borderRadius: 10,
     justifyContent: 'center',
     alignItems: 'center',
   },
-  logoText: {
-    fontSize: 22,
+  brandText: {
+    fontSize: 20,
     fontWeight: '800' as const,
     letterSpacing: -0.5,
   },
-  errorIconWrap: {
-    width: 72,
-    height: 72,
-    borderRadius: 36,
+  errorIconCircle: {
+    width: 68,
+    height: 68,
+    borderRadius: 34,
     justifyContent: 'center',
     alignItems: 'center',
     marginTop: 28,
@@ -627,6 +677,7 @@ const createStyles = (colors: ThemeColors, isDark: boolean) => StyleSheet.create
     fontWeight: '700' as const,
     marginBottom: 8,
     textAlign: 'center',
+    letterSpacing: -0.3,
   },
   errorSub: {
     fontSize: 15,
@@ -634,42 +685,70 @@ const createStyles = (colors: ThemeColors, isDark: boolean) => StyleSheet.create
     lineHeight: 22,
     marginBottom: 28,
   },
-  primaryBtn: {
+  fullWidthBtn: {
+    width: '100%',
+    maxWidth: 400,
+  },
+  solidBtn: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
     gap: 10,
-    paddingHorizontal: 28,
     paddingVertical: 16,
     borderRadius: 14,
     width: '100%',
-    marginBottom: 12,
   },
-  primaryBtnText: {
+  solidBtnText: {
     fontSize: 16,
     fontWeight: '700' as const,
     color: '#fff',
   },
+  gradientBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 10,
+    paddingVertical: 16,
+    borderRadius: 14,
+    width: '100%',
+  },
+  gradientBtnText: {
+    fontSize: 16,
+    fontWeight: '700' as const,
+    color: '#fff',
+  },
+  outlineBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 10,
+    paddingVertical: 14,
+    borderRadius: 14,
+    width: '100%',
+  },
+  outlineBtnText: {
+    fontSize: 15,
+    fontWeight: '600' as const,
+  },
   ghostBtn: {
-    paddingVertical: 12,
+    paddingVertical: 14,
   },
   ghostBtnText: {
     fontSize: 15,
     fontWeight: '500' as const,
   },
-  successIconWrap: {
-    marginBottom: 20,
+  successCheckWrap: {
+    marginBottom: 24,
   },
-  successIcon: {
-    width: 68,
-    height: 68,
-    borderRadius: 34,
-    backgroundColor: '#059669',
+  successCheckGradient: {
+    width: 72,
+    height: 72,
+    borderRadius: 36,
     justifyContent: 'center',
     alignItems: 'center',
   },
   successTitle: {
-    fontSize: 26,
+    fontSize: 28,
     fontWeight: '800' as const,
     marginBottom: 8,
     letterSpacing: -0.5,
@@ -679,10 +758,10 @@ const createStyles = (colors: ThemeColors, isDark: boolean) => StyleSheet.create
     textAlign: 'center',
     lineHeight: 22,
     marginBottom: 28,
-    paddingHorizontal: 16,
+    paddingHorizontal: 8,
   },
   heroSection: {
-    height: 340,
+    height: 380,
     position: 'relative',
   },
   heroImage: {
@@ -702,23 +781,27 @@ const createStyles = (colors: ThemeColors, isDark: boolean) => StyleSheet.create
     justifyContent: 'space-between',
     alignItems: 'center',
     paddingHorizontal: 20,
-    paddingTop: 8,
+    paddingTop: 6,
   },
-  topBarLogoRow: {
+  topBarBrand: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 6,
+    gap: 5,
+    backgroundColor: 'rgba(0,0,0,0.25)',
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 20,
   },
-  topBarLogoMark: {
-    width: 26,
-    height: 26,
-    borderRadius: 7,
+  topBarBrandMark: {
+    width: 22,
+    height: 22,
+    borderRadius: 6,
     backgroundColor: 'rgba(255,255,255,0.2)',
     justifyContent: 'center',
     alignItems: 'center',
   },
-  topBarLogoText: {
-    fontSize: 16,
+  topBarBrandText: {
+    fontSize: 14,
     fontWeight: '800' as const,
     color: '#fff',
     letterSpacing: -0.3,
@@ -728,48 +811,61 @@ const createStyles = (colors: ThemeColors, isDark: boolean) => StyleSheet.create
     bottom: 0,
     left: 0,
     right: 0,
-    paddingHorizontal: 24,
-    paddingBottom: 28,
+    paddingHorizontal: 22,
+    paddingBottom: 24,
   },
-  inviteBadge: {
+  inviteChip: {
     alignSelf: 'flex-start',
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 6,
-    paddingHorizontal: 12,
-    paddingVertical: 5,
-    backgroundColor: 'rgba(255,255,255,0.18)',
-    borderRadius: 8,
-    marginBottom: 12,
+    gap: 5,
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    backgroundColor: 'rgba(255,255,255,0.16)',
+    borderRadius: 20,
+    marginBottom: 10,
   },
-  inviteBadgeText: {
-    fontSize: 11,
+  inviteChipText: {
+    fontSize: 10,
     fontWeight: '700' as const,
     color: '#fff',
-    letterSpacing: 0.6,
+    letterSpacing: 0.8,
     textTransform: 'uppercase' as const,
   },
   heroTitle: {
-    fontSize: 32,
+    fontSize: 30,
     fontWeight: '800' as const,
     color: '#fff',
     marginBottom: 8,
     letterSpacing: -0.5,
+    lineHeight: 36,
   },
   heroLocationRow: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 5,
+    marginBottom: 4,
   },
   heroLocation: {
-    fontSize: 15,
+    fontSize: 14,
     fontWeight: '500' as const,
-    color: 'rgba(255,255,255,0.9)',
+    color: 'rgba(255,255,255,0.88)',
+  },
+  heroDateRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 5,
+    marginTop: 2,
+  },
+  heroDate: {
+    fontSize: 13,
+    fontWeight: '500' as const,
+    color: 'rgba(255,255,255,0.7)',
   },
   body: {
-    paddingHorizontal: 20,
+    paddingHorizontal: 18,
     paddingTop: 20,
-    paddingBottom: 40,
+    paddingBottom: 36,
   },
   statsRow: {
     flexDirection: 'row',
@@ -781,17 +877,17 @@ const createStyles = (colors: ThemeColors, isDark: boolean) => StyleSheet.create
     borderRadius: 16,
     padding: 14,
     alignItems: 'center',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: isDark ? 0 : 0.04,
-    shadowRadius: 6,
-    elevation: isDark ? 0 : 1,
     borderWidth: isDark ? 1 : 0,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: isDark ? 0 : 0.04,
+    shadowRadius: 8,
+    elevation: isDark ? 0 : 1,
   },
-  statIcon: {
-    width: 40,
-    height: 40,
-    borderRadius: 12,
+  statIconWrap: {
+    width: 36,
+    height: 36,
+    borderRadius: 10,
     justifyContent: 'center',
     alignItems: 'center',
     marginBottom: 8,
@@ -799,155 +895,88 @@ const createStyles = (colors: ThemeColors, isDark: boolean) => StyleSheet.create
   statValue: {
     fontSize: 16,
     fontWeight: '700' as const,
-    marginBottom: 2,
+    marginBottom: 1,
   },
   statLabel: {
-    fontSize: 12,
+    fontSize: 11,
     fontWeight: '500' as const,
   },
-  dateCard: {
+  organizerRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 14,
+    gap: 12,
     borderRadius: 16,
-    padding: 16,
+    padding: 14,
     marginBottom: 14,
+    borderWidth: isDark ? 1 : 0,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: isDark ? 0 : 0.04,
+    shadowOpacity: isDark ? 0 : 0.03,
     shadowRadius: 6,
     elevation: isDark ? 0 : 1,
-    borderWidth: isDark ? 1 : 0,
-  },
-  dateIconWrap: {
-    width: 44,
-    height: 44,
-    borderRadius: 12,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  dateInfo: {
-    flex: 1,
-  },
-  dateRange: {
-    fontSize: 15,
-    fontWeight: '600' as const,
-    marginBottom: 2,
-  },
-  dateSub: {
-    fontSize: 13,
-  },
-  organizerCard: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 14,
-    borderRadius: 16,
-    padding: 16,
-    marginBottom: 14,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: isDark ? 0 : 0.04,
-    shadowRadius: 6,
-    elevation: isDark ? 0 : 1,
-    borderWidth: isDark ? 1 : 0,
   },
   organizerAvatar: {
-    width: 48,
-    height: 48,
-    borderRadius: 24,
+    width: 44,
+    height: 44,
+    borderRadius: 22,
   },
   organizerInfo: {
     flex: 1,
   },
   organizerLabel: {
-    fontSize: 12,
+    fontSize: 11,
+    fontWeight: '500' as const,
     marginBottom: 2,
   },
   organizerName: {
-    fontSize: 16,
+    fontSize: 15,
     fontWeight: '600' as const,
-  },
-  travelersCard: {
-    borderRadius: 16,
-    padding: 16,
-    marginBottom: 14,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: isDark ? 0 : 0.04,
-    shadowRadius: 6,
-    elevation: isDark ? 0 : 1,
-    borderWidth: isDark ? 1 : 0,
-  },
-  travelersHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-    marginBottom: 12,
-  },
-  travelersTitle: {
-    fontSize: 14,
-    fontWeight: '600' as const,
-  },
-  avatarRow: {
-    flexDirection: 'row',
-    gap: 8,
-  },
-  smallAvatar: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
-  },
-  moreAvatars: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  moreAvatarsText: {
-    fontSize: 12,
-    fontWeight: '700' as const,
   },
   previewSection: {
     marginBottom: 14,
   },
-  previewTitle: {
-    fontSize: 17,
-    fontWeight: '700' as const,
+  previewHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
     marginBottom: 12,
+  },
+  previewTitle: {
+    fontSize: 16,
+    fontWeight: '700' as const,
   },
   dayCard: {
     borderRadius: 16,
-    padding: 16,
+    padding: 14,
     marginBottom: 10,
+    borderWidth: isDark ? 1 : 0,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: isDark ? 0 : 0.04,
+    shadowOpacity: isDark ? 0 : 0.03,
     shadowRadius: 6,
     elevation: isDark ? 0 : 1,
-    borderWidth: isDark ? 1 : 0,
   },
   dayBadge: {
     alignSelf: 'flex-start',
     paddingHorizontal: 10,
-    paddingVertical: 4,
+    paddingVertical: 3,
     borderRadius: 8,
-    marginBottom: 14,
+    marginBottom: 12,
   },
   dayBadgeText: {
-    fontSize: 12,
+    fontSize: 11,
     fontWeight: '700' as const,
     color: '#fff',
   },
   activityRow: {
     flexDirection: 'row',
     alignItems: 'flex-start',
-    marginBottom: 12,
-    gap: 12,
+    marginBottom: 10,
+    gap: 10,
   },
   activityDot: {
-    width: 8,
-    height: 8,
+    width: 7,
+    height: 7,
     borderRadius: 4,
     marginTop: 6,
   },
@@ -960,7 +989,7 @@ const createStyles = (colors: ThemeColors, isDark: boolean) => StyleSheet.create
   },
   activityLocation: {
     fontSize: 12,
-    marginTop: 2,
+    marginTop: 1,
   },
   activityTime: {
     fontSize: 12,
@@ -968,115 +997,137 @@ const createStyles = (colors: ThemeColors, isDark: boolean) => StyleSheet.create
   },
   moreActivities: {
     fontSize: 12,
-    marginTop: 4,
-    marginLeft: 20,
+    marginTop: 2,
+    marginLeft: 17,
   },
   fadeHint: {
     fontSize: 13,
     fontStyle: 'italic' as const,
     textAlign: 'center',
-    marginTop: 8,
+    marginTop: 6,
   },
-  joinCard: {
-    borderRadius: 20,
-    padding: 24,
-    marginBottom: 16,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 3 },
-    shadowOpacity: isDark ? 0 : 0.06,
-    shadowRadius: 12,
-    elevation: isDark ? 0 : 3,
+  travelersRow: {
+    flexDirection: 'row',
     alignItems: 'center',
+    gap: 12,
+    borderRadius: 14,
+    padding: 14,
+    marginBottom: 14,
     borderWidth: isDark ? 1 : 0,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: isDark ? 0 : 0.03,
+    shadowRadius: 6,
+    elevation: isDark ? 0 : 1,
   },
-  webPreviewIcon: {
-    width: 60,
-    height: 60,
-    borderRadius: 18,
+  travelersAvatarStack: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  stackedAvatar: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    borderWidth: 2,
+    borderColor: colors.surface,
+  },
+  stackedAvatarPlaceholder: {
     justifyContent: 'center',
     alignItems: 'center',
-    marginBottom: 16,
   },
-  joinCardTitle: {
-    fontSize: 20,
+  stackedAvatarMore: {
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  stackedAvatarMoreText: {
+    fontSize: 11,
+    fontWeight: '700' as const,
+  },
+  travelersText: {
+    fontSize: 13,
+    fontWeight: '500' as const,
+  },
+  joinSection: {
+    borderRadius: 20,
+    padding: 22,
+    marginBottom: 14,
+    alignItems: 'center',
+    borderWidth: isDark ? 1 : 0,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: isDark ? 0 : 0.06,
+    shadowRadius: 14,
+    elevation: isDark ? 0 : 3,
+  },
+  webIconWrap: {
+    width: 56,
+    height: 56,
+    borderRadius: 16,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: 14,
+  },
+  joinTitle: {
+    fontSize: 19,
     fontWeight: '700' as const,
     marginBottom: 6,
     textAlign: 'center',
+    letterSpacing: -0.3,
   },
-  joinCardSub: {
+  joinSub: {
     fontSize: 14,
-    lineHeight: 21,
-    marginBottom: 20,
+    lineHeight: 20,
+    marginBottom: 18,
     textAlign: 'center',
+  },
+  inputWrap: {
+    width: '100%',
+    borderRadius: 14,
+    borderWidth: 1.5,
+    marginBottom: 14,
+    overflow: 'hidden',
   },
   nameInput: {
     width: '100%',
-    borderRadius: 14,
-    paddingHorizontal: 18,
-    paddingVertical: 16,
-    fontSize: 16,
-    marginBottom: 16,
-    borderWidth: 1,
-  },
-  joinBtn: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 10,
-    width: '100%',
-    paddingVertical: 16,
-    borderRadius: 14,
-    marginBottom: 10,
-  },
-  joinBtnDisabled: {
-    opacity: 0.4,
-  },
-  joinBtnText: {
-    fontSize: 16,
-    fontWeight: '700' as const,
-    color: '#fff',
-  },
-  downloadBtn: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 10,
+    paddingHorizontal: 16,
     paddingVertical: 14,
-    paddingHorizontal: 28,
-    borderRadius: 14,
-    width: '100%',
+    fontSize: 16,
   },
-  downloadBtnText: {
-    fontSize: 15,
-    fontWeight: '600' as const,
+  trustRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 5,
+    marginTop: 4,
   },
-  ctaSection: {
-    marginBottom: 24,
+  trustText: {
+    fontSize: 12,
+    fontWeight: '500' as const,
   },
   footer: {
     alignItems: 'center',
     paddingVertical: 24,
+    marginTop: 12,
     borderTopWidth: 1,
   },
-  footerLogoRow: {
+  footerBrandRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 6,
-    marginBottom: 8,
+    gap: 5,
+    marginBottom: 6,
   },
-  footerLogoMark: {
-    width: 22,
-    height: 22,
+  footerBrandMark: {
+    width: 20,
+    height: 20,
     borderRadius: 6,
     justifyContent: 'center',
     alignItems: 'center',
   },
-  footerLogoText: {
-    fontSize: 14,
+  footerBrandText: {
+    fontSize: 13,
     fontWeight: '800' as const,
     letterSpacing: -0.3,
   },
   footerText: {
-    fontSize: 13,
+    fontSize: 12,
   },
 });

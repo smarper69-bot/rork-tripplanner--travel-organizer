@@ -10,7 +10,7 @@ import {
   ArrowLeft, MapPin, Calendar, Users, Clock,
   DollarSign, Plane, ChevronRight, Download,
   Flower2, Church, Palmtree, Mountain, Sun, Landmark, Trees, Snowflake, Tent,
-  AlertCircle, ExternalLink, Compass,
+  AlertCircle, ExternalLink, Sparkles,
 } from 'lucide-react-native';
 import { useThemeColors, useIsDark } from '@/hooks/useThemeColors';
 import { ThemeColors } from '@/constants/themes';
@@ -19,7 +19,6 @@ import { mockTrips } from '@/mocks/trips';
 import { TripIcon, StoredItineraryItem } from '@/types/trip';
 import { getDestinationImageHQ } from '@/utils/destinationImages';
 import { hapticLight } from '@/utils/haptics';
-
 
 interface TripPreview {
   name: string;
@@ -49,27 +48,27 @@ function parsePreviewFromParams(params: Record<string, string | string[] | undef
   };
 }
 
-function SkeletonBlock({ width, height, colors, style }: { width: number | string; height: number; colors: ThemeColors; style?: any }) {
+function SkeletonPulse({ width, height, colors, style }: { width: number | string; height: number; colors: ThemeColors; style?: any }) {
   const shimmer = useRef(new Animated.Value(0)).current;
   useEffect(() => {
     Animated.loop(
       Animated.sequence([
-        Animated.timing(shimmer, { toValue: 1, duration: 1000, useNativeDriver: true }),
-        Animated.timing(shimmer, { toValue: 0, duration: 1000, useNativeDriver: true }),
+        Animated.timing(shimmer, { toValue: 1, duration: 1200, useNativeDriver: true }),
+        Animated.timing(shimmer, { toValue: 0, duration: 1200, useNativeDriver: true }),
       ])
     ).start();
   }, [shimmer]);
-  const opacity = shimmer.interpolate({ inputRange: [0, 1], outputRange: [0.3, 0.7] });
+  const opacity = shimmer.interpolate({ inputRange: [0, 1], outputRange: [0.25, 0.55] });
   return (
-    <Animated.View style={[{ width, height, borderRadius: 10, backgroundColor: colors.border, opacity }, style]} />
+    <Animated.View style={[{ width, height, borderRadius: 12, backgroundColor: colors.border, opacity }, style]} />
   );
 }
 
-function AnimatedPressable({ children, onPress, style }: { children: React.ReactNode; onPress: () => void; style?: any }) {
+function PressableScale({ children, onPress, style }: { children: React.ReactNode; onPress: () => void; style?: any }) {
   const scale = useRef(new Animated.Value(1)).current;
   const handlePressIn = useCallback(() => {
     hapticLight();
-    Animated.spring(scale, { toValue: 0.97, useNativeDriver: true, speed: 50, bounciness: 4 }).start();
+    Animated.spring(scale, { toValue: 0.965, useNativeDriver: true, speed: 50, bounciness: 4 }).start();
   }, [scale]);
   const handlePressOut = useCallback(() => {
     Animated.spring(scale, { toValue: 1, useNativeDriver: true, speed: 50, bounciness: 4 }).start();
@@ -81,6 +80,31 @@ function AnimatedPressable({ children, onPress, style }: { children: React.React
       </Animated.View>
     </Pressable>
   );
+}
+
+function formatShortDate(date: string) {
+  try {
+    return new Date(date).toLocaleDateString('en-US', {
+      month: 'short', day: 'numeric',
+    });
+  } catch { return date; }
+}
+
+function formatDate(date: string) {
+  try {
+    return new Date(date).toLocaleDateString('en-US', {
+      month: 'short', day: 'numeric', year: 'numeric',
+    });
+  } catch { return date; }
+}
+
+function calculateDays(startStr: string, endStr: string) {
+  try {
+    if (!startStr || !endStr) return 0;
+    const start = new Date(startStr);
+    const end = new Date(endStr);
+    return Math.max(Math.ceil((end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24)), 1);
+  } catch { return 0; }
 }
 
 export default function SharedTripScreen() {
@@ -106,14 +130,18 @@ export default function SharedTripScreen() {
   const allMemories = useTripsStore((s) => s.memories);
 
   const fadeAnim = useRef(new Animated.Value(0)).current;
-  const slideAnim = useRef(new Animated.Value(24)).current;
+  const slideAnim = useRef(new Animated.Value(30)).current;
+  const heroFade = useRef(new Animated.Value(0)).current;
 
   useEffect(() => {
-    Animated.parallel([
-      Animated.timing(fadeAnim, { toValue: 1, duration: 600, useNativeDriver: true }),
-      Animated.timing(slideAnim, { toValue: 0, duration: 600, useNativeDriver: true }),
+    Animated.sequence([
+      Animated.timing(heroFade, { toValue: 1, duration: 500, useNativeDriver: true }),
+      Animated.parallel([
+        Animated.timing(fadeAnim, { toValue: 1, duration: 500, useNativeDriver: true }),
+        Animated.spring(slideAnim, { toValue: 0, useNativeDriver: true, speed: 14, bounciness: 4 }),
+      ]),
     ]).start();
-  }, [fadeAnim, slideAnim]);
+  }, [heroFade, fadeAnim, slideAnim]);
 
   const trip = useMemo(() => {
     if (!isHydrated) return undefined;
@@ -177,14 +205,18 @@ export default function SharedTripScreen() {
         <Stack.Screen options={{ headerShown: false }} />
         <View style={s.container}>
           <View style={s.skeletonHero}>
-            <SkeletonBlock width="100%" height={360} colors={colors} style={{ borderRadius: 0 }} />
+            <SkeletonPulse width="100%" height={380} colors={colors} style={{ borderRadius: 0 }} />
           </View>
           <View style={s.skeletonBody}>
-            <SkeletonBlock width="60%" height={28} colors={colors} />
-            <SkeletonBlock width="40%" height={16} colors={colors} style={{ marginTop: 12 }} />
-            <SkeletonBlock width="100%" height={120} colors={colors} style={{ marginTop: 24, borderRadius: 16 }} />
-            <SkeletonBlock width="100%" height={80} colors={colors} style={{ marginTop: 16, borderRadius: 16 }} />
-            <SkeletonBlock width="100%" height={160} colors={colors} style={{ marginTop: 16, borderRadius: 20 }} />
+            <SkeletonPulse width="65%" height={26} colors={colors} />
+            <SkeletonPulse width="40%" height={16} colors={colors} style={{ marginTop: 10 }} />
+            <View style={{ flexDirection: 'row' as const, gap: 10, marginTop: 24 }}>
+              <SkeletonPulse width="31%" height={96} colors={colors} style={{ borderRadius: 16 }} />
+              <SkeletonPulse width="31%" height={96} colors={colors} style={{ borderRadius: 16 }} />
+              <SkeletonPulse width="31%" height={96} colors={colors} style={{ borderRadius: 16 }} />
+            </View>
+            <SkeletonPulse width="100%" height={72} colors={colors} style={{ marginTop: 18, borderRadius: 16 }} />
+            <SkeletonPulse width="100%" height={180} colors={colors} style={{ marginTop: 18, borderRadius: 20 }} />
           </View>
         </View>
       </>
@@ -196,61 +228,38 @@ export default function SharedTripScreen() {
       <>
         <Stack.Screen options={{ headerShown: false }} />
         <View style={s.container}>
+          <LinearGradient
+            colors={isDark ? ['#0F0F0F', '#1A1A1A'] : ['#F8F8F8', '#FFFFFF']}
+            style={StyleSheet.absoluteFillObject}
+          />
           <SafeAreaView style={s.errorContainer}>
             <Animated.View style={[s.errorContent, { opacity: fadeAnim, transform: [{ translateY: slideAnim }] }]}>
-              <View style={s.logoRow}>
-                <View style={[s.logoMark, { backgroundColor: colors.accent }]}>
-                  <Plane size={18} color="#fff" />
+              <View style={s.brandRow}>
+                <View style={[s.brandMark, { backgroundColor: colors.accent }]}>
+                  <Plane size={16} color="#fff" />
                 </View>
-                <Text style={[s.logoText, { color: colors.text }]}>TripNest</Text>
+                <Text style={[s.brandText, { color: colors.text }]}>TripNest</Text>
               </View>
-              <View style={[s.errorIconWrap, { backgroundColor: colors.errorBg }]}>
-                <AlertCircle size={36} color={colors.error} />
+              <View style={[s.errorIconCircle, { backgroundColor: isDark ? 'rgba(239,68,68,0.12)' : '#FEE2E2' }]}>
+                <AlertCircle size={32} color={colors.error} />
               </View>
               <Text style={[s.errorTitle, { color: colors.text }]}>
                 This trip link is no longer available
               </Text>
               <Text style={[s.errorSub, { color: colors.textSecondary }]}>
-                The trip may have been removed or this link has expired. Ask the trip owner to send a new link.
+                The trip may have been removed or this link has expired. Ask the organizer to send a new link.
               </Text>
-              <AnimatedPressable onPress={() => router.replace('/')}>
-                <View style={[s.errorBtn, { backgroundColor: colors.accent }]}>
-                  <Text style={s.errorBtnText}>Go to TripNest</Text>
+              <PressableScale onPress={() => router.replace('/')} style={s.fullWidthBtn}>
+                <View style={[s.solidBtn, { backgroundColor: colors.accent }]}>
+                  <Text style={s.solidBtnText}>Go to TripNest</Text>
                 </View>
-              </AnimatedPressable>
+              </PressableScale>
             </Animated.View>
           </SafeAreaView>
         </View>
       </>
     );
   }
-
-  const formatDate = (date: string) => {
-    try {
-      return new Date(date).toLocaleDateString('en-US', {
-        month: 'short', day: 'numeric', year: 'numeric',
-      });
-    } catch { return date; }
-  };
-
-  const formatShortDate = (date: string) => {
-    try {
-      return new Date(date).toLocaleDateString('en-US', {
-        weekday: 'short', month: 'short', day: 'numeric',
-      });
-    } catch { return date; }
-  };
-
-  const calculateDays = () => {
-    try {
-      const startStr = trip?.startDate ?? preview?.startDate ?? '';
-      const endStr = trip?.endDate ?? preview?.endDate ?? '';
-      if (!startStr || !endStr) return 0;
-      const start = new Date(startStr);
-      const end = new Date(endStr);
-      return Math.max(Math.ceil((end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24)), 1);
-    } catch { return 0; }
-  };
 
   const displayName = trip?.name ?? preview?.name ?? 'Shared Trip';
   const displayDest = trip?.destination ?? preview?.destination ?? '';
@@ -259,9 +268,10 @@ export default function SharedTripScreen() {
   const displayEnd = trip?.endDate ?? preview?.endDate ?? '';
   const displayBudget = trip?.totalBudget ?? preview?.totalBudget ?? 0;
   const displayTravelers = trip?.collaborators?.length ?? preview?.travelers ?? 1;
-  const tripDays = calculateDays();
+  const tripDays = calculateDays(displayStart, displayEnd);
   const IconComponent = trip ? getIconComponent(trip.icon) : Landmark;
   const coverImage = getDestinationImageHQ(displayDest, displayCountry);
+  const locationStr = [displayDest, displayCountry].filter(Boolean).join(', ');
   const allActivities = trip ? trip.itinerary.flatMap((day) => day.activities) : [];
 
   const groupedStoredItinerary = useMemo(() => {
@@ -287,75 +297,83 @@ export default function SharedTripScreen() {
       <Stack.Screen options={{ headerShown: false }} />
       <View style={s.container}>
         <ScrollView showsVerticalScrollIndicator={false} bounces={false}>
-          <View style={s.heroSection}>
-            <Image
-              source={{ uri: coverImage }}
-              style={s.heroImage}
-              defaultSource={{ uri: 'https://images.unsplash.com/photo-1488646953014-85cb44e25828?w=800&h=500&fit=crop&q=80' }}
-            />
-            <LinearGradient
-              colors={['rgba(0,0,0,0.15)', 'rgba(0,0,0,0.05)', 'rgba(0,0,0,0.7)']}
-              locations={[0, 0.3, 1]}
-              style={StyleSheet.absoluteFillObject}
-            />
+          <Animated.View style={{ opacity: heroFade }}>
+            <View style={s.heroSection}>
+              <Image
+                source={{ uri: coverImage }}
+                style={s.heroImage}
+                defaultSource={{ uri: 'https://images.unsplash.com/photo-1488646953014-85cb44e25828?w=800&h=500&fit=crop&q=80' }}
+              />
+              <LinearGradient
+                colors={['rgba(0,0,0,0.08)', 'rgba(0,0,0,0.02)', 'rgba(0,0,0,0.65)', 'rgba(0,0,0,0.85)']}
+                locations={[0, 0.25, 0.7, 1]}
+                style={StyleSheet.absoluteFillObject}
+              />
 
-            <SafeAreaView style={s.heroTopWrap} edges={['top']}>
-              <View style={s.topBar}>
-                <TouchableOpacity style={s.topBarBtn} onPress={() => router.back()} activeOpacity={0.7}>
-                  <ArrowLeft size={20} color="#fff" />
-                </TouchableOpacity>
-                <View style={s.topBarLogoRow}>
-                  <View style={s.topBarLogoMark}>
-                    <Plane size={13} color="#fff" />
+              <SafeAreaView style={s.heroTopWrap} edges={['top']}>
+                <View style={s.topBar}>
+                  <TouchableOpacity style={s.topBarBackBtn} onPress={() => router.back()} activeOpacity={0.7}>
+                    <ArrowLeft size={20} color="#fff" />
+                  </TouchableOpacity>
+                  <View style={s.topBarBrand}>
+                    <View style={s.topBarBrandMark}>
+                      <Plane size={12} color="#fff" />
+                    </View>
+                    <Text style={s.topBarBrandText}>TripNest</Text>
                   </View>
-                  <Text style={s.topBarLogoText}>TripNest</Text>
+                  <View style={{ width: 40 }} />
                 </View>
-                <View style={{ width: 40 }} />
-              </View>
-            </SafeAreaView>
+              </SafeAreaView>
 
-            <View style={s.heroBottom}>
-              <View style={s.sharedBadge}>
-                <Compass size={11} color="#fff" />
-                <Text style={s.sharedBadgeText}>Shared Trip</Text>
-              </View>
-              <Text style={s.heroTitle}>{displayName}</Text>
-              {(displayDest || displayCountry) && (
-                <View style={s.heroLocationRow}>
-                  <MapPin size={14} color="rgba(255,255,255,0.9)" />
-                  <Text style={s.heroLocation}>
-                    {[displayDest, displayCountry].filter(Boolean).join(', ')}
-                  </Text>
+              <View style={s.heroBottom}>
+                <View style={s.sharedChip}>
+                  <Sparkles size={10} color="#fff" />
+                  <Text style={s.sharedChipText}>Shared Trip</Text>
                 </View>
-              )}
+                <Text style={s.heroTitle} numberOfLines={2}>{displayName}</Text>
+                {locationStr ? (
+                  <View style={s.heroLocationRow}>
+                    <MapPin size={13} color="rgba(255,255,255,0.85)" />
+                    <Text style={s.heroLocation}>{locationStr}</Text>
+                  </View>
+                ) : null}
+                {displayStart ? (
+                  <View style={s.heroDateRow}>
+                    <Calendar size={13} color="rgba(255,255,255,0.7)" />
+                    <Text style={s.heroDate}>
+                      {formatShortDate(displayStart)}{displayEnd ? ` – ${formatShortDate(displayEnd)}` : ''}
+                    </Text>
+                  </View>
+                ) : null}
+              </View>
             </View>
-          </View>
+          </Animated.View>
 
           <Animated.View style={[s.body, { opacity: fadeAnim, transform: [{ translateY: slideAnim }] }]}>
-            {(displayStart || displayBudget > 0 || tripDays > 0) && (
+            {(tripDays > 0 || displayTravelers > 0 || displayBudget > 0) && (
               <View style={s.statsRow}>
                 {tripDays > 0 && (
-                  <View style={s.statCard}>
-                    <View style={[s.statIcon, { backgroundColor: isDark ? 'rgba(34,211,238,0.12)' : 'rgba(8,145,178,0.08)' }]}>
-                      <Clock size={18} color={colors.accent} />
+                  <View style={[s.statCard, { backgroundColor: colors.surface, borderColor: colors.border }]}>
+                    <View style={[s.statIconWrap, { backgroundColor: isDark ? 'rgba(34,211,238,0.1)' : 'rgba(8,145,178,0.06)' }]}>
+                      <Clock size={16} color={colors.accent} />
                     </View>
                     <Text style={[s.statValue, { color: colors.text }]}>{tripDays}</Text>
                     <Text style={[s.statLabel, { color: colors.textMuted }]}>days</Text>
                   </View>
                 )}
                 {displayTravelers > 0 && (
-                  <View style={s.statCard}>
-                    <View style={[s.statIcon, { backgroundColor: isDark ? 'rgba(34,211,238,0.12)' : 'rgba(8,145,178,0.08)' }]}>
-                      <Users size={18} color={colors.accent} />
+                  <View style={[s.statCard, { backgroundColor: colors.surface, borderColor: colors.border }]}>
+                    <View style={[s.statIconWrap, { backgroundColor: isDark ? 'rgba(34,211,238,0.1)' : 'rgba(8,145,178,0.06)' }]}>
+                      <Users size={16} color={colors.accent} />
                     </View>
                     <Text style={[s.statValue, { color: colors.text }]}>{displayTravelers}</Text>
                     <Text style={[s.statLabel, { color: colors.textMuted }]}>travelers</Text>
                   </View>
                 )}
                 {displayBudget > 0 && (
-                  <View style={s.statCard}>
-                    <View style={[s.statIcon, { backgroundColor: isDark ? 'rgba(34,211,238,0.12)' : 'rgba(8,145,178,0.08)' }]}>
-                      <DollarSign size={18} color={colors.accent} />
+                  <View style={[s.statCard, { backgroundColor: colors.surface, borderColor: colors.border }]}>
+                    <View style={[s.statIconWrap, { backgroundColor: isDark ? 'rgba(34,211,238,0.1)' : 'rgba(8,145,178,0.06)' }]}>
+                      <DollarSign size={16} color={colors.accent} />
                     </View>
                     <Text style={[s.statValue, { color: colors.text }]}>${displayBudget.toLocaleString()}</Text>
                     <Text style={[s.statLabel, { color: colors.textMuted }]}>budget</Text>
@@ -365,9 +383,9 @@ export default function SharedTripScreen() {
             )}
 
             {displayStart && (
-              <View style={[s.dateCard, { backgroundColor: colors.surface }]}>
+              <View style={[s.dateCard, { backgroundColor: colors.surface, borderColor: colors.border }]}>
                 <View style={[s.dateIconWrap, { backgroundColor: isDark ? colors.surfaceElevated : colors.cardBg }]}>
-                  <Calendar size={20} color={colors.accent} />
+                  <Calendar size={18} color={colors.accent} />
                 </View>
                 <View style={s.dateInfo}>
                   <Text style={[s.dateRange, { color: colors.text }]}>
@@ -383,9 +401,9 @@ export default function SharedTripScreen() {
             {hasLocalData && trip.collaborators.length > 0 && (
               <View style={s.section}>
                 <Text style={[s.sectionTitle, { color: colors.text }]}>Travelers</Text>
-                <View style={[s.travelersCard, { backgroundColor: colors.surface }]}>
-                  {trip.collaborators.map((collab) => (
-                    <View key={collab.id} style={[s.travelerRow, { borderBottomColor: colors.borderLight }]}>
+                <View style={[s.travelersCard, { backgroundColor: colors.surface, borderColor: colors.border }]}>
+                  {trip.collaborators.map((collab, idx) => (
+                    <View key={collab.id} style={[s.travelerRow, idx < trip.collaborators.length - 1 && { borderBottomWidth: 1, borderBottomColor: colors.borderLight }]}>
                       {collab.avatar ? (
                         <Image source={{ uri: collab.avatar }} style={s.travelerAvatar} />
                       ) : (
@@ -400,7 +418,7 @@ export default function SharedTripScreen() {
                         </Text>
                       </View>
                       {collab.role === 'owner' && (
-                        <View style={[s.ownerBadge, { backgroundColor: isDark ? 'rgba(34,211,238,0.12)' : 'rgba(8,145,178,0.08)' }]}>
+                        <View style={[s.ownerBadge, { backgroundColor: isDark ? 'rgba(34,211,238,0.1)' : 'rgba(8,145,178,0.06)' }]}>
                           <Text style={[s.ownerBadgeText, { color: colors.accent }]}>Owner</Text>
                         </View>
                       )}
@@ -412,16 +430,19 @@ export default function SharedTripScreen() {
 
             {hasLocalData && hasItinerary && (
               <View style={s.section}>
-                <Text style={[s.sectionTitle, { color: colors.text }]}>Itinerary Preview</Text>
+                <View style={s.sectionHeaderRow}>
+                  <Sparkles size={15} color={colors.accent} />
+                  <Text style={[s.sectionTitle, { color: colors.text, marginBottom: 0 }]}>Itinerary Preview</Text>
+                </View>
 
                 {trip.itinerary.slice(0, 3).map((day, dayIndex) => (
-                  <View key={day.id} style={[s.itineraryDayCard, { backgroundColor: colors.surface }]}>
+                  <View key={day.id} style={[s.itineraryDayCard, { backgroundColor: colors.surface, borderColor: colors.border }]}>
                     <View style={[s.dayBadge, { backgroundColor: colors.accent }]}>
                       <Text style={s.dayBadgeText}>Day {dayIndex + 1}</Text>
                     </View>
                     {day.activities.slice(0, 3).map((activity) => (
                       <View key={activity.id} style={s.activityRow}>
-                        <View style={[s.activityTimeDot, { backgroundColor: colors.accent }]} />
+                        <View style={[s.activityDot, { backgroundColor: colors.accent }]} />
                         <View style={s.activityContent}>
                           <Text style={[s.activityTitle, { color: colors.text }]}>{activity.title}</Text>
                           {activity.location && (
@@ -442,13 +463,13 @@ export default function SharedTripScreen() {
                 ))}
 
                 {groupedStoredItinerary.slice(0, 3).map((group) => (
-                  <View key={group.date} style={[s.itineraryDayCard, { backgroundColor: colors.surface }]}>
+                  <View key={group.date} style={[s.itineraryDayCard, { backgroundColor: colors.surface, borderColor: colors.border }]}>
                     <View style={[s.dayBadge, { backgroundColor: colors.accent }]}>
                       <Text style={s.dayBadgeText}>{formatShortDate(group.date)}</Text>
                     </View>
                     {group.items.slice(0, 3).map((item) => (
                       <View key={item.id} style={s.activityRow}>
-                        <View style={[s.activityTimeDot, { backgroundColor: colors.accent }]} />
+                        <View style={[s.activityDot, { backgroundColor: colors.accent }]} />
                         <View style={s.activityContent}>
                           <Text style={[s.activityTitle, { color: colors.text }]}>{item.title}</Text>
                           {item.notes && (
@@ -466,11 +487,9 @@ export default function SharedTripScreen() {
                 ))}
 
                 {(trip.itinerary.length > 3 || groupedStoredItinerary.length > 3) && (
-                  <View style={s.fadeHint}>
-                    <Text style={[s.fadeHintText, { color: colors.textMuted }]}>
-                      Open in TripNest to see the full itinerary
-                    </Text>
-                  </View>
+                  <Text style={[s.fadeHintText, { color: colors.textMuted }]}>
+                    Open in TripNest to see the full itinerary
+                  </Text>
                 )}
               </View>
             )}
@@ -478,7 +497,7 @@ export default function SharedTripScreen() {
             {hasLocalData && hasMemories && (
               <View style={s.section}>
                 <View style={s.sectionHeaderRow}>
-                  <Text style={[s.sectionTitle, { color: colors.text }]}>Memories</Text>
+                  <Text style={[s.sectionTitle, { color: colors.text, marginBottom: 0 }]}>Memories</Text>
                   <View style={[s.countBadge, { backgroundColor: isDark ? colors.surfaceElevated : colors.cardBg }]}>
                     <Text style={[s.countBadgeText, { color: colors.textSecondary }]}>{tripMemories.length}</Text>
                   </View>
@@ -489,7 +508,7 @@ export default function SharedTripScreen() {
                   contentContainerStyle={s.memoriesScroll}
                 >
                   {tripMemories.slice(0, 6).map((memory) => (
-                    <View key={memory.id} style={s.memoryThumb}>
+                    <View key={memory.id} style={[s.memoryThumb, { backgroundColor: colors.border }]}>
                       <Image source={{ uri: memory.uri }} style={s.memoryThumbImage} />
                     </View>
                   ))}
@@ -504,52 +523,57 @@ export default function SharedTripScreen() {
               </View>
             )}
 
-            <View style={[s.ctaCard, { backgroundColor: colors.surface }]}>
-              <View style={[s.ctaIconWrap, { backgroundColor: isDark ? 'rgba(34,211,238,0.12)' : 'rgba(8,145,178,0.08)' }]}>
-                <IconComponent size={32} color={colors.accent} />
+            <View style={[s.ctaCard, { backgroundColor: colors.surface, borderColor: colors.border }]}>
+              <View style={[s.ctaIconWrap, { backgroundColor: isDark ? 'rgba(34,211,238,0.1)' : 'rgba(8,145,178,0.06)' }]}>
+                <IconComponent size={30} color={colors.accent} />
               </View>
               <Text style={[s.ctaTitle, { color: colors.text }]}>
                 {hasLocalData ? 'Want to join this trip?' : 'View full trip details'}
               </Text>
               <Text style={[s.ctaSub, { color: colors.textSecondary }]}>
                 {hasLocalData
-                  ? 'Open in the TripNest app to view all details, collaborate, and start planning.'
-                  : 'Open in the TripNest app to see the full itinerary, collaborate with travelers, and plan together.'
+                  ? 'Open in the TripNest app to collaborate, edit the itinerary, and plan together.'
+                  : 'Open in the TripNest app to see everything, collaborate with travelers, and start planning.'
                 }
               </Text>
 
-              <AnimatedPressable onPress={handleOpenInApp} style={{ width: '100%' as const }}>
-                <View style={[s.ctaPrimaryBtn, { backgroundColor: colors.accent }]}>
+              <PressableScale onPress={handleOpenInApp} style={s.fullWidthBtn}>
+                <LinearGradient
+                  colors={isDark ? ['#0891B2', '#0E7490'] : ['#0891B2', '#0891B2']}
+                  style={s.gradientBtn}
+                  start={{ x: 0, y: 0 }}
+                  end={{ x: 1, y: 0 }}
+                >
                   {hasLocalData ? (
                     <Plane size={18} color="#fff" />
                   ) : (
                     <ExternalLink size={18} color="#fff" />
                   )}
-                  <Text style={s.ctaPrimaryText}>Open in TripNest</Text>
-                  <ChevronRight size={18} color="#fff" />
-                </View>
-              </AnimatedPressable>
+                  <Text style={s.gradientBtnText}>Open in TripNest</Text>
+                  <ChevronRight size={18} color="rgba(255,255,255,0.6)" />
+                </LinearGradient>
+              </PressableScale>
 
-              <AnimatedPressable onPress={() => console.log('[SharedTrip] Download tapped')} style={{ width: '100%' as const }}>
-                <View style={[s.ctaSecondaryBtn, { backgroundColor: isDark ? colors.surfaceElevated : colors.cardBg }]}>
-                  <Download size={18} color={colors.text} />
-                  <Text style={[s.ctaSecondaryText, { color: colors.text }]}>Download the App</Text>
+              <PressableScale onPress={() => console.log('[SharedTrip] Download tapped')} style={s.fullWidthBtn}>
+                <View style={[s.outlineBtn, { backgroundColor: isDark ? colors.surfaceElevated : colors.cardBg }]}>
+                  <Download size={16} color={colors.text} />
+                  <Text style={[s.outlineBtnText, { color: colors.text }]}>Download the App</Text>
                 </View>
-              </AnimatedPressable>
+              </PressableScale>
             </View>
 
             <View style={[s.footer, { borderTopColor: colors.border }]}>
-              <View style={s.footerLogoRow}>
-                <View style={[s.footerLogoMark, { backgroundColor: colors.accent }]}>
-                  <Plane size={11} color="#fff" />
+              <View style={s.footerBrandRow}>
+                <View style={[s.footerBrandMark, { backgroundColor: colors.accent }]}>
+                  <Plane size={10} color="#fff" />
                 </View>
-                <Text style={[s.footerLogoText, { color: colors.text }]}>TripNest</Text>
+                <Text style={[s.footerBrandText, { color: colors.text }]}>TripNest</Text>
               </View>
               <Text style={[s.footerText, { color: colors.textMuted }]}>
-                Plan trips together. Travel smarter.
+                Plan trips together · Travel smarter
               </Text>
-              <Text style={[s.footerDisclaimer, { color: colors.textMuted, opacity: 0.6 }]}>
-                This is a read-only view of a shared trip.
+              <Text style={[s.footerDisclaimer, { color: colors.textMuted }]}>
+                This is a read-only preview of a shared trip.
               </Text>
             </View>
           </Animated.View>
@@ -568,7 +592,7 @@ const createStyles = (colors: ThemeColors, isDark: boolean) => StyleSheet.create
     width: '100%',
   },
   skeletonBody: {
-    padding: 24,
+    padding: 20,
   },
   errorContainer: {
     flex: 1,
@@ -577,30 +601,32 @@ const createStyles = (colors: ThemeColors, isDark: boolean) => StyleSheet.create
   },
   errorContent: {
     alignItems: 'center',
-    paddingHorizontal: 40,
+    paddingHorizontal: 36,
+    maxWidth: 400,
+    width: '100%',
   },
-  logoRow: {
+  brandRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 10,
-    marginBottom: 4,
+    gap: 8,
+    marginBottom: 8,
   },
-  logoMark: {
-    width: 38,
-    height: 38,
-    borderRadius: 11,
+  brandMark: {
+    width: 34,
+    height: 34,
+    borderRadius: 10,
     justifyContent: 'center',
     alignItems: 'center',
   },
-  logoText: {
-    fontSize: 22,
+  brandText: {
+    fontSize: 20,
     fontWeight: '800' as const,
     letterSpacing: -0.5,
   },
-  errorIconWrap: {
-    width: 72,
-    height: 72,
-    borderRadius: 36,
+  errorIconCircle: {
+    width: 68,
+    height: 68,
+    borderRadius: 34,
     justifyContent: 'center',
     alignItems: 'center',
     marginTop: 28,
@@ -611,6 +637,7 @@ const createStyles = (colors: ThemeColors, isDark: boolean) => StyleSheet.create
     fontWeight: '700' as const,
     marginBottom: 8,
     textAlign: 'center',
+    letterSpacing: -0.3,
   },
   errorSub: {
     fontSize: 15,
@@ -618,18 +645,54 @@ const createStyles = (colors: ThemeColors, isDark: boolean) => StyleSheet.create
     lineHeight: 22,
     marginBottom: 28,
   },
-  errorBtn: {
-    paddingHorizontal: 32,
-    paddingVertical: 15,
-    borderRadius: 14,
+  fullWidthBtn: {
+    width: '100%',
+    maxWidth: 400,
   },
-  errorBtnText: {
+  solidBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 10,
+    paddingVertical: 16,
+    borderRadius: 14,
+    width: '100%',
+  },
+  solidBtnText: {
     fontSize: 16,
     fontWeight: '700' as const,
     color: '#fff',
   },
+  gradientBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 10,
+    paddingVertical: 16,
+    borderRadius: 14,
+    width: '100%',
+    marginBottom: 10,
+  },
+  gradientBtnText: {
+    fontSize: 16,
+    fontWeight: '700' as const,
+    color: '#fff',
+  },
+  outlineBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 10,
+    paddingVertical: 14,
+    borderRadius: 14,
+    width: '100%',
+  },
+  outlineBtnText: {
+    fontSize: 15,
+    fontWeight: '600' as const,
+  },
   heroSection: {
-    height: 360,
+    height: 380,
     position: 'relative',
   },
   heroImage: {
@@ -649,31 +712,35 @@ const createStyles = (colors: ThemeColors, isDark: boolean) => StyleSheet.create
     justifyContent: 'space-between',
     alignItems: 'center',
     paddingHorizontal: 20,
-    paddingTop: 8,
+    paddingTop: 6,
   },
-  topBarBtn: {
+  topBarBackBtn: {
     width: 40,
     height: 40,
     borderRadius: 20,
-    backgroundColor: 'rgba(0,0,0,0.25)',
+    backgroundColor: 'rgba(0,0,0,0.3)',
     justifyContent: 'center',
     alignItems: 'center',
   },
-  topBarLogoRow: {
+  topBarBrand: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 6,
+    gap: 5,
+    backgroundColor: 'rgba(0,0,0,0.25)',
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 20,
   },
-  topBarLogoMark: {
-    width: 26,
-    height: 26,
-    borderRadius: 7,
+  topBarBrandMark: {
+    width: 22,
+    height: 22,
+    borderRadius: 6,
     backgroundColor: 'rgba(255,255,255,0.2)',
     justifyContent: 'center',
     alignItems: 'center',
   },
-  topBarLogoText: {
-    fontSize: 16,
+  topBarBrandText: {
+    fontSize: 14,
     fontWeight: '800' as const,
     color: '#fff',
     letterSpacing: -0.3,
@@ -683,48 +750,61 @@ const createStyles = (colors: ThemeColors, isDark: boolean) => StyleSheet.create
     bottom: 0,
     left: 0,
     right: 0,
-    paddingHorizontal: 24,
-    paddingBottom: 28,
+    paddingHorizontal: 22,
+    paddingBottom: 24,
   },
-  sharedBadge: {
+  sharedChip: {
     alignSelf: 'flex-start',
     flexDirection: 'row',
     alignItems: 'center',
     gap: 5,
     paddingHorizontal: 10,
-    paddingVertical: 5,
-    backgroundColor: 'rgba(255,255,255,0.18)',
-    borderRadius: 8,
+    paddingVertical: 4,
+    backgroundColor: 'rgba(255,255,255,0.16)',
+    borderRadius: 20,
     marginBottom: 10,
   },
-  sharedBadgeText: {
-    fontSize: 11,
+  sharedChipText: {
+    fontSize: 10,
     fontWeight: '700' as const,
     color: '#fff',
-    letterSpacing: 0.6,
+    letterSpacing: 0.8,
     textTransform: 'uppercase' as const,
   },
   heroTitle: {
-    fontSize: 32,
+    fontSize: 30,
     fontWeight: '800' as const,
     color: '#fff',
     marginBottom: 8,
     letterSpacing: -0.5,
+    lineHeight: 36,
   },
   heroLocationRow: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 5,
+    marginBottom: 4,
   },
   heroLocation: {
-    fontSize: 15,
+    fontSize: 14,
     fontWeight: '500' as const,
-    color: 'rgba(255,255,255,0.9)',
+    color: 'rgba(255,255,255,0.88)',
+  },
+  heroDateRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 5,
+    marginTop: 2,
+  },
+  heroDate: {
+    fontSize: 13,
+    fontWeight: '500' as const,
+    color: 'rgba(255,255,255,0.7)',
   },
   body: {
-    paddingHorizontal: 20,
+    paddingHorizontal: 18,
     paddingTop: 20,
-    paddingBottom: 40,
+    paddingBottom: 36,
   },
   statsRow: {
     flexDirection: 'row',
@@ -733,22 +813,20 @@ const createStyles = (colors: ThemeColors, isDark: boolean) => StyleSheet.create
   },
   statCard: {
     flex: 1,
-    backgroundColor: colors.surface,
     borderRadius: 16,
     padding: 14,
     alignItems: 'center',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: isDark ? 0 : 0.04,
-    shadowRadius: 6,
-    elevation: isDark ? 0 : 1,
     borderWidth: isDark ? 1 : 0,
-    borderColor: colors.border,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: isDark ? 0 : 0.04,
+    shadowRadius: 8,
+    elevation: isDark ? 0 : 1,
   },
-  statIcon: {
-    width: 40,
-    height: 40,
-    borderRadius: 12,
+  statIconWrap: {
+    width: 36,
+    height: 36,
+    borderRadius: 10,
     justifyContent: 'center',
     alignItems: 'center',
     marginBottom: 8,
@@ -756,10 +834,10 @@ const createStyles = (colors: ThemeColors, isDark: boolean) => StyleSheet.create
   statValue: {
     fontSize: 16,
     fontWeight: '700' as const,
-    marginBottom: 2,
+    marginBottom: 1,
   },
   statLabel: {
-    fontSize: 12,
+    fontSize: 11,
     fontWeight: '500' as const,
   },
   dateCard: {
@@ -767,19 +845,18 @@ const createStyles = (colors: ThemeColors, isDark: boolean) => StyleSheet.create
     alignItems: 'center',
     gap: 14,
     borderRadius: 16,
-    padding: 16,
+    padding: 14,
     marginBottom: 16,
+    borderWidth: isDark ? 1 : 0,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: isDark ? 0 : 0.04,
+    shadowOpacity: isDark ? 0 : 0.03,
     shadowRadius: 6,
     elevation: isDark ? 0 : 1,
-    borderWidth: isDark ? 1 : 0,
-    borderColor: colors.border,
   },
   dateIconWrap: {
-    width: 44,
-    height: 44,
+    width: 42,
+    height: 42,
     borderRadius: 12,
     justifyContent: 'center',
     alignItems: 'center',
@@ -796,16 +873,16 @@ const createStyles = (colors: ThemeColors, isDark: boolean) => StyleSheet.create
     fontSize: 13,
   },
   section: {
-    marginBottom: 20,
+    marginBottom: 18,
   },
   sectionHeaderRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 8,
+    gap: 6,
     marginBottom: 12,
   },
   sectionTitle: {
-    fontSize: 17,
+    fontSize: 16,
     fontWeight: '700' as const,
     marginBottom: 12,
   },
@@ -813,7 +890,6 @@ const createStyles = (colors: ThemeColors, isDark: boolean) => StyleSheet.create
     paddingHorizontal: 8,
     paddingVertical: 2,
     borderRadius: 8,
-    marginBottom: 12,
   },
   countBadgeText: {
     fontSize: 13,
@@ -822,26 +898,24 @@ const createStyles = (colors: ThemeColors, isDark: boolean) => StyleSheet.create
   travelersCard: {
     borderRadius: 16,
     overflow: 'hidden',
+    borderWidth: isDark ? 1 : 0,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: isDark ? 0 : 0.04,
+    shadowOpacity: isDark ? 0 : 0.03,
     shadowRadius: 6,
     elevation: isDark ? 0 : 1,
-    borderWidth: isDark ? 1 : 0,
-    borderColor: colors.border,
   },
   travelerRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingHorizontal: 16,
-    paddingVertical: 14,
-    borderBottomWidth: 1,
+    paddingHorizontal: 14,
+    paddingVertical: 12,
   },
   travelerAvatar: {
-    width: 42,
-    height: 42,
-    borderRadius: 21,
-    marginRight: 14,
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    marginRight: 12,
   },
   travelerInfo: {
     flex: 1,
@@ -851,7 +925,7 @@ const createStyles = (colors: ThemeColors, isDark: boolean) => StyleSheet.create
     fontWeight: '600' as const,
   },
   travelerRole: {
-    fontSize: 13,
+    fontSize: 12,
     marginTop: 1,
   },
   ownerBadge: {
@@ -865,37 +939,36 @@ const createStyles = (colors: ThemeColors, isDark: boolean) => StyleSheet.create
   },
   itineraryDayCard: {
     borderRadius: 16,
-    padding: 16,
+    padding: 14,
     marginBottom: 10,
+    borderWidth: isDark ? 1 : 0,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: isDark ? 0 : 0.04,
+    shadowOpacity: isDark ? 0 : 0.03,
     shadowRadius: 6,
     elevation: isDark ? 0 : 1,
-    borderWidth: isDark ? 1 : 0,
-    borderColor: colors.border,
   },
   dayBadge: {
     alignSelf: 'flex-start',
     paddingHorizontal: 10,
-    paddingVertical: 4,
+    paddingVertical: 3,
     borderRadius: 8,
-    marginBottom: 14,
+    marginBottom: 12,
   },
   dayBadgeText: {
-    fontSize: 12,
+    fontSize: 11,
     fontWeight: '700' as const,
     color: '#fff',
   },
   activityRow: {
     flexDirection: 'row',
     alignItems: 'flex-start',
-    marginBottom: 12,
-    gap: 12,
+    marginBottom: 10,
+    gap: 10,
   },
-  activityTimeDot: {
-    width: 8,
-    height: 8,
+  activityDot: {
+    width: 7,
+    height: 7,
     borderRadius: 4,
     marginTop: 6,
   },
@@ -908,7 +981,7 @@ const createStyles = (colors: ThemeColors, isDark: boolean) => StyleSheet.create
   },
   activityLocation: {
     fontSize: 12,
-    marginTop: 2,
+    marginTop: 1,
   },
   activityTime: {
     fontSize: 12,
@@ -916,26 +989,23 @@ const createStyles = (colors: ThemeColors, isDark: boolean) => StyleSheet.create
   },
   moreText: {
     fontSize: 12,
-    marginTop: 4,
-    marginLeft: 20,
-  },
-  fadeHint: {
-    alignItems: 'center',
-    paddingVertical: 12,
+    marginTop: 2,
+    marginLeft: 17,
   },
   fadeHintText: {
     fontSize: 13,
     fontStyle: 'italic' as const,
+    textAlign: 'center',
+    marginTop: 6,
   },
   memoriesScroll: {
     gap: 10,
   },
   memoryThumb: {
-    width: 110,
-    height: 110,
+    width: 100,
+    height: 100,
     borderRadius: 14,
     overflow: 'hidden',
-    backgroundColor: colors.border,
   },
   memoryThumbImage: {
     width: '100%',
@@ -943,8 +1013,8 @@ const createStyles = (colors: ThemeColors, isDark: boolean) => StyleSheet.create
     resizeMode: 'cover',
   },
   memoryMoreThumb: {
-    width: 110,
-    height: 110,
+    width: 100,
+    height: 100,
     borderRadius: 14,
     justifyContent: 'center',
     alignItems: 'center',
@@ -955,97 +1025,69 @@ const createStyles = (colors: ThemeColors, isDark: boolean) => StyleSheet.create
   },
   ctaCard: {
     borderRadius: 20,
-    padding: 28,
+    padding: 24,
     alignItems: 'center',
-    marginTop: 8,
-    marginBottom: 24,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 3 },
-    shadowOpacity: isDark ? 0 : 0.06,
-    shadowRadius: 12,
-    elevation: isDark ? 0 : 3,
+    marginTop: 6,
+    marginBottom: 20,
     borderWidth: isDark ? 1 : 0,
-    borderColor: colors.border,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: isDark ? 0 : 0.06,
+    shadowRadius: 14,
+    elevation: isDark ? 0 : 3,
   },
   ctaIconWrap: {
-    width: 68,
-    height: 68,
-    borderRadius: 20,
+    width: 64,
+    height: 64,
+    borderRadius: 18,
     justifyContent: 'center',
     alignItems: 'center',
-    marginBottom: 18,
+    marginBottom: 16,
   },
   ctaTitle: {
-    fontSize: 20,
+    fontSize: 19,
     fontWeight: '700' as const,
-    marginBottom: 8,
+    marginBottom: 6,
     textAlign: 'center',
+    letterSpacing: -0.3,
   },
   ctaSub: {
     fontSize: 14,
     textAlign: 'center',
-    lineHeight: 21,
-    marginBottom: 24,
+    lineHeight: 20,
+    marginBottom: 22,
     paddingHorizontal: 8,
-  },
-  ctaPrimaryBtn: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 10,
-    paddingVertical: 16,
-    paddingHorizontal: 28,
-    borderRadius: 14,
-    width: '100%',
-    marginBottom: 10,
-  },
-  ctaPrimaryText: {
-    fontSize: 16,
-    fontWeight: '700' as const,
-    color: '#fff',
-  },
-  ctaSecondaryBtn: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 10,
-    paddingVertical: 14,
-    paddingHorizontal: 28,
-    borderRadius: 14,
-    width: '100%',
-  },
-  ctaSecondaryText: {
-    fontSize: 15,
-    fontWeight: '600' as const,
   },
   footer: {
     alignItems: 'center',
     paddingVertical: 24,
+    marginTop: 4,
     borderTopWidth: 1,
   },
-  footerLogoRow: {
+  footerBrandRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 6,
-    marginBottom: 8,
+    gap: 5,
+    marginBottom: 6,
   },
-  footerLogoMark: {
-    width: 22,
-    height: 22,
+  footerBrandMark: {
+    width: 20,
+    height: 20,
     borderRadius: 6,
     justifyContent: 'center',
     alignItems: 'center',
   },
-  footerLogoText: {
-    fontSize: 14,
+  footerBrandText: {
+    fontSize: 13,
     fontWeight: '800' as const,
     letterSpacing: -0.3,
   },
   footerText: {
-    fontSize: 13,
+    fontSize: 12,
     marginBottom: 4,
   },
   footerDisclaimer: {
     fontSize: 11,
+    opacity: 0.6,
   },
 });
