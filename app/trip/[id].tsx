@@ -1,4 +1,4 @@
-import React, { useState, useRef, useMemo } from 'react';
+import React, { useState, useRef, useMemo, useEffect, useCallback } from 'react';
 import { 
   View, Text, StyleSheet, ScrollView, TouchableOpacity, Image, 
   Dimensions, Modal, TextInput, Alert, Platform, Share
@@ -96,8 +96,9 @@ export default function TripDetailScreen() {
   const [showInviteModal, setShowInviteModal] = useState(false);
   const [linkCopied, setLinkCopied] = useState(false);
   const [inviteLink, setInviteLink] = useState('');
+  const [isDeleting, setIsDeleting] = useState(false);
 
-  const getIconComponent = (iconName: TripIcon) => {
+  const getIconComponent = useCallback((iconName: TripIcon) => {
     const iconMap: Record<TripIcon, React.ComponentType<{ size: number; color: string }>> = {
       'cherry-blossom': Flower2,
       'cathedral': Church,
@@ -110,13 +111,35 @@ export default function TripDetailScreen() {
       'tent': Tent,
     };
     return iconMap[iconName] || Landmark;
-  };
+  }, []);
+
+  const groupedItinerary = useMemo(() => {
+    const groups: Record<string, StoredItineraryItem[]> = {};
+    for (const item of itineraryItems) {
+      const dateKey = item.date.split('T')[0];
+      if (!groups[dateKey]) groups[dateKey] = [];
+      groups[dateKey].push(item);
+    }
+    return Object.entries(groups)
+      .sort(([a], [b]) => a.localeCompare(b))
+      .map(([date, items]) => ({ date, items: items.sort((a, b) => (a.time ?? '').localeCompare(b.time ?? '')) }));
+  }, [itineraryItems]);
+
+  useEffect(() => {
+    if (!trip && !isDeleting) {
+      console.log('[TripDetail] Trip not found, navigating away');
+      router.replace('/(tabs)/trips');
+    }
+  }, [trip, isDeleting, router]);
 
   if (!trip) {
     return (
-      <View style={styles.notFound}>
-        <Text style={styles.notFoundText}>Trip not found</Text>
-      </View>
+      <>
+        <Stack.Screen options={{ headerShown: false }} />
+        <View style={styles.notFound}>
+          <Text style={styles.notFoundText}>Trip not found</Text>
+        </View>
+      </>
     );
   }
 
@@ -164,18 +187,6 @@ export default function TripDetailScreen() {
     hapticSelection();
     setActiveTab(tabId);
   };
-
-  const groupedItinerary = useMemo(() => {
-    const groups: Record<string, StoredItineraryItem[]> = {};
-    for (const item of itineraryItems) {
-      const dateKey = item.date.split('T')[0];
-      if (!groups[dateKey]) groups[dateKey] = [];
-      groups[dateKey].push(item);
-    }
-    return Object.entries(groups)
-      .sort(([a], [b]) => a.localeCompare(b))
-      .map(([date, items]) => ({ date, items: items.sort((a, b) => (a.time ?? '').localeCompare(b.time ?? '')) }));
-  }, [itineraryItems]);
 
   const handleSaveItinerary = () => {
     if (!itineraryTitle.trim() || !itineraryDate) {
@@ -280,9 +291,10 @@ export default function TripDetailScreen() {
           text: 'Delete',
           style: 'destructive',
           onPress: () => {
+            setIsDeleting(true);
             deleteTripAction(trip.id);
             console.log('[TripDetail] Deleted trip:', trip.id);
-            router.back();
+            router.replace('/(tabs)/trips');
           },
         },
       ]
