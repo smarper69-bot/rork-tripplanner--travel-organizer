@@ -10,7 +10,25 @@ import { destinations, DiscoverDestination } from '@/mocks/destinations';
 import { ThemeColors } from '@/constants/themes';
 import { DEFAULT_FALLBACK_IMAGE } from '@/utils/destinationImages';
 
-type CategoryType = 'trending' | 'budget' | 'seasonal' | 'recommended' | 'weekend';
+type CategoryType = 'trending' | 'budget' | 'seasonal' | 'recommended' | 'weekend' | 'beach' | 'city' | 'nature' | 'culture' | 'adventure';
+
+const TAG_COLORS: Record<string, string> = {
+  beach: '#0EA5E9',
+  city: '#8B5CF6',
+  nature: '#22C55E',
+  culture: '#F59E0B',
+  adventure: '#EF4444',
+  food: '#FB923C',
+  romantic: '#EC4899',
+  family: '#6366F1',
+  solo: '#14B8A6',
+  luxury: '#D4AF37',
+  budget: '#10B981',
+};
+
+function getTagColor(tag: string): string {
+  return TAG_COLORS[tag.toLowerCase()] ?? '#6B7280';
+}
 
 function getCategoryTitle(category: CategoryType, monthName?: string): string {
   switch (category) {
@@ -19,6 +37,11 @@ function getCategoryTitle(category: CategoryType, monthName?: string): string {
     case 'seasonal': return `Best in ${monthName ?? 'This Month'}`;
     case 'recommended': return 'Recommended for You';
     case 'weekend': return 'Weekend Getaways';
+    case 'beach': return 'Beach Destinations';
+    case 'city': return 'City Breaks';
+    case 'nature': return 'Nature Escapes';
+    case 'culture': return 'Cultural Journeys';
+    case 'adventure': return 'Adventure Trips';
     default: return 'Destinations';
   }
 }
@@ -30,6 +53,11 @@ function getCategorySubtitle(category: CategoryType): string {
     case 'seasonal': return 'Perfect weather and events this time of year';
     case 'recommended': return 'Curated based on your travel style';
     case 'weekend': return 'Quick escapes for a short break';
+    case 'beach': return 'Sun, sand, and crystal-clear waters';
+    case 'city': return 'Urban adventures and skyline views';
+    case 'nature': return 'Mountains, forests, and wild landscapes';
+    case 'culture': return 'History, art, and local traditions';
+    case 'adventure': return 'Thrilling experiences and outdoor activities';
     default: return '';
   }
 }
@@ -90,8 +118,8 @@ function DestinationGridCard({ destination, onPress, colors }: CardProps) {
           </View>
           <View style={styles.gridTagsRow}>
             {destination.tripTypes.slice(0, 2).map((type) => (
-              <View key={type} style={[styles.gridTag, { backgroundColor: colors.inputBackground }]}>
-                <Text style={[styles.gridTagText, { color: colors.textSecondary }]}>{type}</Text>
+              <View key={type} style={[styles.gridTag, { backgroundColor: getTagColor(type) + '18' }]}>
+                <Text style={[styles.gridTagText, { color: getTagColor(type) }]}>{type}</Text>
               </View>
             ))}
           </View>
@@ -120,7 +148,7 @@ export default function ExploreCategoryScreen() {
       }
       case 'budget':
         return [...destinations]
-          .filter(d => d.avgDailyCost <= 100)
+          .filter(d => d.avgDailyCost <= 100 || d.tripTypes.includes('budget'))
           .sort((a, b) => a.avgDailyCost - b.avgDailyCost);
       case 'seasonal':
         return destinations
@@ -142,6 +170,26 @@ export default function ExploreCategoryScreen() {
           .filter(d => nearbyRegions.includes(d.region))
           .sort((a, b) => a.avgDailyCost - b.avgDailyCost);
       }
+      case 'beach':
+        return [...destinations]
+          .filter(d => d.tripTypes.includes('beach'))
+          .sort((a, b) => b.popularityScore - a.popularityScore);
+      case 'city':
+        return [...destinations]
+          .filter(d => d.tripTypes.includes('city'))
+          .sort((a, b) => b.popularityScore - a.popularityScore);
+      case 'nature':
+        return [...destinations]
+          .filter(d => d.tripTypes.includes('nature'))
+          .sort((a, b) => b.popularityScore - a.popularityScore);
+      case 'culture':
+        return [...destinations]
+          .filter(d => d.tripTypes.includes('culture'))
+          .sort((a, b) => b.popularityScore - a.popularityScore);
+      case 'adventure':
+        return [...destinations]
+          .filter(d => d.tripTypes.includes('adventure'))
+          .sort((a, b) => b.popularityScore - a.popularityScore);
       default:
         return destinations;
     }
@@ -340,7 +388,7 @@ const styles = StyleSheet.create({
   },
   gridTagText: {
     fontSize: 11,
-    fontWeight: '500' as const,
+    fontWeight: '600' as const,
     textTransform: 'capitalize' as const,
   },
 });
