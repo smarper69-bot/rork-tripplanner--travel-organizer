@@ -8,104 +8,133 @@ import {
   Animated,
   Dimensions,
   Platform,
-  FlatList,
-  ViewToken,
-  Alert,
+  ScrollView,
+  KeyboardAvoidingView,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import {
   MapPin,
-  Plane,
-  Globe,
-  ChevronRight,
-  Mail,
-  User,
-  Bell,
-  Navigation,
   Compass,
-  Plus,
+  ChevronRight,
+  Navigation,
+  Bell,
+  Check,
+  Palmtree,
+  Building2,
+  Trees,
+  UtensilsCrossed,
+  Landmark,
+  Mountain,
+  Gem,
+  Wallet,
+  User,
+  Heart,
+  Users,
+  Baby,
+  Sparkles,
+  Map,
+  Wand2,
   ArrowRight,
+  Plus,
 } from 'lucide-react-native';
 import * as Haptics from 'expo-haptics';
 import * as Location from 'expo-location';
 import * as Notifications from 'expo-notifications';
 import Colors from '@/constants/colors';
-import { useOnboardingStore } from '@/store/useOnboardingStore';
+import { useOnboardingStore, UsagePurpose, TripType, TravelCompanion } from '@/store/useOnboardingStore';
 import { usePreferencesStore } from '@/store/usePreferencesStore';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
 type OnboardingStep =
   | 'welcome'
-  | 'carousel'
-  | 'auth'
-  | 'email-input'
-  | 'guest-name'
+  | 'usage'
+  | 'trip-types'
+  | 'companion'
+  | 'personal'
   | 'permissions'
-  | 'first-action';
+  | 'ready';
 
-const CAROUSEL_DATA = [
-  {
-    id: '1',
-    icon: MapPin,
-    title: 'Plan trips in minutes',
-    description: 'Create and manage trips effortlessly with smart itineraries.',
-    accent: '#2D3436',
-  },
-  {
-    id: '2',
-    icon: Plane,
-    title: 'Explore stays & flights',
-    description: 'Discover hotels, flights, and experiences in one place.',
-    accent: '#1A1A2E',
-  },
-  {
-    id: '3',
-    icon: Globe,
-    title: 'Track your travel footprint',
-    description: 'Visualize your journeys and see the world you have explored.',
-    accent: '#16213E',
-  },
+const STEP_COUNT = 7;
+
+const USAGE_OPTIONS: { id: UsagePurpose; label: string; icon: React.ElementType }[] = [
+  { id: 'planning_trip', label: 'Planning a trip', icon: MapPin },
+  { id: 'finding_destinations', label: 'Finding destinations', icon: Compass },
+  { id: 'building_itineraries', label: 'Building itineraries', icon: Map },
+  { id: 'planning_with_friends', label: 'Planning with friends', icon: Users },
+  { id: 'tracking_memories', label: 'Tracking travel memories', icon: Heart },
 ];
+
+const TRIP_TYPE_OPTIONS: { id: TripType; label: string; icon: React.ElementType; color: string }[] = [
+  { id: 'beach', label: 'Beach', icon: Palmtree, color: '#0EA5E9' },
+  { id: 'city', label: 'City', icon: Building2, color: '#6366F1' },
+  { id: 'nature', label: 'Nature', icon: Trees, color: '#22C55E' },
+  { id: 'food', label: 'Food', icon: UtensilsCrossed, color: '#F97316' },
+  { id: 'culture', label: 'Culture', icon: Landmark, color: '#A855F7' },
+  { id: 'adventure', label: 'Adventure', icon: Mountain, color: '#EF4444' },
+  { id: 'luxury', label: 'Luxury', icon: Gem, color: '#D4A574' },
+  { id: 'budget', label: 'Budget', icon: Wallet, color: '#14B8A6' },
+];
+
+const COMPANION_OPTIONS: { id: TravelCompanion; label: string; icon: React.ElementType; desc: string }[] = [
+  { id: 'solo', label: 'Solo', icon: User, desc: 'Just me, myself & I' },
+  { id: 'partner', label: 'Partner', icon: Heart, desc: 'Romantic getaways' },
+  { id: 'friends', label: 'Friends', icon: Users, desc: 'Squad adventures' },
+  { id: 'family', label: 'Family', icon: Baby, desc: 'Family-friendly trips' },
+];
+
+function getStepIndex(step: OnboardingStep): number {
+  const steps: OnboardingStep[] = ['welcome', 'usage', 'trip-types', 'companion', 'personal', 'permissions', 'ready'];
+  return steps.indexOf(step);
+}
 
 export default function OnboardingScreen() {
   const router = useRouter();
   const completeOnboarding = useOnboardingStore((s) => s.completeOnboarding);
   const setUserName = useOnboardingStore((s) => s.setUserName);
   const setUserEmail = useOnboardingStore((s) => s.setUserEmail);
-  const setAuthMethod = useOnboardingStore((s) => s.setAuthMethod);
   const setLocationEnabled = useOnboardingStore((s) => s.setLocationEnabled);
   const setNotificationsEnabled = useOnboardingStore((s) => s.setNotificationsEnabled);
+  const setUsagePurposes = useOnboardingStore((s) => s.setUsagePurposes);
+  const setTripTypes = useOnboardingStore((s) => s.setTripTypes);
+  const setTravelCompanion = useOnboardingStore((s) => s.setTravelCompanion);
   const setProfile = usePreferencesStore((s) => s.setProfile);
   const setNotificationsPref = usePreferencesStore((s) => s.setNotifications);
 
   const [step, setStep] = useState<OnboardingStep>('welcome');
-  const [carouselIndex, setCarouselIndex] = useState<number>(0);
-  const [guestName, setGuestName] = useState<string>('');
+  const [selectedUsage, setSelectedUsage] = useState<UsagePurpose[]>([]);
+  const [selectedTripTypes, setSelectedTripTypes] = useState<TripType[]>([]);
+  const [selectedCompanion, setSelectedCompanion] = useState<TravelCompanion>('');
+  const [nameInput, setNameInput] = useState<string>('');
   const [emailInput, setEmailInput] = useState<string>('');
-  const [emailName, setEmailName] = useState<string>('');
-  const [selectedAuthMethod, setSelectedAuthMethod] = useState<string>('');
 
   const fadeAnim = useRef(new Animated.Value(1)).current;
   const slideAnim = useRef(new Animated.Value(0)).current;
-  const flatListRef = useRef<FlatList>(null);
+  const progressAnim = useRef(new Animated.Value(0)).current;
 
   const animateTransition = useCallback((nextStep: OnboardingStep) => {
+    const nextIndex = getStepIndex(nextStep);
+    Animated.timing(progressAnim, {
+      toValue: nextIndex / (STEP_COUNT - 1),
+      duration: 300,
+      useNativeDriver: false,
+    }).start();
+
     Animated.parallel([
       Animated.timing(fadeAnim, {
         toValue: 0,
-        duration: 150,
+        duration: 120,
         useNativeDriver: true,
       }),
       Animated.timing(slideAnim, {
-        toValue: -30,
-        duration: 150,
+        toValue: -20,
+        duration: 120,
         useNativeDriver: true,
       }),
     ]).start(() => {
       setStep(nextStep);
-      slideAnim.setValue(30);
+      slideAnim.setValue(20);
       Animated.parallel([
         Animated.timing(fadeAnim, {
           toValue: 1,
@@ -119,63 +148,63 @@ export default function OnboardingScreen() {
         }),
       ]).start();
     });
-  }, [fadeAnim, slideAnim]);
+  }, [fadeAnim, slideAnim, progressAnim]);
 
-  const handleContinueWelcome = useCallback(() => {
+  const toggleUsage = useCallback((id: UsagePurpose) => {
     void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-    animateTransition('carousel');
-  }, [animateTransition]);
+    setSelectedUsage((prev) =>
+      prev.includes(id) ? prev.filter((p) => p !== id) : [...prev, id]
+    );
+  }, []);
 
-  const handleCarouselNext = useCallback(() => {
+  const toggleTripType = useCallback((id: TripType) => {
     void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-    if (carouselIndex < CAROUSEL_DATA.length - 1) {
-      const nextIndex = carouselIndex + 1;
-      setCarouselIndex(nextIndex);
-      flatListRef.current?.scrollToIndex({ index: nextIndex, animated: true });
-    } else {
-      animateTransition('auth');
-    }
-  }, [carouselIndex, animateTransition]);
+    setSelectedTripTypes((prev) =>
+      prev.includes(id) ? prev.filter((p) => p !== id) : [...prev, id]
+    );
+  }, []);
 
-  const handleSkipCarousel = useCallback(() => {
-    void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-    animateTransition('auth');
-  }, [animateTransition]);
-
-  const handleAuthChoice = useCallback((method: string) => {
+  const selectCompanion = useCallback((id: TravelCompanion) => {
     void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-    setSelectedAuthMethod(method);
-    void setAuthMethod(method as 'email' | 'apple' | 'google' | 'guest');
-    console.log('[Onboarding] Auth method selected:', method);
+    setSelectedCompanion(id);
+  }, []);
 
-    if (method === 'guest') {
-      animateTransition('guest-name');
-    } else if (method === 'email') {
-      animateTransition('email-input');
-    } else {
-      animateTransition('guest-name');
-    }
-  }, [animateTransition, setAuthMethod]);
+  const handleGetStarted = useCallback(() => {
+    void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+    animateTransition('usage');
+  }, [animateTransition]);
 
-  const handleEmailContinue = useCallback(async () => {
+  const handleUsageContinue = useCallback(async () => {
     void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-    const trimmedEmail = emailInput.trim();
-    if (!trimmedEmail || !trimmedEmail.includes('@')) {
-      Alert.alert('Invalid Email', 'Please enter a valid email address.');
-      return;
-    }
-    await setUserEmail(trimmedEmail);
-    console.log('[Onboarding] Email saved:', trimmedEmail);
-    animateTransition('guest-name');
-  }, [emailInput, setUserEmail, animateTransition]);
+    await setUsagePurposes(selectedUsage);
+    animateTransition('trip-types');
+  }, [selectedUsage, setUsagePurposes, animateTransition]);
 
-  const handleGuestContinue = useCallback(async () => {
+  const handleTripTypesContinue = useCallback(async () => {
     void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-    const nameToSave = (selectedAuthMethod === 'email' ? emailName.trim() : guestName.trim()) || 'Traveler';
-    await setUserName(nameToSave);
-    console.log('[Onboarding] Name saved:', nameToSave);
+    await setTripTypes(selectedTripTypes);
+    animateTransition('companion');
+  }, [selectedTripTypes, setTripTypes, animateTransition]);
+
+  const handleCompanionContinue = useCallback(async () => {
+    void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    if (selectedCompanion) {
+      await setTravelCompanion(selectedCompanion);
+    }
+    animateTransition('personal');
+  }, [selectedCompanion, setTravelCompanion, animateTransition]);
+
+  const handlePersonalContinue = useCallback(async () => {
+    void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    const name = nameInput.trim() || 'Traveler';
+    const email = emailInput.trim();
+    await setUserName(name);
+    if (email) {
+      await setUserEmail(email);
+    }
+    console.log('[Onboarding] Personal info saved - name:', name, 'email:', email);
     animateTransition('permissions');
-  }, [guestName, emailName, selectedAuthMethod, setUserName, animateTransition]);
+  }, [nameInput, emailInput, setUserName, setUserEmail, animateTransition]);
 
   const requestLocationPermission = useCallback(async (): Promise<boolean> => {
     if (Platform.OS === 'web') {
@@ -210,7 +239,6 @@ export default function OnboardingScreen() {
       try {
         if (!('Notification' in window)) return false;
         const result = await Notification.requestPermission();
-        console.log('[Onboarding] Web notification permission:', result);
         return result === 'granted';
       } catch {
         return false;
@@ -241,375 +269,352 @@ export default function OnboardingScreen() {
       await setLocationEnabled(false);
       await setNotificationsEnabled(false);
       await setNotificationsPref(false);
-      console.log('[Onboarding] Permissions skipped');
     }
-    animateTransition('first-action');
+    animateTransition('ready');
   }, [animateTransition, requestLocationPermission, requestNotificationPermission, setLocationEnabled, setNotificationsEnabled, setNotificationsPref]);
 
-  const handleFinish = useCallback(async (action: 'create' | 'explore') => {
+  const handleFinish = useCallback(async (action: 'create' | 'explore' | 'ai') => {
     void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
 
-    const userName = useOnboardingStore.getState().userName || 'Traveler';
-    const userEmail = useOnboardingStore.getState().userEmail || '';
+    const userName = nameInput.trim() || 'Traveler';
+    const userEmail = emailInput.trim();
     await setProfile({ name: userName, email: userEmail });
     console.log('[Onboarding] Profile synced - name:', userName, 'email:', userEmail);
 
     await completeOnboarding();
     if (action === 'create') {
       router.replace('/');
-      setTimeout(() => {
-        router.push('/create-trip');
-      }, 300);
+      setTimeout(() => { router.push('/create-trip'); }, 300);
+    } else if (action === 'ai') {
+      router.replace('/');
+      setTimeout(() => { router.push('/(tabs)/concierge'); }, 300);
     } else {
       router.replace('/');
     }
-  }, [completeOnboarding, router, setProfile]);
+  }, [completeOnboarding, router, setProfile, nameInput, emailInput]);
 
-  const onViewableItemsChanged = useRef(({ viewableItems }: { viewableItems: ViewToken[] }) => {
-    if (viewableItems.length > 0 && viewableItems[0].index != null) {
-      setCarouselIndex(viewableItems[0].index);
-    }
-  }).current;
+  const currentStepIndex = getStepIndex(step);
+  const showProgress = step !== 'welcome' && step !== 'ready';
 
-  const viewabilityConfig = useRef({ viewAreaCoveragePercentThreshold: 50 }).current;
+  const renderProgressBar = () => {
+    if (!showProgress) return null;
+    const progressWidth = progressAnim.interpolate({
+      inputRange: [0, 1],
+      outputRange: ['0%', '100%'],
+    });
+    return (
+      <View style={styles.progressContainer}>
+        <View style={styles.progressTrack}>
+          <Animated.View style={[styles.progressFill, { width: progressWidth }]} />
+        </View>
+        <Text style={styles.progressLabel}>
+          {currentStepIndex} of {STEP_COUNT - 2}
+        </Text>
+      </View>
+    );
+  };
 
   const renderWelcome = () => (
     <View style={styles.stepContainer}>
-      <View style={styles.welcomeTop}>
-        <View style={styles.logoContainer}>
-          <View style={styles.logoCircle}>
-            <Compass size={40} color="#FFF" strokeWidth={1.5} />
+      <View style={styles.welcomeContent}>
+        <View style={styles.welcomeIconRow}>
+          <View style={styles.welcomeIconDot}>
+            <MapPin size={20} color="#0EA5E9" strokeWidth={2} />
+          </View>
+          <View style={[styles.welcomeIconDot, { backgroundColor: '#FEF3C7' }]}>
+            <Compass size={20} color="#D97706" strokeWidth={2} />
+          </View>
+          <View style={[styles.welcomeIconDot, { backgroundColor: '#DCFCE7' }]}>
+            <Map size={20} color="#16A34A" strokeWidth={2} />
           </View>
         </View>
-        <Text style={styles.logoTitle}>TripNest</Text>
-        <Text style={styles.logoTagline}>Your world, planned beautifully</Text>
+        <Text style={styles.welcomeHeadline}>Plan your next{'\n'}trip smarter</Text>
+        <Text style={styles.welcomeSubtext}>
+          Discover destinations, build itineraries,{'\n'}and plan with friends
+        </Text>
       </View>
       <View style={styles.welcomeBottom}>
         <Pressable
-          style={({ pressed }) => [
-            styles.primaryButton,
-            pressed && styles.buttonPressed,
-          ]}
-          onPress={handleContinueWelcome}
-          testID="onboarding-continue"
+          style={({ pressed }) => [styles.ctaButton, pressed && styles.ctaPressed]}
+          onPress={handleGetStarted}
+          testID="onboarding-get-started"
         >
-          <Text style={styles.primaryButtonText}>Continue</Text>
-          <ChevronRight size={20} color="#FFF" />
+          <Text style={styles.ctaText}>Get started</Text>
+          <ArrowRight size={20} color="#FFF" strokeWidth={2.5} />
         </Pressable>
       </View>
     </View>
   );
 
-  const renderCarouselItem = ({ item }: { item: typeof CAROUSEL_DATA[0] }) => {
-    const IconComponent = item.icon;
-    return (
-      <View style={[styles.carouselItem, { width: SCREEN_WIDTH }]}>
-        <View style={[styles.carouselIconWrap, { backgroundColor: item.accent }]}>
-          <IconComponent size={48} color="#FFF" strokeWidth={1.2} />
-        </View>
-        <Text style={styles.carouselTitle}>{item.title}</Text>
-        <Text style={styles.carouselDescription}>{item.description}</Text>
+  const renderUsage = () => (
+    <ScrollView style={styles.scrollStep} contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
+      <Text style={styles.stepTitle}>What are you using{'\n'}TripNest for?</Text>
+      <Text style={styles.stepSubtitle}>Select all that apply</Text>
+      <View style={styles.chipGrid}>
+        {USAGE_OPTIONS.map((option) => {
+          const selected = selectedUsage.includes(option.id);
+          const IconComp = option.icon;
+          return (
+            <Pressable
+              key={option.id}
+              style={[styles.usageChip, selected && styles.usageChipSelected]}
+              onPress={() => toggleUsage(option.id)}
+              testID={`onboarding-usage-${option.id}`}
+            >
+              <View style={[styles.usageChipIcon, selected && styles.usageChipIconSelected]}>
+                <IconComp size={18} color={selected ? '#FFF' : Colors.textSecondary} strokeWidth={2} />
+              </View>
+              <Text style={[styles.usageChipLabel, selected && styles.usageChipLabelSelected]}>
+                {option.label}
+              </Text>
+              {selected && (
+                <View style={styles.usageCheckmark}>
+                  <Check size={14} color="#0EA5E9" strokeWidth={3} />
+                </View>
+              )}
+            </Pressable>
+          );
+        })}
       </View>
-    );
-  };
+      <View style={styles.scrollBottom}>
+        <Pressable
+          style={({ pressed }) => [styles.ctaButton, pressed && styles.ctaPressed]}
+          onPress={handleUsageContinue}
+          testID="onboarding-usage-continue"
+        >
+          <Text style={styles.ctaText}>{selectedUsage.length > 0 ? 'Continue' : 'Skip for now'}</Text>
+          <ChevronRight size={20} color="#FFF" strokeWidth={2.5} />
+        </Pressable>
+        {selectedUsage.length === 0 && (
+          <Text style={styles.hintText}>Selecting options helps personalise your experience</Text>
+        )}
+      </View>
+    </ScrollView>
+  );
 
-  const renderCarousel = () => (
+  const renderTripTypes = () => (
+    <ScrollView style={styles.scrollStep} contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
+      <Text style={styles.stepTitle}>What kind of trips{'\n'}do you like?</Text>
+      <Text style={styles.stepSubtitle}>Pick your favourites</Text>
+      <View style={styles.tripTypeGrid}>
+        {TRIP_TYPE_OPTIONS.map((option) => {
+          const selected = selectedTripTypes.includes(option.id);
+          const IconComp = option.icon;
+          return (
+            <Pressable
+              key={option.id}
+              style={[styles.tripTypeCard, selected && { borderColor: option.color, borderWidth: 2 }]}
+              onPress={() => toggleTripType(option.id)}
+              testID={`onboarding-triptype-${option.id}`}
+            >
+              <View style={[styles.tripTypeIconWrap, { backgroundColor: option.color + '18' }]}>
+                <IconComp size={24} color={option.color} strokeWidth={1.8} />
+              </View>
+              <Text style={[styles.tripTypeLabel, selected && { color: option.color, fontWeight: '700' as const }]}>
+                {option.label}
+              </Text>
+              {selected && (
+                <View style={[styles.tripTypeCheck, { backgroundColor: option.color }]}>
+                  <Check size={12} color="#FFF" strokeWidth={3} />
+                </View>
+              )}
+            </Pressable>
+          );
+        })}
+      </View>
+      <View style={styles.scrollBottom}>
+        <Pressable
+          style={({ pressed }) => [styles.ctaButton, pressed && styles.ctaPressed]}
+          onPress={handleTripTypesContinue}
+          testID="onboarding-triptypes-continue"
+        >
+          <Text style={styles.ctaText}>{selectedTripTypes.length > 0 ? 'Continue' : 'Skip for now'}</Text>
+          <ChevronRight size={20} color="#FFF" strokeWidth={2.5} />
+        </Pressable>
+        {selectedTripTypes.length === 0 && (
+          <Text style={styles.hintText}>This helps us recommend better destinations</Text>
+        )}
+      </View>
+    </ScrollView>
+  );
+
+  const renderCompanion = () => (
     <View style={styles.stepContainer}>
-      <Pressable style={styles.skipButton} onPress={handleSkipCarousel} testID="onboarding-skip">
-        <Text style={styles.skipText}>Skip</Text>
-      </Pressable>
-
-      <View style={styles.carouselContainer}>
-        <FlatList
-          ref={flatListRef}
-          data={CAROUSEL_DATA}
-          renderItem={renderCarouselItem}
-          keyExtractor={(item) => item.id}
-          horizontal
-          pagingEnabled
-          showsHorizontalScrollIndicator={false}
-          onViewableItemsChanged={onViewableItemsChanged}
-          viewabilityConfig={viewabilityConfig}
-          bounces={false}
-        />
-      </View>
-
-      <View style={styles.carouselFooter}>
-        <View style={styles.dots}>
-          {CAROUSEL_DATA.map((_, i) => (
-            <View
-              key={i}
-              style={[
-                styles.dot,
-                i === carouselIndex && styles.dotActive,
-              ]}
-            />
-          ))}
+      <View style={styles.companionContent}>
+        <Text style={styles.stepTitle}>Who do you usually{'\n'}travel with?</Text>
+        <Text style={styles.stepSubtitle}>Pick one</Text>
+        <View style={styles.companionGrid}>
+          {COMPANION_OPTIONS.map((option) => {
+            const selected = selectedCompanion === option.id;
+            const IconComp = option.icon;
+            return (
+              <Pressable
+                key={option.id}
+                style={[styles.companionCard, selected && styles.companionCardSelected]}
+                onPress={() => selectCompanion(option.id)}
+                testID={`onboarding-companion-${option.id}`}
+              >
+                <View style={[styles.companionIconWrap, selected && styles.companionIconWrapSelected]}>
+                  <IconComp size={26} color={selected ? '#FFF' : Colors.textSecondary} strokeWidth={1.8} />
+                </View>
+                <Text style={[styles.companionLabel, selected && styles.companionLabelSelected]}>
+                  {option.label}
+                </Text>
+                <Text style={[styles.companionDesc, selected && styles.companionDescSelected]}>
+                  {option.desc}
+                </Text>
+              </Pressable>
+            );
+          })}
         </View>
-
+      </View>
+      <View style={styles.bottomActions}>
         <Pressable
-          style={({ pressed }) => [
-            styles.primaryButton,
-            pressed && styles.buttonPressed,
-          ]}
-          onPress={handleCarouselNext}
-          testID="onboarding-next"
+          style={({ pressed }) => [styles.ctaButton, pressed && styles.ctaPressed]}
+          onPress={handleCompanionContinue}
+          testID="onboarding-companion-continue"
         >
-          <Text style={styles.primaryButtonText}>
-            {carouselIndex === CAROUSEL_DATA.length - 1 ? 'Get Started' : 'Next'}
-          </Text>
-          <ChevronRight size={20} color="#FFF" />
+          <Text style={styles.ctaText}>{selectedCompanion ? 'Continue' : 'Skip for now'}</Text>
+          <ChevronRight size={20} color="#FFF" strokeWidth={2.5} />
         </Pressable>
       </View>
     </View>
   );
 
-  const renderAuth = () => (
-    <View style={styles.stepContainer}>
-      <View style={styles.authTop}>
-        <Text style={styles.authTitle}>Welcome aboard</Text>
-        <Text style={styles.authSubtitle}>Choose how you{"'"}d like to continue</Text>
-      </View>
-
-      <View style={styles.authButtons}>
-        <Pressable
-          style={({ pressed }) => [
-            styles.authButton,
-            pressed && styles.authButtonPressed,
-          ]}
-          onPress={() => handleAuthChoice('email')}
-          testID="onboarding-email"
-        >
-          <View style={styles.authButtonIcon}>
-            <Mail size={20} color={Colors.text} />
+  const renderPersonal = () => (
+    <KeyboardAvoidingView
+      style={styles.stepContainer}
+      behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+      keyboardVerticalOffset={20}
+    >
+      <ScrollView style={{ flex: 1 }} contentContainerStyle={styles.personalContent} showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled">
+        <View style={styles.personalHeader}>
+          <View style={styles.personalAvatar}>
+            <User size={32} color="#FFF" strokeWidth={1.8} />
           </View>
-          <Text style={styles.authButtonText}>Continue with Email</Text>
-        </Pressable>
-
-        <Pressable
-          style={({ pressed }) => [
-            styles.authButton,
-            pressed && styles.authButtonPressed,
-          ]}
-          onPress={() => handleAuthChoice('apple')}
-          testID="onboarding-apple"
-        >
-          <View style={styles.authButtonIcon}>
-            <Text style={styles.appleIcon}></Text>
-          </View>
-          <Text style={styles.authButtonText}>Continue with Apple</Text>
-        </Pressable>
-
-        <Pressable
-          style={({ pressed }) => [
-            styles.authButton,
-            pressed && styles.authButtonPressed,
-          ]}
-          onPress={() => handleAuthChoice('google')}
-          testID="onboarding-google"
-        >
-          <View style={styles.authButtonIcon}>
-            <Text style={styles.googleIcon}>G</Text>
-          </View>
-          <Text style={styles.authButtonText}>Continue with Google</Text>
-        </Pressable>
-
-        <View style={styles.divider}>
-          <View style={styles.dividerLine} />
-          <Text style={styles.dividerText}>or</Text>
-          <View style={styles.dividerLine} />
+          <Text style={styles.stepTitle}>Tell us about{'\n'}yourself</Text>
+          <Text style={styles.stepSubtitle}>So we can personalise your experience</Text>
         </View>
-
-        <Pressable
-          style={({ pressed }) => [
-            styles.guestButton,
-            pressed && styles.buttonPressed,
-          ]}
-          onPress={() => handleAuthChoice('guest')}
-          testID="onboarding-guest"
-        >
-          <User size={20} color="#FFF" />
-          <Text style={styles.guestButtonText}>Continue as Guest</Text>
-        </Pressable>
-      </View>
-    </View>
-  );
-
-  const renderEmailInput = () => (
-    <View style={styles.stepContainer}>
-      <View style={styles.guestNameTop}>
-        <View style={styles.guestAvatarCircle}>
-          <Mail size={32} color={Colors.textMuted} />
-        </View>
-        <Text style={styles.guestNameTitle}>Enter your email</Text>
-        <Text style={styles.guestNameSubtitle}>We{"'"}ll use this to identify your account</Text>
-      </View>
-
-      <View style={styles.guestNameMiddle}>
-        <TextInput
-          style={styles.nameInput}
-          placeholder="your@email.com"
-          placeholderTextColor={Colors.textMuted}
-          value={emailInput}
-          onChangeText={setEmailInput}
-          keyboardType="email-address"
-          autoCapitalize="none"
-          autoCorrect={false}
-          autoFocus
-          testID="onboarding-email-input"
-        />
-      </View>
-
-      <View style={styles.guestNameBottom}>
-        <Pressable
-          style={({ pressed }) => [
-            styles.primaryButton,
-            pressed && styles.buttonPressed,
-            !emailInput.trim() && styles.buttonDisabled,
-          ]}
-          onPress={handleEmailContinue}
-          testID="onboarding-email-continue"
-        >
-          <Text style={styles.primaryButtonText}>Continue</Text>
-          <ChevronRight size={20} color="#FFF" />
-        </Pressable>
-      </View>
-    </View>
-  );
-
-  const renderGuestName = () => {
-    const isEmailFlow = selectedAuthMethod === 'email';
-    const nameValue = isEmailFlow ? emailName : guestName;
-    const setNameValue = isEmailFlow ? setEmailName : setGuestName;
-
-    return (
-      <View style={styles.stepContainer}>
-        <View style={styles.guestNameTop}>
-          <View style={styles.guestAvatarCircle}>
-            <User size={32} color={Colors.textMuted} />
-          </View>
-          <Text style={styles.guestNameTitle}>What should we call you?</Text>
-          <Text style={styles.guestNameSubtitle}>This is optional — you can skip it</Text>
-        </View>
-
-        <View style={styles.guestNameMiddle}>
+        <View style={styles.inputGroup}>
+          <Text style={styles.inputLabel}>Your name</Text>
           <TextInput
-            style={styles.nameInput}
-            placeholder="Your name"
+            style={styles.textInput}
+            placeholder="What should we call you?"
             placeholderTextColor={Colors.textMuted}
-            value={nameValue}
-            onChangeText={setNameValue}
+            value={nameInput}
+            onChangeText={setNameInput}
             autoCapitalize="words"
-            autoFocus
             testID="onboarding-name-input"
           />
         </View>
-
-        <View style={styles.guestNameBottom}>
-          <Pressable
-            style={({ pressed }) => [
-              styles.primaryButton,
-              pressed && styles.buttonPressed,
-            ]}
-            onPress={handleGuestContinue}
-            testID="onboarding-guest-continue"
-          >
-            <Text style={styles.primaryButtonText}>Continue</Text>
-            <ChevronRight size={20} color="#FFF" />
-          </Pressable>
+        <View style={styles.inputGroup}>
+          <Text style={styles.inputLabel}>Email (optional)</Text>
+          <TextInput
+            style={styles.textInput}
+            placeholder="your@email.com"
+            placeholderTextColor={Colors.textMuted}
+            value={emailInput}
+            onChangeText={setEmailInput}
+            keyboardType="email-address"
+            autoCapitalize="none"
+            autoCorrect={false}
+            testID="onboarding-email-input"
+          />
         </View>
+      </ScrollView>
+      <View style={styles.bottomActions}>
+        <Pressable
+          style={({ pressed }) => [styles.ctaButton, pressed && styles.ctaPressed]}
+          onPress={handlePersonalContinue}
+          testID="onboarding-personal-continue"
+        >
+          <Text style={styles.ctaText}>Continue</Text>
+          <ChevronRight size={20} color="#FFF" strokeWidth={2.5} />
+        </Pressable>
       </View>
-    );
-  };
+    </KeyboardAvoidingView>
+  );
 
   const renderPermissions = () => (
     <View style={styles.stepContainer}>
-      <View style={styles.permissionsTop}>
-        <Text style={styles.permissionsTitle}>Stay in the loop</Text>
-        <Text style={styles.permissionsSubtitle}>
-          Enable permissions for a better experience
-        </Text>
-      </View>
-
-      <View style={styles.permissionCards}>
-        <View style={styles.permissionCard}>
-          <View style={styles.permissionIconWrap}>
-            <Navigation size={24} color={Colors.text} />
+      <View style={styles.permContent}>
+        <Text style={styles.stepTitle}>One more thing</Text>
+        <Text style={styles.stepSubtitle}>These help us make your experience better</Text>
+        <View style={styles.permCards}>
+          <View style={styles.permCard}>
+            <View style={[styles.permIconWrap, { backgroundColor: '#DBEAFE' }]}>
+              <Navigation size={22} color="#2563EB" strokeWidth={2} />
+            </View>
+            <View style={styles.permInfo}>
+              <Text style={styles.permName}>Location</Text>
+              <Text style={styles.permDesc}>Used for relevant destination suggestions</Text>
+            </View>
           </View>
-          <View style={styles.permissionInfo}>
-            <Text style={styles.permissionName}>Location</Text>
-            <Text style={styles.permissionDesc}>Nearby suggestions & trip tracking</Text>
-          </View>
-        </View>
-
-        <View style={styles.permissionCard}>
-          <View style={styles.permissionIconWrap}>
-            <Bell size={24} color={Colors.text} />
-          </View>
-          <View style={styles.permissionInfo}>
-            <Text style={styles.permissionName}>Notifications</Text>
-            <Text style={styles.permissionDesc}>Trip reminders & travel alerts</Text>
+          <View style={styles.permCard}>
+            <View style={[styles.permIconWrap, { backgroundColor: '#FEF3C7' }]}>
+              <Bell size={22} color="#D97706" strokeWidth={2} />
+            </View>
+            <View style={styles.permInfo}>
+              <Text style={styles.permName}>Notifications</Text>
+              <Text style={styles.permDesc}>Used for trip reminders and updates</Text>
+            </View>
           </View>
         </View>
       </View>
-
-      <View style={styles.permissionsBottom}>
+      <View style={styles.bottomActions}>
         <Pressable
-          style={({ pressed }) => [
-            styles.primaryButton,
-            pressed && styles.buttonPressed,
-          ]}
+          style={({ pressed }) => [styles.ctaButton, pressed && styles.ctaPressed]}
           onPress={() => handlePermissions('enable')}
           testID="onboarding-enable-permissions"
         >
-          <Text style={styles.primaryButtonText}>Enable</Text>
+          <Text style={styles.ctaText}>Allow permissions</Text>
         </Pressable>
         <Pressable
-          style={styles.textButton}
+          style={styles.skipBtn}
           onPress={() => handlePermissions('skip')}
           testID="onboarding-skip-permissions"
         >
-          <Text style={styles.textButtonLabel}>Not now</Text>
+          <Text style={styles.skipBtnText}>Maybe later</Text>
         </Pressable>
       </View>
     </View>
   );
 
-  const renderFirstAction = () => (
+  const renderReady = () => (
     <View style={styles.stepContainer}>
-      <View style={styles.firstActionTop}>
-        <View style={styles.firstActionIconWrap}>
-          <Compass size={56} color={Colors.text} strokeWidth={1} />
+      <View style={styles.readyContent}>
+        <View style={styles.readyBadge}>
+          <Sparkles size={32} color="#D97706" strokeWidth={1.8} />
         </View>
-        <Text style={styles.firstActionTitle}>Let{"'"}s plan your{'\n'}first adventure</Text>
-        <Text style={styles.firstActionSubtitle}>
-          Start by creating a trip or explore what the world has to offer
+        <Text style={styles.readyTitle}>You{"'"}re ready to go</Text>
+        <Text style={styles.readySubtext}>
+          {nameInput.trim() ? `Let's plan something amazing, ${nameInput.trim()}` : "Let's plan something amazing"}
         </Text>
       </View>
-
-      <View style={styles.firstActionBottom}>
+      <View style={styles.readyActions}>
         <Pressable
-          style={({ pressed }) => [
-            styles.primaryButton,
-            pressed && styles.buttonPressed,
-          ]}
+          style={({ pressed }) => [styles.ctaButton, pressed && styles.ctaPressed]}
           onPress={() => handleFinish('create')}
           testID="onboarding-create-trip"
         >
-          <Plus size={20} color="#FFF" />
-          <Text style={styles.primaryButtonText}>Create your first trip</Text>
+          <Plus size={20} color="#FFF" strokeWidth={2.5} />
+          <Text style={styles.ctaText}>Create my first trip</Text>
         </Pressable>
-
         <Pressable
-          style={({ pressed }) => [
-            styles.secondaryButton,
-            pressed && styles.secondaryButtonPressed,
-          ]}
+          style={({ pressed }) => [styles.outlineButton, pressed && styles.outlineButtonPressed]}
           onPress={() => handleFinish('explore')}
           testID="onboarding-explore"
         >
-          <Text style={styles.secondaryButtonText}>Explore destinations</Text>
-          <ArrowRight size={18} color={Colors.text} />
+          <Compass size={18} color={Colors.text} strokeWidth={2} />
+          <Text style={styles.outlineButtonText}>Explore destinations</Text>
+        </Pressable>
+        <Pressable
+          style={({ pressed }) => [styles.outlineButton, pressed && styles.outlineButtonPressed]}
+          onPress={() => handleFinish('ai')}
+          testID="onboarding-ai-itinerary"
+        >
+          <Wand2 size={18} color={Colors.text} strokeWidth={2} />
+          <Text style={styles.outlineButtonText}>Try AI itinerary</Text>
         </Pressable>
       </View>
     </View>
@@ -617,26 +622,20 @@ export default function OnboardingScreen() {
 
   const renderStep = () => {
     switch (step) {
-      case 'welcome':
-        return renderWelcome();
-      case 'carousel':
-        return renderCarousel();
-      case 'auth':
-        return renderAuth();
-      case 'email-input':
-        return renderEmailInput();
-      case 'guest-name':
-        return renderGuestName();
-      case 'permissions':
-        return renderPermissions();
-      case 'first-action':
-        return renderFirstAction();
+      case 'welcome': return renderWelcome();
+      case 'usage': return renderUsage();
+      case 'trip-types': return renderTripTypes();
+      case 'companion': return renderCompanion();
+      case 'personal': return renderPersonal();
+      case 'permissions': return renderPermissions();
+      case 'ready': return renderReady();
     }
   };
 
   return (
     <View style={styles.screen}>
       <SafeAreaView style={styles.safeArea}>
+        {renderProgressBar()}
         <Animated.View
           style={[
             styles.animatedWrap,
@@ -656,7 +655,7 @@ export default function OnboardingScreen() {
 const styles = StyleSheet.create({
   screen: {
     flex: 1,
-    backgroundColor: '#FAFAFA',
+    backgroundColor: '#FAFAF9',
   },
   safeArea: {
     flex: 1,
@@ -664,360 +663,399 @@ const styles = StyleSheet.create({
   animatedWrap: {
     flex: 1,
   },
+
+  progressContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 24,
+    paddingTop: 8,
+    paddingBottom: 4,
+    gap: 12,
+  },
+  progressTrack: {
+    flex: 1,
+    height: 4,
+    backgroundColor: '#E7E5E4',
+    borderRadius: 2,
+    overflow: 'hidden',
+  },
+  progressFill: {
+    height: '100%',
+    backgroundColor: '#1A1A1A',
+    borderRadius: 2,
+  },
+  progressLabel: {
+    fontSize: 13,
+    color: Colors.textMuted,
+    fontWeight: '500' as const,
+    minWidth: 32,
+    textAlign: 'right' as const,
+  },
+
   stepContainer: {
     flex: 1,
     paddingHorizontal: 24,
   },
+  scrollStep: {
+    flex: 1,
+    paddingHorizontal: 24,
+  },
+  scrollContent: {
+    paddingBottom: 40,
+  },
 
-  welcomeTop: {
+  stepTitle: {
+    fontSize: 32,
+    fontWeight: '800' as const,
+    color: '#1A1A1A',
+    letterSpacing: -0.8,
+    lineHeight: 40,
+    marginBottom: 8,
+  },
+  stepSubtitle: {
+    fontSize: 16,
+    color: Colors.textSecondary,
+    marginBottom: 28,
+    lineHeight: 22,
+  },
+
+  welcomeContent: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
   },
-  logoContainer: {
-    marginBottom: 24,
+  welcomeIconRow: {
+    flexDirection: 'row',
+    gap: 12,
+    marginBottom: 32,
   },
-  logoCircle: {
-    width: 88,
-    height: 88,
-    borderRadius: 28,
-    backgroundColor: '#1A1A1A',
+  welcomeIconDot: {
+    width: 48,
+    height: 48,
+    borderRadius: 16,
+    backgroundColor: '#DBEAFE',
     justifyContent: 'center',
     alignItems: 'center',
   },
-  logoTitle: {
-    fontSize: 36,
-    fontWeight: '700' as const,
-    color: Colors.text,
+  welcomeHeadline: {
+    fontSize: 38,
+    fontWeight: '800' as const,
+    color: '#1A1A1A',
     letterSpacing: -1,
-    marginBottom: 8,
+    lineHeight: 46,
+    textAlign: 'center' as const,
+    marginBottom: 16,
   },
-  logoTagline: {
-    fontSize: 16,
+  welcomeSubtext: {
+    fontSize: 17,
     color: Colors.textSecondary,
-    letterSpacing: 0.2,
+    textAlign: 'center' as const,
+    lineHeight: 26,
   },
   welcomeBottom: {
     paddingBottom: 24,
   },
 
-  primaryButton: {
+  ctaButton: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
     backgroundColor: '#1A1A1A',
-    paddingVertical: 16,
+    paddingVertical: 17,
     paddingHorizontal: 28,
     borderRadius: 16,
     gap: 8,
   },
-  buttonPressed: {
-    opacity: 0.85,
-    transform: [{ scale: 0.98 }],
+  ctaPressed: {
+    opacity: 0.88,
+    transform: [{ scale: 0.985 }],
   },
-  buttonDisabled: {
-    opacity: 0.5,
-  },
-  primaryButtonText: {
+  ctaText: {
     color: '#FFF',
     fontSize: 17,
     fontWeight: '600' as const,
     letterSpacing: 0.1,
   },
 
-  skipButton: {
-    position: 'absolute' as const,
-    top: 8,
-    right: 0,
-    zIndex: 10,
-    padding: 8,
-  },
-  skipText: {
-    fontSize: 16,
-    color: Colors.textSecondary,
-    fontWeight: '500' as const,
-  },
-
-  carouselContainer: {
-    flex: 1,
-    justifyContent: 'center',
-  },
-  carouselItem: {
-    justifyContent: 'center',
-    alignItems: 'center',
-    paddingHorizontal: 40,
-  },
-  carouselIconWrap: {
-    width: 100,
-    height: 100,
-    borderRadius: 32,
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginBottom: 40,
-  },
-  carouselTitle: {
-    fontSize: 28,
-    fontWeight: '700' as const,
-    color: Colors.text,
+  hintText: {
     textAlign: 'center' as const,
-    letterSpacing: -0.5,
-    marginBottom: 12,
-  },
-  carouselDescription: {
-    fontSize: 16,
-    color: Colors.textSecondary,
-    textAlign: 'center' as const,
-    lineHeight: 24,
-    maxWidth: 280,
-  },
-
-  carouselFooter: {
-    paddingBottom: 24,
-    gap: 24,
-  },
-  dots: {
-    flexDirection: 'row',
-    justifyContent: 'center',
-    gap: 8,
-  },
-  dot: {
-    width: 8,
-    height: 8,
-    borderRadius: 4,
-    backgroundColor: '#D9D9D9',
-  },
-  dotActive: {
-    backgroundColor: '#1A1A1A',
-    width: 24,
-  },
-
-  authTop: {
-    paddingTop: 48,
-    marginBottom: 40,
-  },
-  authTitle: {
-    fontSize: 30,
-    fontWeight: '700' as const,
-    color: Colors.text,
-    letterSpacing: -0.5,
-    marginBottom: 8,
-  },
-  authSubtitle: {
-    fontSize: 16,
-    color: Colors.textSecondary,
-  },
-  authButtons: {
-    gap: 12,
-  },
-  authButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: '#FFF',
-    paddingVertical: 16,
-    paddingHorizontal: 20,
-    borderRadius: 14,
-    borderWidth: 1,
-    borderColor: '#E8E8E8',
-    gap: 14,
-  },
-  authButtonPressed: {
-    backgroundColor: '#F5F5F5',
-  },
-  authButtonIcon: {
-    width: 24,
-    alignItems: 'center',
-  },
-  authButtonText: {
-    fontSize: 16,
-    fontWeight: '600' as const,
-    color: Colors.text,
-  },
-  appleIcon: {
-    fontSize: 20,
-    color: Colors.text,
-  },
-  googleIcon: {
-    fontSize: 18,
-    fontWeight: '700' as const,
-    color: '#4285F4',
-  },
-  divider: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginVertical: 8,
-    gap: 12,
-  },
-  dividerLine: {
-    flex: 1,
-    height: 1,
-    backgroundColor: '#E8E8E8',
-  },
-  dividerText: {
-    fontSize: 14,
+    fontSize: 13,
     color: Colors.textMuted,
-  },
-  guestButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: '#1A1A1A',
-    paddingVertical: 16,
-    paddingHorizontal: 28,
-    borderRadius: 14,
-    gap: 10,
-  },
-  guestButtonText: {
-    color: '#FFF',
-    fontSize: 16,
-    fontWeight: '600' as const,
+    marginTop: 12,
   },
 
-  guestNameTop: {
-    paddingTop: 48,
-    alignItems: 'center',
-    marginBottom: 32,
-  },
-  guestAvatarCircle: {
-    width: 72,
-    height: 72,
-    borderRadius: 36,
-    backgroundColor: '#F0F0F0',
-    justifyContent: 'center',
-    alignItems: 'center',
+  chipGrid: {
+    gap: 10,
     marginBottom: 24,
   },
-  guestNameTitle: {
-    fontSize: 26,
-    fontWeight: '700' as const,
-    color: Colors.text,
-    textAlign: 'center' as const,
-    letterSpacing: -0.3,
-    marginBottom: 8,
-  },
-  guestNameSubtitle: {
-    fontSize: 15,
-    color: Colors.textSecondary,
-    textAlign: 'center' as const,
-  },
-  guestNameMiddle: {
-    flex: 1,
-  },
-  nameInput: {
+  usageChip: {
+    flexDirection: 'row',
+    alignItems: 'center',
     backgroundColor: '#FFF',
-    borderWidth: 1.5,
-    borderColor: '#E0E0E0',
-    borderRadius: 14,
     paddingVertical: 16,
-    paddingHorizontal: 20,
-    fontSize: 18,
-    color: Colors.text,
-    fontWeight: '500' as const,
+    paddingHorizontal: 18,
+    borderRadius: 14,
+    borderWidth: 1.5,
+    borderColor: '#E7E5E4',
+    gap: 14,
   },
-  guestNameBottom: {
+  usageChipSelected: {
+    borderColor: '#0EA5E9',
+    backgroundColor: '#F0F9FF',
+  },
+  usageChipIcon: {
+    width: 36,
+    height: 36,
+    borderRadius: 10,
+    backgroundColor: '#F5F5F4',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  usageChipIconSelected: {
+    backgroundColor: '#0EA5E9',
+  },
+  usageChipLabel: {
+    flex: 1,
+    fontSize: 16,
+    fontWeight: '600' as const,
+    color: Colors.text,
+  },
+  usageChipLabelSelected: {
+    color: '#0369A1',
+  },
+  usageCheckmark: {
+    width: 24,
+    height: 24,
+    borderRadius: 12,
+    backgroundColor: '#E0F2FE',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+
+  tripTypeGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 12,
+    marginBottom: 24,
+  },
+  tripTypeCard: {
+    width: (SCREEN_WIDTH - 60) / 2,
+    backgroundColor: '#FFF',
+    borderRadius: 16,
+    paddingVertical: 20,
+    paddingHorizontal: 16,
+    alignItems: 'center',
+    borderWidth: 1.5,
+    borderColor: '#E7E5E4',
+    position: 'relative' as const,
+  },
+  tripTypeIconWrap: {
+    width: 52,
+    height: 52,
+    borderRadius: 16,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: 10,
+  },
+  tripTypeLabel: {
+    fontSize: 15,
+    fontWeight: '600' as const,
+    color: Colors.text,
+  },
+  tripTypeCheck: {
+    position: 'absolute' as const,
+    top: 10,
+    right: 10,
+    width: 22,
+    height: 22,
+    borderRadius: 11,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+
+  scrollBottom: {
+    paddingTop: 8,
     paddingBottom: 24,
   },
 
-  permissionsTop: {
-    paddingTop: 48,
-    marginBottom: 32,
+  companionContent: {
+    flex: 1,
+    paddingTop: 8,
   },
-  permissionsTitle: {
-    fontSize: 28,
+  companionGrid: {
+    gap: 12,
+  },
+  companionCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#FFF',
+    paddingVertical: 18,
+    paddingHorizontal: 18,
+    borderRadius: 16,
+    borderWidth: 1.5,
+    borderColor: '#E7E5E4',
+    gap: 16,
+  },
+  companionCardSelected: {
+    borderColor: '#1A1A1A',
+    backgroundColor: '#FAFAF9',
+  },
+  companionIconWrap: {
+    width: 48,
+    height: 48,
+    borderRadius: 14,
+    backgroundColor: '#F5F5F4',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  companionIconWrapSelected: {
+    backgroundColor: '#1A1A1A',
+  },
+  companionLabel: {
+    fontSize: 17,
     fontWeight: '700' as const,
     color: Colors.text,
-    letterSpacing: -0.5,
-    marginBottom: 8,
   },
-  permissionsSubtitle: {
-    fontSize: 16,
+  companionLabelSelected: {
+    color: '#1A1A1A',
+  },
+  companionDesc: {
+    fontSize: 13,
+    color: Colors.textMuted,
+    position: 'absolute' as const,
+    right: 18,
+  },
+  companionDescSelected: {
     color: Colors.textSecondary,
-    lineHeight: 22,
   },
-  permissionCards: {
+
+  bottomActions: {
+    paddingBottom: 24,
     gap: 12,
-    marginBottom: 'auto' as const,
   },
-  permissionCard: {
+
+  personalContent: {
+    paddingTop: 8,
+    paddingBottom: 40,
+  },
+  personalHeader: {
+    alignItems: 'center',
+    marginBottom: 32,
+  },
+  personalAvatar: {
+    width: 72,
+    height: 72,
+    borderRadius: 24,
+    backgroundColor: '#1A1A1A',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: 20,
+  },
+  inputGroup: {
+    marginBottom: 20,
+  },
+  inputLabel: {
+    fontSize: 14,
+    fontWeight: '600' as const,
+    color: Colors.textSecondary,
+    marginBottom: 8,
+    letterSpacing: 0.2,
+  },
+  textInput: {
+    backgroundColor: '#FFF',
+    borderWidth: 1.5,
+    borderColor: '#E7E5E4',
+    borderRadius: 14,
+    paddingVertical: 16,
+    paddingHorizontal: 18,
+    fontSize: 17,
+    color: Colors.text,
+    fontWeight: '500' as const,
+  },
+
+  permContent: {
+    flex: 1,
+    paddingTop: 8,
+  },
+  permCards: {
+    gap: 14,
+  },
+  permCard: {
     flexDirection: 'row',
     alignItems: 'center',
     backgroundColor: '#FFF',
     paddingVertical: 20,
-    paddingHorizontal: 20,
+    paddingHorizontal: 18,
     borderRadius: 16,
     gap: 16,
     borderWidth: 1,
-    borderColor: '#EFEFEF',
+    borderColor: '#F0EFED',
   },
-  permissionIconWrap: {
+  permIconWrap: {
     width: 48,
     height: 48,
     borderRadius: 14,
-    backgroundColor: '#F5F5F5',
     justifyContent: 'center',
     alignItems: 'center',
   },
-  permissionInfo: {
+  permInfo: {
     flex: 1,
   },
-  permissionName: {
+  permName: {
     fontSize: 17,
     fontWeight: '600' as const,
     color: Colors.text,
     marginBottom: 3,
   },
-  permissionDesc: {
+  permDesc: {
     fontSize: 14,
     color: Colors.textSecondary,
+    lineHeight: 20,
   },
-  permissionsBottom: {
-    paddingBottom: 24,
-    gap: 12,
-  },
-  textButton: {
+
+  skipBtn: {
     alignItems: 'center',
-    paddingVertical: 12,
+    paddingVertical: 14,
   },
-  textButtonLabel: {
+  skipBtnText: {
     fontSize: 16,
     color: Colors.textSecondary,
     fontWeight: '500' as const,
   },
 
-  firstActionTop: {
+  readyContent: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
   },
-  firstActionIconWrap: {
-    width: 100,
-    height: 100,
-    borderRadius: 50,
-    backgroundColor: '#F0F0F0',
+  readyBadge: {
+    width: 80,
+    height: 80,
+    borderRadius: 24,
+    backgroundColor: '#FEF3C7',
     justifyContent: 'center',
     alignItems: 'center',
-    marginBottom: 32,
+    marginBottom: 28,
   },
-  firstActionTitle: {
-    fontSize: 30,
-    fontWeight: '700' as const,
-    color: Colors.text,
-    textAlign: 'center' as const,
-    letterSpacing: -0.5,
-    lineHeight: 38,
+  readyTitle: {
+    fontSize: 34,
+    fontWeight: '800' as const,
+    color: '#1A1A1A',
+    letterSpacing: -0.8,
     marginBottom: 12,
+    textAlign: 'center' as const,
   },
-  firstActionSubtitle: {
-    fontSize: 16,
+  readySubtext: {
+    fontSize: 17,
     color: Colors.textSecondary,
     textAlign: 'center' as const,
-    lineHeight: 22,
-    maxWidth: 280,
+    lineHeight: 24,
   },
-  firstActionBottom: {
+  readyActions: {
     paddingBottom: 24,
-    gap: 12,
+    gap: 10,
   },
-  secondaryButton: {
+  outlineButton: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
@@ -1026,14 +1064,14 @@ const styles = StyleSheet.create({
     paddingHorizontal: 28,
     borderRadius: 16,
     borderWidth: 1.5,
-    borderColor: '#E0E0E0',
+    borderColor: '#E7E5E4',
     gap: 8,
   },
-  secondaryButtonPressed: {
-    backgroundColor: '#F5F5F5',
+  outlineButtonPressed: {
+    backgroundColor: '#F5F5F4',
   },
-  secondaryButtonText: {
-    fontSize: 17,
+  outlineButtonText: {
+    fontSize: 16,
     fontWeight: '600' as const,
     color: Colors.text,
   },
