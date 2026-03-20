@@ -439,36 +439,34 @@ export default function OnboardingScreen() {
   );
 
   const renderCompanion = () => (
-    <View style={styles.stepContainer}>
-      <View style={styles.companionContent}>
-        <Text style={styles.stepTitle}>Who do you usually{'\n'}travel with?</Text>
-        <Text style={styles.stepSubtitle}>Pick one</Text>
-        <View style={styles.companionGrid}>
-          {COMPANION_OPTIONS.map((option) => {
-            const selected = selectedCompanion === option.id;
-            const IconComp = option.icon;
-            return (
-              <Pressable
-                key={option.id}
-                style={[styles.companionCard, selected && styles.companionCardSelected]}
-                onPress={() => selectCompanion(option.id)}
-                testID={`onboarding-companion-${option.id}`}
-              >
-                <View style={[styles.companionIconWrap, selected && styles.companionIconWrapSelected]}>
-                  <IconComp size={26} color={selected ? '#FFF' : Colors.textSecondary} strokeWidth={1.8} />
-                </View>
-                <Text style={[styles.companionLabel, selected && styles.companionLabelSelected]}>
-                  {option.label}
-                </Text>
-                <Text style={[styles.companionDesc, selected && styles.companionDescSelected]}>
-                  {option.desc}
-                </Text>
-              </Pressable>
-            );
-          })}
-        </View>
+    <ScrollView style={styles.scrollStep} contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
+      <Text style={styles.stepTitle}>Who do you usually{'\n'}travel with?</Text>
+      <Text style={styles.stepSubtitle}>Pick one</Text>
+      <View style={styles.companionGrid}>
+        {COMPANION_OPTIONS.map((option) => {
+          const selected = selectedCompanion === option.id;
+          const IconComp = option.icon;
+          return (
+            <Pressable
+              key={option.id}
+              style={[styles.companionCard, selected && styles.companionCardSelected]}
+              onPress={() => selectCompanion(option.id)}
+              testID={`onboarding-companion-${option.id}`}
+            >
+              <View style={[styles.companionIconWrap, selected && styles.companionIconWrapSelected]}>
+                <IconComp size={26} color={selected ? '#FFF' : Colors.textSecondary} strokeWidth={1.8} />
+              </View>
+              <Text style={[styles.companionLabel, selected && styles.companionLabelSelected]}>
+                {option.label}
+              </Text>
+              <Text style={[styles.companionDesc, selected && styles.companionDescSelected]}>
+                {option.desc}
+              </Text>
+            </Pressable>
+          );
+        })}
       </View>
-      <View style={styles.bottomActions}>
+      <View style={styles.scrollBottom}>
         <Pressable
           style={({ pressed }) => [styles.ctaButton, pressed && styles.ctaPressed]}
           onPress={handleCompanionContinue}
@@ -478,7 +476,7 @@ export default function OnboardingScreen() {
           <ChevronRight size={20} color="#FFF" strokeWidth={2.5} />
         </Pressable>
       </View>
-    </View>
+    </ScrollView>
   );
 
   const renderPersonal = () => (
@@ -971,6 +969,7 @@ const styles = StyleSheet.create({
     fontSize: 17,
     color: Colors.text,
     fontWeight: '500' as const,
+    ...Platform.select({ web: { outlineStyle: 'none' as any } }),
   },
 
   permContent: {

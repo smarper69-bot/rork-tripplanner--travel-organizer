@@ -22,8 +22,12 @@ import {
   Plane,
   Moon,
   Image,
+  Map,
+  Compass,
+  Plus,
 } from 'lucide-react-native';
 import { Image as RNImage } from 'react-native';
+import { useRouter } from 'expo-router';
 import { openComingSoon } from '@/utils/comingSoon';
 import { useThemeColors, useIsDark } from '@/hooks/useThemeColors';
 import { ThemeColors } from '@/constants/themes';
@@ -36,12 +40,16 @@ import {
   SVG_HEIGHT,
   TOTAL_COUNTRIES_WORLD,
   COUNTRY_NAME_TO_CODE,
+  CONTINENT_MAP,
 } from '@/constants/countryPaths';
 
 const { width } = Dimensions.get('window');
 const MAP_CARD_WIDTH = width - 40;
 const MAP_SVG_WIDTH = MAP_CARD_WIDTH - 24;
 const MAP_SVG_HEIGHT = MAP_SVG_WIDTH * 0.5;
+
+const VISITED_COLOR = '#34D399';
+const VISITED_GLOW = 'rgba(52, 211, 153, 0.25)';
 
 interface CountryGroup {
   country: string;
@@ -163,11 +171,10 @@ function TripMemoryModal({
 function WorldMapSvg({
   visitedCodes,
   onCountryPress,
-  isDark,
 }: {
   visitedCodes: string[];
   onCountryPress?: (code: string) => void;
-  isDark: boolean;
+  isDark?: boolean;
 }) {
   const visitedSet = useMemo(() => new Set(visitedCodes), [visitedCodes]);
 
@@ -175,11 +182,6 @@ function WorldMapSvg({
     () => CITY_MARKERS.filter((dot) => visitedSet.has(dot.code)),
     [visitedSet],
   );
-
-  const visitedFill = isDark ? '#ffffff' : '#ffffff';
-  const unvisitedFill = isDark ? '#2a2a2a' : '#2a2a2a';
-  const borderColor = isDark ? '#444444' : '#444444';
-  const dotColor = '#ffffff';
 
   return (
     <View style={staticStyles.svgContainer}>
@@ -197,9 +199,9 @@ function WorldMapSvg({
             <Path
               key={country.id}
               d={country.d}
-              fill={visited ? visitedFill : unvisitedFill}
-              stroke={borderColor}
-              strokeWidth={0.8}
+              fill={visited ? VISITED_COLOR : '#1e1e1e'}
+              stroke={visited ? '#2dd4a0' : '#333333'}
+              strokeWidth={visited ? 1.2 : 0.6}
               strokeLinejoin="round"
               onPress={
                 visited && onCountryPress
@@ -212,13 +214,13 @@ function WorldMapSvg({
 
         {activeDots.map((dot) => (
           <G key={`${dot.code}-${dot.label}`}>
-            <Circle cx={dot.x} cy={dot.y} r={8} fill="rgba(255,255,255,0.15)" />
-            <Circle cx={dot.x} cy={dot.y} r={4} fill={dotColor} />
+            <Circle cx={dot.x} cy={dot.y} r={10} fill={VISITED_GLOW} />
+            <Circle cx={dot.x} cy={dot.y} r={4} fill="#ffffff" />
             <SvgText
               x={dot.x + 12}
               y={dot.y + 4}
-              fill="rgba(255,255,255,0.8)"
-              fontSize={14}
+              fill="rgba(255,255,255,0.85)"
+              fontSize={13}
               fontWeight="600"
             >
               {dot.label}
@@ -232,9 +234,14 @@ function WorldMapSvg({
 
 function getCountryCode(countryName: string): string {
   if (COUNTRY_NAME_TO_CODE[countryName]) return COUNTRY_NAME_TO_CODE[countryName];
-  for (const cp of COUNTRY_PATHS) {
-    if (cp.name.toLowerCase() === countryName.toLowerCase()) return cp.id;
+  const lower = countryName.toLowerCase();
+  for (const [name, code] of Object.entries(COUNTRY_NAME_TO_CODE)) {
+    if (name.toLowerCase() === lower) return code;
   }
+  for (const cp of COUNTRY_PATHS) {
+    if (cp.name.toLowerCase() === lower) return cp.id;
+  }
+  console.log('[Globe] Could not resolve country code for:', countryName);
   return '';
 }
 
@@ -245,9 +252,19 @@ function calculateNights(startDate: string, endDate: string): number {
   return Math.max(diff, 0);
 }
 
+function getContinentsVisited(codes: string[]): string[] {
+  const continents = new Set<string>();
+  for (const code of codes) {
+    const continent = CONTINENT_MAP[code];
+    if (continent) continents.add(continent);
+  }
+  return Array.from(continents).sort();
+}
+
 export default function GlobeScreen() {
   const colors = useThemeColors();
   const isDark = useIsDark();
+  const router = useRouter();
   const [expandedCountry, setExpandedCountry] = useState<string | null>(null);
   const [selectedDetail, setSelectedDetail] = useState<PlaceDetail | null>(null);
   const [modalVisible, setModalVisible] = useState(false);
@@ -257,32 +274,34 @@ export default function GlobeScreen() {
   const trips = useTripsStore((s) => s.trips);
   const storedMemories = useTripsStore((s) => s.memories);
 
-  const allTrips = trips;
-
-  const countryGroups = useMemo(() => {
-    const map = new Map<string, CountryGroup>();
-    for (const trip of allTrips) {
+  const countryGroups: CountryGroup[] = useMemo(() => {
+    const map: Record<string, CountryGroup> = {};
+    for (const trip of trips) {
       const country = trip.country || trip.destination;
       if (!country) continue;
       const nights = calculateNights(trip.startDate, trip.endDate);
-      const existing = map.get(country);
+      const code = getCountryCode(country);
+      const existing = map[country];
       const tripData = { id: trip.id, name: trip.name, destination: trip.destination, startDate: trip.startDate, endDate: trip.endDate, nights };
       if (existing) {
         existing.trips.push(tripData);
         existing.totalTrips += 1;
         existing.totalNights += nights;
+        if (!existing.countryCode && code) {
+          existing.countryCode = code;
+        }
       } else {
-        map.set(country, {
+        map[country] = {
           country,
-          countryCode: getCountryCode(country),
+          countryCode: code,
           trips: [tripData],
           totalTrips: 1,
           totalNights: nights,
-        });
+        };
       }
     }
-    return Array.from(map.values()).sort((a, b) => a.country.localeCompare(b.country));
-  }, [allTrips]);
+    return Object.values(map).sort((a, b) => a.country.localeCompare(b.country));
+  }, [trips]);
 
   const visitedCountries = useMemo(
     () => countryGroups.map((g) => g.country),
@@ -293,23 +312,32 @@ export default function GlobeScreen() {
     [countryGroups],
   );
 
+  const continentsVisited = useMemo(
+    () => getContinentsVisited(visitedCodes),
+    [visitedCodes],
+  );
+
   const codeToCountryName = useMemo(() => {
-    const map = new Map<string, string>();
+    const result: Record<string, string> = {};
     for (const group of countryGroups) {
-      if (group.countryCode) map.set(group.countryCode, group.country);
+      if (group.countryCode) result[group.countryCode] = group.country;
     }
-    return map;
+    return result;
   }, [countryGroups]);
 
   const totalNightsTraveled = useMemo(
-    () => allTrips.reduce((sum, t) => {
+    () => trips.reduce((sum, t) => {
       if (!t.startDate || !t.endDate) return sum;
       return sum + calculateNights(t.startDate, t.endDate);
     }, 0),
-    [allTrips],
+    [trips],
   );
 
-  const worldPercent = Math.floor((visitedCountries.length / TOTAL_COUNTRIES_WORLD) * 100);
+  const worldPercent = visitedCountries.length > 0
+    ? Math.max(1, Math.floor((visitedCountries.length / TOTAL_COUNTRIES_WORLD) * 100))
+    : 0;
+
+  const hasTrips = trips.length > 0;
 
   const expandAndScrollToCountry = useCallback((countryName: string) => {
     setExpandedCountry(countryName);
@@ -323,7 +351,7 @@ export default function GlobeScreen() {
 
   const handleCountryPress = useCallback(
     (code: string) => {
-      const name = codeToCountryName.get(code);
+      const name = codeToCountryName[code];
       if (name) {
         expandAndScrollToCountry(name);
       }
@@ -399,139 +427,198 @@ export default function GlobeScreen() {
         <View style={staticStyles.mapCard}>
           <WorldMapSvg visitedCodes={visitedCodes} onCountryPress={handleCountryPress} isDark={isDark} />
 
-          <ScrollView
-            horizontal
-            showsHorizontalScrollIndicator={false}
-            contentContainerStyle={staticStyles.chipsRow}
-          >
-            {visitedCountries.map((c) => (
-              <TouchableOpacity
-                key={c}
-                style={staticStyles.countryChip}
-                activeOpacity={0.7}
-                onPress={() => handleChipPress(c)}
-              >
-                <Text style={staticStyles.countryChipText}>{c}</Text>
-              </TouchableOpacity>
-            ))}
-          </ScrollView>
-        </View>
-
-        <View style={[s.inTotalCard]}>
-          <Text style={[staticStyles.inTotalHeaderText, { color: colors.textMuted }]}>In Total</Text>
-          <View style={staticStyles.inTotalRow}>
-            <View style={staticStyles.inTotalItem}>
-              <Text style={[staticStyles.inTotalBigNumber, { color: colors.text }]}>{worldPercent}%</Text>
-              <Text style={[staticStyles.inTotalSmallLabel, { color: colors.textSecondary }]}>of the world</Text>
-            </View>
-            <View style={[staticStyles.inTotalDivider, { backgroundColor: colors.borderLight }]} />
-            <View style={staticStyles.inTotalItem}>
-              <Text style={[staticStyles.inTotalBigNumber, { color: colors.text }]}>{visitedCountries.length}</Text>
-              <Text style={[staticStyles.inTotalSmallLabel, { color: colors.textSecondary }]}>countries</Text>
-            </View>
-          </View>
-          <Text style={[staticStyles.inTotalFootnote, { color: colors.textMuted }]}>Out of {TOTAL_COUNTRIES_WORLD} UN Countries</Text>
-        </View>
-
-        <View style={staticStyles.statsSection}>
-          <Text style={[staticStyles.sectionTitleText, { color: colors.text }]}>Travel Stats</Text>
-          <View style={staticStyles.statsGrid}>
-            {[
-              { value: visitedCountries.length, label: 'Countries' },
-              { value: allTrips.length, label: 'Trips' },
-              { value: totalNightsTraveled, label: 'Nights' },
-            ].map((stat) => (
-              <View key={stat.label} style={[s.statCard]}>
-                <Text style={[staticStyles.statValueText, { color: colors.text }]}>{stat.value}</Text>
-                <Text style={[staticStyles.statLabelText, { color: colors.textSecondary }]}>{stat.label}</Text>
-              </View>
-            ))}
-          </View>
-        </View>
-
-        <View style={staticStyles.memoriesSection}>
-          <Text style={[staticStyles.sectionTitleText, { color: colors.text }]}>Memories</Text>
-
-          {countryGroups.length === 0 && (
-            <View style={staticStyles.emptyMemories}>
-              <Plane size={32} color={colors.textMuted} />
-              <Text style={[staticStyles.emptyMemoriesText, { color: colors.textMuted }]}>Complete a trip to see your memories here</Text>
+          {visitedCountries.length > 0 ? (
+            <ScrollView
+              horizontal
+              showsHorizontalScrollIndicator={false}
+              contentContainerStyle={staticStyles.chipsRow}
+            >
+              {visitedCountries.map((c) => (
+                <TouchableOpacity
+                  key={c}
+                  style={staticStyles.countryChip}
+                  activeOpacity={0.7}
+                  onPress={() => handleChipPress(c)}
+                >
+                  <Text style={staticStyles.countryChipText}>{c}</Text>
+                </TouchableOpacity>
+              ))}
+            </ScrollView>
+          ) : (
+            <View style={staticStyles.mapEmptyHint}>
+              <Text style={staticStyles.mapEmptyHintText}>Your visited countries will light up here</Text>
             </View>
           )}
-
-          {countryGroups.map((group) => {
-            const isExpanded = expandedCountry === group.country;
-            const memories = isExpanded ? buildTripMemories(group) : [];
-
-            return (
-              <View
-                key={group.country}
-                style={[s.countryAccordion]}
-                onLayout={(e) => {
-                  countryLayoutsRef.current[group.country] = e.nativeEvent.layout.y;
-                }}
-              >
-                <TouchableOpacity
-                  style={staticStyles.countryRow}
-                  activeOpacity={0.7}
-                  onPress={() => toggleCountry(group.country)}
-                >
-                  <View style={[staticStyles.countryFlag, { backgroundColor: colors.text }]}>
-                    <MapPin size={16} color={colors.background} />
-                  </View>
-                  <View style={staticStyles.countryInfo}>
-                    <Text style={[staticStyles.countryNameText, { color: colors.text }]}>{group.country}</Text>
-                    <Text style={[staticStyles.countryMeta, { color: colors.textSecondary }]}>
-                      {group.totalTrips} {group.totalTrips === 1 ? 'trip' : 'trips'} · {group.totalNights} nights
-                    </Text>
-                  </View>
-
-                  {isExpanded ? (
-                    <ChevronDown size={20} color={colors.textMuted} />
-                  ) : (
-                    <ChevronRight size={20} color={colors.textMuted} />
-                  )}
-                </TouchableOpacity>
-
-                {isExpanded && (
-                  <View style={[staticStyles.tripsList, { borderTopColor: colors.borderLight }]}>
-                    {memories.map((memory) => (
-                      <TouchableOpacity
-                        key={memory.id}
-                        style={[staticStyles.tripMemoryCard, { borderBottomColor: colors.borderLight }]}
-                        activeOpacity={0.7}
-                        onPress={() => openTripMemory(memory)}
-                      >
-                        <View style={staticStyles.tripMemoryLeft}>
-                          <View style={[staticStyles.tripIconCircle, { backgroundColor: colors.surfaceElevated }]}>
-                            <Plane size={14} color={colors.text} />
-                          </View>
-                          <View style={staticStyles.tripMemoryInfo}>
-                            <Text style={[staticStyles.tripMemoryTitle, { color: colors.text }]}>{memory.name}</Text>
-                            <Text style={[staticStyles.tripMemoryCity, { color: colors.textSecondary }]}>{memory.city}</Text>
-                            <Text style={[staticStyles.tripMemoryDates, { color: colors.textMuted }]}>
-                              {formatDateRange(memory.startDate, memory.endDate)}
-                            </Text>
-                          </View>
-                        </View>
-                        <View style={staticStyles.tripMemoryRight}>
-                          {memory.memoryThumbnails.length > 0 && (
-                            <View style={staticStyles.miniPhotoRow}>
-                              {memory.memoryThumbnails.map((uri, i) => (
-                                <RNImage key={i} source={{ uri }} style={staticStyles.miniPhotoImage} />
-                              ))}
-                            </View>
-                          )}
-                          <ChevronRight size={16} color={colors.textMuted} />
-                        </View>
-                      </TouchableOpacity>
-                    ))}
-                  </View>
-                )}
-              </View>
-            );
-          })}
         </View>
+
+        {hasTrips ? (
+          <>
+            <View style={[s.inTotalCard]}>
+              <Text style={[staticStyles.inTotalHeaderText, { color: colors.textMuted }]}>In Total</Text>
+              <View style={staticStyles.inTotalRow}>
+                <View style={staticStyles.inTotalItem}>
+                  <Text style={[staticStyles.inTotalBigNumber, { color: colors.text }]}>{worldPercent}%</Text>
+                  <Text style={[staticStyles.inTotalSmallLabel, { color: colors.textSecondary }]}>of the world</Text>
+                </View>
+                <View style={[staticStyles.inTotalDivider, { backgroundColor: colors.borderLight }]} />
+                <View style={staticStyles.inTotalItem}>
+                  <Text style={[staticStyles.inTotalBigNumber, { color: colors.text }]}>{visitedCountries.length}</Text>
+                  <Text style={[staticStyles.inTotalSmallLabel, { color: colors.textSecondary }]}>
+                    {visitedCountries.length === 1 ? 'country' : 'countries'}
+                  </Text>
+                </View>
+              </View>
+              <Text style={[staticStyles.inTotalFootnote, { color: colors.textMuted }]}>Out of {TOTAL_COUNTRIES_WORLD} UN Countries</Text>
+            </View>
+
+            <View style={staticStyles.statsSection}>
+              <Text style={[staticStyles.sectionTitleText, { color: colors.text }]}>Travel Stats</Text>
+              <View style={staticStyles.statsGrid}>
+                {[
+                  { value: visitedCountries.length, label: 'Countries', icon: MapPin },
+                  { value: trips.length, label: 'Trips', icon: Plane },
+                  { value: totalNightsTraveled, label: 'Nights', icon: Moon },
+                  { value: continentsVisited.length, label: 'Continents', icon: Compass },
+                ].map((stat) => {
+                  const StatIcon = stat.icon;
+                  return (
+                    <View key={stat.label} style={[s.statCard]}>
+                      <StatIcon size={16} color={VISITED_COLOR} strokeWidth={2} />
+                      <Text style={[staticStyles.statValueText, { color: colors.text }]}>{stat.value}</Text>
+                      <Text style={[staticStyles.statLabelText, { color: colors.textSecondary }]}>{stat.label}</Text>
+                    </View>
+                  );
+                })}
+              </View>
+            </View>
+
+            {continentsVisited.length > 0 && (
+              <View style={staticStyles.continentsSection}>
+                <Text style={[staticStyles.sectionTitleText, { color: colors.text }]}>Continents Explored</Text>
+                <ScrollView
+                  horizontal
+                  showsHorizontalScrollIndicator={false}
+                  contentContainerStyle={staticStyles.continentsRow}
+                >
+                  {continentsVisited.map((continent) => (
+                    <View key={continent} style={[s.continentChip]}>
+                      <Map size={14} color={VISITED_COLOR} strokeWidth={2} />
+                      <Text style={[staticStyles.continentChipText, { color: colors.text }]}>{continent}</Text>
+                    </View>
+                  ))}
+                </ScrollView>
+              </View>
+            )}
+
+            <View style={staticStyles.memoriesSection}>
+              <Text style={[staticStyles.sectionTitleText, { color: colors.text }]}>Visited Countries</Text>
+
+              {countryGroups.length === 0 && (
+                <View style={staticStyles.emptyMemories}>
+                  <Plane size={32} color={colors.textMuted} />
+                  <Text style={[staticStyles.emptyMemoriesText, { color: colors.textMuted }]}>
+                    Add a country to your trips to see them here
+                  </Text>
+                </View>
+              )}
+
+              {countryGroups.map((group) => {
+                const isExpanded = expandedCountry === group.country;
+                const memories = isExpanded ? buildTripMemories(group) : [];
+
+                return (
+                  <View
+                    key={group.country}
+                    style={[s.countryAccordion]}
+                    onLayout={(e) => {
+                      countryLayoutsRef.current[group.country] = e.nativeEvent.layout.y;
+                    }}
+                  >
+                    <TouchableOpacity
+                      style={staticStyles.countryRow}
+                      activeOpacity={0.7}
+                      onPress={() => toggleCountry(group.country)}
+                    >
+                      <View style={staticStyles.countryFlag}>
+                        <MapPin size={16} color="#fff" />
+                      </View>
+                      <View style={staticStyles.countryInfo}>
+                        <Text style={[staticStyles.countryNameText, { color: colors.text }]}>{group.country}</Text>
+                        <Text style={[staticStyles.countryMeta, { color: colors.textSecondary }]}>
+                          {group.totalTrips} {group.totalTrips === 1 ? 'trip' : 'trips'} · {group.totalNights} nights
+                        </Text>
+                      </View>
+
+                      {isExpanded ? (
+                        <ChevronDown size={20} color={colors.textMuted} />
+                      ) : (
+                        <ChevronRight size={20} color={colors.textMuted} />
+                      )}
+                    </TouchableOpacity>
+
+                    {isExpanded && (
+                      <View style={[staticStyles.tripsList, { borderTopColor: colors.borderLight }]}>
+                        {memories.map((memory) => (
+                          <TouchableOpacity
+                            key={memory.id}
+                            style={[staticStyles.tripMemoryCard, { borderBottomColor: colors.borderLight }]}
+                            activeOpacity={0.7}
+                            onPress={() => openTripMemory(memory)}
+                          >
+                            <View style={staticStyles.tripMemoryLeft}>
+                              <View style={[staticStyles.tripIconCircle, { backgroundColor: colors.surfaceElevated }]}>
+                                <Plane size={14} color={colors.text} />
+                              </View>
+                              <View style={staticStyles.tripMemoryInfo}>
+                                <Text style={[staticStyles.tripMemoryTitle, { color: colors.text }]}>{memory.name}</Text>
+                                <Text style={[staticStyles.tripMemoryCity, { color: colors.textSecondary }]}>{memory.city}</Text>
+                                <Text style={[staticStyles.tripMemoryDates, { color: colors.textMuted }]}>
+                                  {formatDateRange(memory.startDate, memory.endDate)}
+                                </Text>
+                              </View>
+                            </View>
+                            <View style={staticStyles.tripMemoryRight}>
+                              {memory.memoryThumbnails.length > 0 && (
+                                <View style={staticStyles.miniPhotoRow}>
+                                  {memory.memoryThumbnails.map((uri, i) => (
+                                    <RNImage key={i} source={{ uri }} style={staticStyles.miniPhotoImage} />
+                                  ))}
+                                </View>
+                              )}
+                              <ChevronRight size={16} color={colors.textMuted} />
+                            </View>
+                          </TouchableOpacity>
+                        ))}
+                      </View>
+                    )}
+                  </View>
+                );
+              })}
+            </View>
+          </>
+        ) : (
+          <View style={staticStyles.emptyStateContainer}>
+            <View style={[s.emptyCard]}>
+              <View style={staticStyles.emptyIconWrap}>
+                <Globe size={40} color={colors.textMuted} strokeWidth={1.2} />
+              </View>
+              <Text style={[staticStyles.emptyTitle, { color: colors.text }]}>
+                Start your travel footprint
+              </Text>
+              <Text style={[staticStyles.emptyDesc, { color: colors.textSecondary }]}>
+                Create trips to see your visited countries, travel stats, and memories appear here on the globe.
+              </Text>
+              <TouchableOpacity
+                style={staticStyles.emptyCtaButton}
+                activeOpacity={0.8}
+                onPress={() => router.push('/create-trip')}
+              >
+                <Plus size={18} color="#fff" strokeWidth={2.5} />
+                <Text style={staticStyles.emptyCtaText}>Create your first trip</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        )}
 
         <View style={staticStyles.bottomPadding} />
       </ScrollView>
@@ -559,11 +646,13 @@ const createStyles = (colors: ThemeColors) => StyleSheet.create({
   statCard: {
     flex: 1,
     backgroundColor: colors.surface,
-    padding: 14,
+    paddingVertical: 14,
+    paddingHorizontal: 6,
     borderRadius: 14,
     alignItems: 'center',
     borderWidth: 1,
     borderColor: colors.border,
+    gap: 4,
   },
   countryAccordion: {
     marginHorizontal: 20,
@@ -573,6 +662,25 @@ const createStyles = (colors: ThemeColors) => StyleSheet.create({
     borderWidth: 1,
     borderColor: colors.border,
     overflow: 'hidden',
+  },
+  continentChip: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    backgroundColor: colors.surface,
+    borderWidth: 1,
+    borderColor: colors.border,
+    borderRadius: 12,
+    paddingHorizontal: 14,
+    paddingVertical: 10,
+  },
+  emptyCard: {
+    backgroundColor: colors.surface,
+    borderWidth: 1,
+    borderColor: colors.border,
+    borderRadius: 20,
+    padding: 32,
+    alignItems: 'center',
   },
 });
 
@@ -622,9 +730,9 @@ const staticStyles = StyleSheet.create({
     paddingBottom: 4,
   },
   countryChip: {
-    backgroundColor: 'rgba(255,255,255,0.08)',
+    backgroundColor: 'rgba(52, 211, 153, 0.12)',
     borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.12)',
+    borderColor: 'rgba(52, 211, 153, 0.25)',
     borderRadius: 14,
     paddingHorizontal: 12,
     paddingVertical: 6,
@@ -632,7 +740,17 @@ const staticStyles = StyleSheet.create({
   countryChipText: {
     fontSize: 12,
     fontWeight: '600' as const,
-    color: '#ccc',
+    color: '#34D399',
+  },
+  mapEmptyHint: {
+    paddingTop: 12,
+    paddingBottom: 4,
+    alignItems: 'center',
+  },
+  mapEmptyHintText: {
+    fontSize: 12,
+    color: 'rgba(255,255,255,0.35)',
+    fontWeight: '500' as const,
   },
   inTotalHeaderText: {
     fontSize: 13,
@@ -665,7 +783,7 @@ const staticStyles = StyleSheet.create({
   },
   inTotalFootnote: {
     fontSize: 12,
-    textAlign: 'center',
+    textAlign: 'center' as const,
     marginTop: 14,
   },
   statsSection: {
@@ -680,16 +798,27 @@ const staticStyles = StyleSheet.create({
   statsGrid: {
     flexDirection: 'row',
     paddingHorizontal: 20,
-    gap: 10,
+    gap: 8,
   },
   statValueText: {
-    fontSize: 22,
+    fontSize: 20,
     fontWeight: '700' as const,
-    marginBottom: 2,
   },
   statLabelText: {
     fontSize: 11,
     fontWeight: '500' as const,
+  },
+  continentsSection: {
+    marginBottom: 24,
+  },
+  continentsRow: {
+    flexDirection: 'row',
+    gap: 8,
+    paddingHorizontal: 20,
+  },
+  continentChipText: {
+    fontSize: 13,
+    fontWeight: '600' as const,
   },
   memoriesSection: {
     marginBottom: 20,
@@ -704,6 +833,7 @@ const staticStyles = StyleSheet.create({
     width: 36,
     height: 36,
     borderRadius: 18,
+    backgroundColor: VISITED_COLOR,
     justifyContent: 'center',
     alignItems: 'center',
   },
@@ -771,6 +901,57 @@ const staticStyles = StyleSheet.create({
     width: 20,
     height: 20,
     borderRadius: 4,
+  },
+  emptyStateContainer: {
+    paddingHorizontal: 20,
+    paddingTop: 8,
+  },
+  emptyIconWrap: {
+    width: 80,
+    height: 80,
+    borderRadius: 40,
+    backgroundColor: 'rgba(52, 211, 153, 0.08)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: 20,
+  },
+  emptyTitle: {
+    fontSize: 20,
+    fontWeight: '700' as const,
+    marginBottom: 8,
+    textAlign: 'center' as const,
+  },
+  emptyDesc: {
+    fontSize: 14,
+    lineHeight: 21,
+    textAlign: 'center' as const,
+    marginBottom: 24,
+    paddingHorizontal: 8,
+  },
+  emptyCtaButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
+    backgroundColor: '#1A1A1A',
+    paddingVertical: 14,
+    paddingHorizontal: 24,
+    borderRadius: 14,
+  },
+  emptyCtaText: {
+    fontSize: 15,
+    fontWeight: '600' as const,
+    color: '#fff',
+  },
+  emptyMemories: {
+    alignItems: 'center',
+    paddingVertical: 40,
+    marginHorizontal: 20,
+    gap: 10,
+  },
+  emptyMemoriesText: {
+    fontSize: 14,
+    textAlign: 'center' as const,
   },
   bottomPadding: {
     height: 100,
@@ -877,15 +1058,5 @@ const staticStyles = StyleSheet.create({
   importBtnText: {
     fontSize: 14,
     fontWeight: '500' as const,
-  },
-  emptyMemories: {
-    alignItems: 'center',
-    paddingVertical: 40,
-    marginHorizontal: 20,
-    gap: 10,
-  },
-  emptyMemoriesText: {
-    fontSize: 14,
-    textAlign: 'center',
   },
 });
