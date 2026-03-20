@@ -222,6 +222,7 @@ export default function CreateTripScreen() {
             }}
             selectedDate={endDate}
             minDate={startDate || undefined}
+            initialMonth={startDate || undefined}
             title="End Date"
           />
 

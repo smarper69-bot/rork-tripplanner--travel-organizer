@@ -268,6 +268,7 @@ export default function EditTripScreen() {
           }}
           selectedDate={endDate}
           minDate={startDate || undefined}
+          initialMonth={startDate || undefined}
           title="End Date"
         />
       </SafeAreaView>

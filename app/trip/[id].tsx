@@ -407,7 +407,7 @@ export default function TripDetailScreen() {
           <View style={[styles.quickActionIcon, { backgroundColor: '#EEF2FF' }]}>
             <Calendar size={20} color="#6366F1" />
           </View>
-          <Text style={styles.quickActionLabel}>Add itinerary</Text>
+          <Text style={styles.quickActionLabel}>{itineraryItems.length > 0 ? 'Go to itinerary' : 'Add itinerary'}</Text>
         </TouchableOpacity>
 
         <TouchableOpacity 

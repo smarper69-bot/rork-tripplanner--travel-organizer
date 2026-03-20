@@ -21,6 +21,7 @@ interface CalendarPickerProps {
   selectedDate?: string;
   minDate?: string;
   title?: string;
+  initialMonth?: string;
 }
 
 const WEEKDAYS = ['Su', 'Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa'];
@@ -61,6 +62,7 @@ export default function CalendarPicker({
   selectedDate,
   minDate,
   title = 'Select Date',
+  initialMonth,
 }: CalendarPickerProps) {
   const today = new Date();
   const initialDate = selectedDate ? parseDate(selectedDate) : null;
@@ -79,6 +81,12 @@ export default function CalendarPicker({
           setViewYear(parsed.year);
           setViewMonth(parsed.month);
         }
+      } else if (initialMonth) {
+        const parsed = parseDate(initialMonth);
+        if (parsed) {
+          setViewYear(parsed.year);
+          setViewMonth(parsed.month);
+        }
       }
       Animated.timing(fadeAnim, {
         toValue: 1,
@@ -88,7 +96,7 @@ export default function CalendarPicker({
     } else {
       fadeAnim.setValue(0);
     }
-  }, [visible, selectedDate]);
+  }, [visible, selectedDate, initialMonth]);
 
   const goToPrevMonth = useCallback(() => {
     setViewMonth((prev) => {
