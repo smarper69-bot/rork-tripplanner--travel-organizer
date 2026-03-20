@@ -1,4 +1,4 @@
-const MAPBOX_TOKEN = process.env.MAPBOX_ACCESS_TOKEN || '';
+const MAPBOX_TOKEN = process.env.EXPO_PUBLIC_MAPBOX_ACCESS_TOKEN || process.env.MAPBOX_ACCESS_TOKEN || '';
 
 export interface MapboxPlace {
   id: string;
