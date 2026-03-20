@@ -1,4 +1,7 @@
-const MAPBOX_TOKEN = process.env.EXPO_PUBLIC_MAPBOX_ACCESS_TOKEN || process.env.MAPBOX_ACCESS_TOKEN || '';
+function getMapboxToken(): string {
+  const token = process.env.EXPO_PUBLIC_MAPBOX_ACCESS_TOKEN || process.env.MAPBOX_ACCESS_TOKEN || '';
+  return token;
+}
 
 export interface MapboxPlace {
   id: string;
@@ -15,19 +18,32 @@ export async function searchPlaces(query: string): Promise<MapboxPlace[]> {
     return [];
   }
 
+  const token = getMapboxToken();
+  console.log('[MapboxSearch] Token available:', token ? `yes (${token.substring(0, 8)}...)` : 'NO TOKEN');
+
+  if (!token) {
+    console.log('[MapboxSearch] No Mapbox token found. Set EXPO_PUBLIC_MAPBOX_ACCESS_TOKEN.');
+    return [];
+  }
+
   const encoded = encodeURIComponent(query.trim());
-  const url = `https://api.mapbox.com/geocoding/v5/mapbox.places/${encoded}.json?access_token=${MAPBOX_TOKEN}&types=place,locality,region,district&limit=8&language=en`;
+  const url = `https://api.mapbox.com/geocoding/v5/mapbox.places/${encoded}.json?access_token=${token}&types=place,locality,region,district&limit=8&language=en`;
 
   console.log('[MapboxSearch] Searching for:', query);
+  console.log('[MapboxSearch] URL:', url.replace(token, 'TOKEN_HIDDEN'));
 
   try {
     const response = await fetch(url);
+    console.log('[MapboxSearch] Response status:', response.status);
+
     if (!response.ok) {
-      console.log('[MapboxSearch] API error:', response.status);
+      const errorText = await response.text();
+      console.log('[MapboxSearch] API error body:', errorText);
       return [];
     }
 
     const data = await response.json();
+    console.log('[MapboxSearch] Raw features count:', data.features?.length ?? 0);
 
     if (!data.features || data.features.length === 0) {
       console.log('[MapboxSearch] No results for:', query);
@@ -55,10 +71,10 @@ export async function searchPlaces(query: string): Promise<MapboxPlace[]> {
       };
     });
 
-    console.log('[MapboxSearch] Found', results.length, 'results');
+    console.log('[MapboxSearch] Found', results.length, 'results:', results.map(r => r.name).join(', '));
     return results;
   } catch (error) {
-    console.log('[MapboxSearch] Error:', error);
+    console.log('[MapboxSearch] Fetch error:', error);
     return [];
   }
 }
