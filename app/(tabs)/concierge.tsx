@@ -1,12 +1,14 @@
 import React, { useState, useRef, useCallback, useMemo } from 'react';
 import { 
   View, Text, StyleSheet, ScrollView, TouchableOpacity, 
-  TextInput, KeyboardAvoidingView, Platform, Alert, ActivityIndicator
+  TextInput, KeyboardAvoidingView, Platform, Alert, ActivityIndicator,
+  Modal, Animated, Dimensions
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { 
   Sparkles, MapPin, Calendar, ChevronDown, 
-  Check, Wand2, Utensils, Landmark, Waves, Mountain
+  Check, Wand2, Utensils, Landmark, Waves, Mountain,
+  Moon, ShoppingBag, TreePalm, Bike, X, Trophy
 } from 'lucide-react-native';
 import { z } from 'zod';
 import { useThemeColors } from '@/hooks/useThemeColors';
@@ -14,6 +16,7 @@ import { useTripsStore } from '@/store/useTripsStore';
 import { generateObject } from '@rork-ai/toolkit-sdk';
 import { Trip } from '@/types/trip';
 import { ThemeColors } from '@/constants/themes';
+import { hapticLight, hapticMedium, hapticSelection } from '@/utils/haptics';
 
 interface GeneratedDay {
   date: string;
@@ -28,13 +31,20 @@ interface ChatEntry {
   tripName?: string;
   generatedDays?: GeneratedDay[];
   saved?: boolean;
+  interests?: string[];
+  customNote?: string;
 }
 
 const INTEREST_OPTIONS = [
-  { id: 'food', label: 'Food & Dining', icon: Utensils },
-  { id: 'culture', label: 'Culture & History', icon: Landmark },
-  { id: 'beach', label: 'Beach & Relaxation', icon: Waves },
-  { id: 'adventure', label: 'Adventure & Nature', icon: Mountain },
+  { id: 'food', label: 'Food & Restaurants', icon: Utensils, color: '#EA580C' },
+  { id: 'culture', label: 'Culture & History', icon: Landmark, color: '#7C3AED' },
+  { id: 'nature', label: 'Nature & Scenery', icon: Mountain, color: '#059669' },
+  { id: 'adventure', label: 'Adventure & Activities', icon: Bike, color: '#2563EB' },
+  { id: 'nightlife', label: 'Nightlife', icon: Moon, color: '#DB2777' },
+  { id: 'relaxation', label: 'Relaxation', icon: TreePalm, color: '#0891B2' },
+  { id: 'shopping', label: 'Shopping', icon: ShoppingBag, color: '#D97706' },
+  { id: 'beaches', label: 'Beaches & Water', icon: Waves, color: '#06B6D4' },
+  { id: 'sports', label: 'Sports', icon: Trophy, color: '#EF4444' },
 ] as const;
 
 const itinerarySchema = z.object({
@@ -55,8 +65,12 @@ export default function ConciergeScreen() {
   const [selectedInterests, setSelectedInterests] = useState<string[]>([]);
   const [isGenerating, setIsGenerating] = useState(false);
   const [showTripPicker, setShowTripPicker] = useState(false);
+  const [showInterestsModal, setShowInterestsModal] = useState(false);
   const [chatLog, setChatLog] = useState<ChatEntry[]>([]);
-  const [freeformInput, setFreeformInput] = useState('');
+  const [modalCustomInput, setModalCustomInput] = useState('');
+
+  const modalAnim = useRef(new Animated.Value(0)).current;
+  const overlayAnim = useRef(new Animated.Value(0)).current;
 
   const trips = useTripsStore((s) => s.trips);
   const addItineraryItem = useTripsStore((s) => s.addItineraryItem);
@@ -65,12 +79,6 @@ export default function ConciergeScreen() {
     () => trips.find((t) => t.id === selectedTripId) ?? null,
     [trips, selectedTripId],
   );
-
-  const toggleInterest = useCallback((id: string) => {
-    setSelectedInterests((prev) =>
-      prev.includes(id) ? prev.filter((i) => i !== id) : [...prev, id],
-    );
-  }, []);
 
   const getDatesForTrip = useCallback((trip: Trip): string[] => {
     const dates: string[] = [];
@@ -85,6 +93,57 @@ export default function ConciergeScreen() {
       current.setDate(current.getDate() + 1);
     }
     return dates;
+  }, []);
+
+  const openInterestsModal = useCallback(() => {
+    if (!selectedTrip) {
+      Alert.alert('Select a trip', 'Please select a trip to generate an itinerary for.');
+      return;
+    }
+    const dates = getDatesForTrip(selectedTrip);
+    if (dates.length === 0) {
+      Alert.alert('Invalid dates', 'The selected trip has no valid date range.');
+      return;
+    }
+    hapticLight();
+    setShowInterestsModal(true);
+    Animated.parallel([
+      Animated.spring(modalAnim, {
+        toValue: 1,
+        useNativeDriver: true,
+        tension: 65,
+        friction: 11,
+      }),
+      Animated.timing(overlayAnim, {
+        toValue: 1,
+        duration: 250,
+        useNativeDriver: true,
+      }),
+    ]).start();
+  }, [selectedTrip, modalAnim, overlayAnim, getDatesForTrip]);
+
+  const closeInterestsModal = useCallback(() => {
+    Animated.parallel([
+      Animated.timing(modalAnim, {
+        toValue: 0,
+        duration: 200,
+        useNativeDriver: true,
+      }),
+      Animated.timing(overlayAnim, {
+        toValue: 0,
+        duration: 200,
+        useNativeDriver: true,
+      }),
+    ]).start(() => {
+      setShowInterestsModal(false);
+    });
+  }, [modalAnim, overlayAnim]);
+
+  const toggleInterest = useCallback((id: string) => {
+    hapticSelection();
+    setSelectedInterests((prev) =>
+      prev.includes(id) ? prev.filter((i) => i !== id) : [...prev, id],
+    );
   }, []);
 
   const handleSaveItinerary = useCallback((entryId: string) => {
@@ -114,47 +173,73 @@ export default function ConciergeScreen() {
     console.log('[Concierge] Saved', itemCount, 'items to trip', selectedTrip.id);
   }, [chatLog, selectedTrip, addItineraryItem]);
 
-  const handleGenerate = useCallback(async () => {
-    if (!selectedTrip) {
-      Alert.alert('Select a trip', 'Please select a trip to generate an itinerary for.');
-      return;
-    }
+  const handleGenerateFromModal = useCallback(async () => {
+    if (!selectedTrip) return;
+
+    hapticMedium();
+    closeInterestsModal();
+
+    await new Promise((resolve) => setTimeout(resolve, 300));
 
     const tripDates = getDatesForTrip(selectedTrip);
-    if (tripDates.length === 0) {
-      Alert.alert('Invalid dates', 'The selected trip has no valid date range.');
-      return;
-    }
+    if (tripDates.length === 0) return;
 
     setIsGenerating(true);
+
+    const interestLabels = selectedInterests.map(
+      (id) => INTEREST_OPTIONS.find((o) => o.id === id)?.label ?? id
+    );
+    const customText = modalCustomInput.trim();
 
     const userEntry: ChatEntry = {
       id: Date.now().toString(),
       role: 'user',
-      text: `Generate itinerary for "${selectedTrip.name}" in ${selectedTrip.destination}, ${selectedTrip.country}${selectedInterests.length > 0 ? ` (interests: ${selectedInterests.join(', ')})` : ''}${freeformInput.trim() ? `\nNotes: ${freeformInput.trim()}` : ''}`,
+      text: `Generate itinerary for "${selectedTrip.name}" in ${selectedTrip.destination}, ${selectedTrip.country}${interestLabels.length > 0 ? `\nInterests: ${interestLabels.join(', ')}` : ''}${customText ? `\nNotes: ${customText}` : ''}`,
+      interests: [...selectedInterests],
+      customNote: customText || undefined,
     };
     setChatLog((prev) => [...prev, userEntry]);
-    setFreeformInput('');
 
     try {
-      const interestsText = selectedInterests.length > 0 
-        ? `The traveler is especially interested in: ${selectedInterests.join(', ')}.` 
+      const interestsBlock = interestLabels.length > 0
+        ? `The traveler is especially interested in: ${interestLabels.join(', ')}. Prioritize activities related to these interests. Avoid suggesting activities that don't align with their preferences unless they complement the experience.`
         : '';
-      const freeformText = freeformInput.trim() 
-        ? `Additional preferences: ${freeformInput.trim()}` 
+      const customBlock = customText
+        ? `Additional specific preferences: "${customText}". Make sure to incorporate these into the plan.`
         : '';
 
-      const prompt = `You are a travel itinerary planner. Create a detailed day-by-day itinerary for a trip to ${selectedTrip.destination}, ${selectedTrip.country}.
+      const interestExamples = selectedInterests.map((id) => {
+        switch (id) {
+          case 'food': return 'Include local restaurants, street food markets, food tours, and culinary experiences.';
+          case 'culture': return 'Include museums, historical sites, temples, local traditions, and cultural tours.';
+          case 'nature': return 'Include scenic viewpoints, parks, gardens, nature trails, and outdoor excursions.';
+          case 'adventure': return 'Include adventure sports, hiking, zip-lining, kayaking, or other thrill activities.';
+          case 'nightlife': return 'Include evening activities like bars, live music venues, night markets, and rooftop lounges.';
+          case 'relaxation': return 'Include spa treatments, beach lounging, yoga sessions, and calm scenic spots.';
+          case 'shopping': return 'Include local markets, shopping districts, artisan shops, and souvenir spots.';
+          case 'beaches': return 'Include beach activities, snorkeling, coastal walks, and waterfront dining.';
+          case 'sports': return 'Include sports activities like surfing, skiing, diving, cycling, or local sports experiences.';
+          default: return '';
+        }
+      }).filter(Boolean).join('\n');
+
+      const prompt = `You are a travel itinerary planner creating a personalized day-by-day itinerary for a trip to ${selectedTrip.destination}, ${selectedTrip.country}.
 
 Trip dates: ${tripDates[0]} to ${tripDates[tripDates.length - 1]} (${tripDates.length} days).
-${interestsText}
-${freeformText}
 
-Generate activities for each day. Each day should have 3-5 activities with realistic times starting from morning. Include a mix of sightseeing, meals, and experiences. Use the exact dates provided.
+${interestsBlock}
+
+${interestExamples ? `Specific guidance based on interests:\n${interestExamples}` : ''}
+
+${customBlock}
+
+Generate activities for each day. Each day should have 3-5 activities with realistic times starting from morning. The itinerary should feel tailored and personal, not generic. Use the exact dates provided.
+
+${interestLabels.length === 0 ? 'Since no specific interests were selected, create a well-rounded itinerary with a good mix of sightseeing, local food, cultural experiences, and leisure time.' : `Focus heavily on the selected interests (${interestLabels.join(', ')}). At least 60% of activities should directly relate to these interests.`}
 
 Available dates: ${tripDates.join(', ')}`;
 
-      console.log('[Concierge] Generating itinerary for trip:', selectedTrip.id);
+      console.log('[Concierge] Generating personalized itinerary for trip:', selectedTrip.id, 'interests:', selectedInterests);
 
       const result = await generateObject({
         messages: [{ role: 'user', content: prompt }],
@@ -171,14 +256,16 @@ Available dates: ${tripDates.join(', ')}`;
       const successEntry: ChatEntry = {
         id: (Date.now() + 1).toString(),
         role: 'assistant',
-        text: `Here's your ${result.days.length}-day itinerary for "${selectedTrip.name}" with ${itemCount} activities. Review it below and tap Save to add it to your trip.`,
+        text: `Here's your personalized ${result.days.length}-day itinerary for "${selectedTrip.name}" with ${itemCount} activities${interestLabels.length > 0 ? `, tailored to your interests in ${interestLabels.join(', ').toLowerCase()}` : ''}. Review below and tap Save to add it to your trip.`,
         generatedCount: itemCount,
         tripName: selectedTrip.name,
         generatedDays: result.days,
         saved: false,
+        interests: [...selectedInterests],
+        customNote: customText || undefined,
       };
       setChatLog((prev) => [...prev, successEntry]);
-      console.log('[Concierge] Generated', itemCount, 'items for trip', selectedTrip.id);
+      console.log('[Concierge] Generated', itemCount, 'personalized items for trip', selectedTrip.id);
     } catch (e) {
       console.error('[Concierge] Generation failed:', e);
       const errorEntry: ChatEntry = {
@@ -189,8 +276,9 @@ Available dates: ${tripDates.join(', ')}`;
       setChatLog((prev) => [...prev, errorEntry]);
     } finally {
       setIsGenerating(false);
+      setModalCustomInput('');
     }
-  }, [selectedTrip, selectedInterests, freeformInput, getDatesForTrip]);
+  }, [selectedTrip, selectedInterests, modalCustomInput, getDatesForTrip, closeInterestsModal]);
 
   const s = createStyles(colors);
 
@@ -235,6 +323,159 @@ Available dates: ${tripDates.join(', ')}`;
     </View>
   );
 
+  const renderInterestsModal = () => {
+    const translateY = modalAnim.interpolate({
+      inputRange: [0, 1],
+      outputRange: [Dimensions.get('window').height, 0],
+    });
+    const scale = modalAnim.interpolate({
+      inputRange: [0, 0.5, 1],
+      outputRange: [0.95, 0.98, 1],
+    });
+
+    return (
+      <Modal
+        visible={showInterestsModal}
+        transparent
+        animationType="none"
+        onRequestClose={closeInterestsModal}
+        statusBarTranslucent
+      >
+        <View style={staticStyles.modalRoot}>
+          <Animated.View
+            style={[
+              staticStyles.modalOverlay,
+              { backgroundColor: colors.overlay, opacity: overlayAnim },
+            ]}
+          >
+            <TouchableOpacity
+              style={StyleSheet.absoluteFill}
+              activeOpacity={1}
+              onPress={closeInterestsModal}
+            />
+          </Animated.View>
+
+          <Animated.View
+            style={[
+              staticStyles.modalSheet,
+              {
+                backgroundColor: colors.surface,
+                transform: [{ translateY }, { scale }],
+              },
+            ]}
+          >
+            <View style={staticStyles.modalHandle}>
+              <View style={[staticStyles.modalHandleBar, { backgroundColor: colors.borderLight }]} />
+            </View>
+
+            <View style={staticStyles.modalHeader}>
+              <View style={{ flex: 1 }}>
+                <Text style={[staticStyles.modalTitle, { color: colors.text }]}>
+                  What are you interested in?
+                </Text>
+                <Text style={[staticStyles.modalSubtitle, { color: colors.textSecondary }]}>
+                  We'll tailor your trip to match your style
+                </Text>
+              </View>
+              <TouchableOpacity
+                onPress={closeInterestsModal}
+                style={[staticStyles.modalCloseButton, { backgroundColor: colors.inputBackground }]}
+                activeOpacity={0.7}
+              >
+                <X size={18} color={colors.textSecondary} />
+              </TouchableOpacity>
+            </View>
+
+            <ScrollView
+              style={staticStyles.modalBody}
+              contentContainerStyle={staticStyles.modalBodyContent}
+              showsVerticalScrollIndicator={false}
+              bounces={false}
+            >
+              <View style={staticStyles.chipsGrid}>
+                {INTEREST_OPTIONS.map((opt) => {
+                  const isActive = selectedInterests.includes(opt.id);
+                  return (
+                    <TouchableOpacity
+                      key={opt.id}
+                      style={[
+                        s.modalChip,
+                        isActive && { backgroundColor: opt.color + '18', borderColor: opt.color + '50' },
+                      ]}
+                      onPress={() => toggleInterest(opt.id)}
+                      activeOpacity={0.7}
+                    >
+                      <View style={[
+                        staticStyles.chipIconWrap,
+                        { backgroundColor: isActive ? opt.color + '20' : colors.inputBackground },
+                      ]}>
+                        <opt.icon size={16} color={isActive ? opt.color : colors.textMuted} />
+                      </View>
+                      <Text style={[
+                        s.modalChipText,
+                        isActive && { color: opt.color, fontWeight: '600' as const },
+                      ]}>
+                        {opt.label}
+                      </Text>
+                      {isActive && (
+                        <View style={[staticStyles.chipCheck, { backgroundColor: opt.color }]}>
+                          <Check size={10} color="#FFFFFF" />
+                        </View>
+                      )}
+                    </TouchableOpacity>
+                  );
+                })}
+              </View>
+
+              <View style={staticStyles.customInputSection}>
+                <Text style={[staticStyles.customInputLabel, { color: colors.textSecondary }]}>
+                  Anything specific?
+                </Text>
+                <TextInput
+                  style={[s.modalTextInput]}
+                  placeholder="e.g. surfing, museums, hiking trails..."
+                  placeholderTextColor={colors.textMuted}
+                  value={modalCustomInput}
+                  onChangeText={setModalCustomInput}
+                  multiline
+                  maxLength={300}
+                />
+              </View>
+
+              {selectedInterests.length === 0 && !modalCustomInput.trim() && (
+                <View style={[staticStyles.hintRow, { backgroundColor: colors.warningBg }]}>
+                  <Sparkles size={14} color={colors.warning} />
+                  <Text style={[staticStyles.hintText, { color: colors.warning }]}>
+                    Selecting interests improves your itinerary
+                  </Text>
+                </View>
+              )}
+            </ScrollView>
+
+            <View style={[staticStyles.modalFooter, { borderTopColor: colors.borderLight }]}>
+              <TouchableOpacity
+                style={[s.modalGenerateButton]}
+                onPress={handleGenerateFromModal}
+                activeOpacity={0.7}
+              >
+                <Wand2 size={20} color={colors.textOnPrimary} />
+                <Text style={[staticStyles.modalGenerateText, { color: colors.textOnPrimary }]}>
+                  Generate my itinerary
+                </Text>
+              </TouchableOpacity>
+
+              {selectedInterests.length > 0 && (
+                <Text style={[staticStyles.selectedCount, { color: colors.textMuted }]}>
+                  {selectedInterests.length} interest{selectedInterests.length !== 1 ? 's' : ''} selected
+                </Text>
+              )}
+            </View>
+          </Animated.View>
+        </View>
+      </Modal>
+    );
+  };
+
   return (
     <SafeAreaView style={[staticStyles.containerBase, { backgroundColor: colors.background }]} edges={['top']}>
       <View style={[staticStyles.header, { borderBottomColor: colors.borderLight }]}>
@@ -243,7 +484,7 @@ Available dates: ${tripDates.join(', ')}`;
         </View>
         <View style={staticStyles.headerContent}>
           <Text style={[staticStyles.titleText, { color: colors.text }]}>AI Concierge</Text>
-          <Text style={[staticStyles.subtitleText, { color: colors.textSecondary }]}>Generate itineraries with AI</Text>
+          <Text style={[staticStyles.subtitleText, { color: colors.textSecondary }]}>Personalised itineraries powered by AI</Text>
         </View>
       </View>
 
@@ -282,44 +523,31 @@ Available dates: ${tripDates.join(', ')}`;
               <ChevronDown size={18} color={colors.textMuted} />
             </TouchableOpacity>
 
-            <Text style={[staticStyles.configLabel, { color: colors.textSecondary }]}>Interests (optional)</Text>
-            <View style={staticStyles.interestsGrid}>
-              {INTEREST_OPTIONS.map((opt) => {
-                const isActive = selectedInterests.includes(opt.id);
-                return (
-                  <TouchableOpacity
-                    key={opt.id}
-                    style={[s.interestChip, isActive && s.interestChipActive]}
-                    onPress={() => toggleInterest(opt.id)}
-                    activeOpacity={0.7}
-                  >
-                    <opt.icon size={16} color={isActive ? colors.chipActiveText : colors.textSecondary} />
-                    <Text style={[s.interestChipText, isActive && s.interestChipTextActive]}>
-                      {opt.label}
-                    </Text>
-                  </TouchableOpacity>
-                );
-              })}
-            </View>
-
-            <Text style={[staticStyles.configLabel, { color: colors.textSecondary }]}>Additional notes (optional)</Text>
-            <TextInput
-              style={[s.notesInput]}
-              placeholder="e.g. we love street food, skip museums..."
-              placeholderTextColor={colors.textMuted}
-              value={freeformInput}
-              onChangeText={setFreeformInput}
-              multiline
-              maxLength={300}
-            />
+            {selectedInterests.length > 0 && (
+              <View style={staticStyles.selectedInterestsPreview}>
+                <Text style={[staticStyles.configLabel, { color: colors.textSecondary }]}>Your interests</Text>
+                <View style={staticStyles.previewChipsRow}>
+                  {selectedInterests.map((id) => {
+                    const opt = INTEREST_OPTIONS.find((o) => o.id === id);
+                    if (!opt) return null;
+                    return (
+                      <View key={id} style={[staticStyles.previewChip, { backgroundColor: opt.color + '15' }]}>
+                        <opt.icon size={12} color={opt.color} />
+                        <Text style={[staticStyles.previewChipText, { color: opt.color }]}>{opt.label}</Text>
+                      </View>
+                    );
+                  })}
+                </View>
+              </View>
+            )}
 
             <TouchableOpacity
               style={[
                 s.generateButton,
                 (!selectedTrip || isGenerating) && staticStyles.generateButtonDisabled,
               ]}
-              onPress={handleGenerate}
-              disabled={!selectedTrip || isGenerating}
+              onPress={isGenerating ? undefined : openInterestsModal}
+              disabled={isGenerating}
               activeOpacity={0.7}
             >
               {isGenerating ? (
@@ -405,7 +633,7 @@ Available dates: ${tripDates.join(', ')}`;
               <Wand2 size={32} color={colors.textMuted} />
               <Text style={[staticStyles.emptyHintTitle, { color: colors.text }]}>AI Itinerary Generator</Text>
               <Text style={[staticStyles.emptyHintText, { color: colors.textSecondary }]}>
-                Select a trip, choose your interests, and let AI create a detailed day-by-day itinerary for you.
+                Select a trip, tell us your interests, and let AI create a personalised day-by-day itinerary just for you.
               </Text>
             </View>
           )}
@@ -415,6 +643,7 @@ Available dates: ${tripDates.join(', ')}`;
       </KeyboardAvoidingView>
 
       {showTripPicker && renderTripPicker()}
+      {renderInterestsModal()}
     </SafeAreaView>
   );
 }
@@ -433,40 +662,6 @@ const createStyles = (colors: ThemeColors) => StyleSheet.create({
     backgroundColor: colors.inputBackground,
     borderRadius: 14,
     padding: 14,
-    marginBottom: 20,
-  },
-  interestChip: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 6,
-    paddingHorizontal: 14,
-    paddingVertical: 10,
-    backgroundColor: colors.inputBackground,
-    borderRadius: 12,
-    borderWidth: 1,
-    borderColor: colors.borderLight,
-  },
-  interestChipActive: {
-    backgroundColor: colors.chipActiveBg,
-    borderColor: colors.chipActiveBg,
-  },
-  interestChipText: {
-    fontSize: 13,
-    fontWeight: '500' as const,
-    color: colors.textSecondary,
-  },
-  interestChipTextActive: {
-    color: colors.chipActiveText,
-  },
-  notesInput: {
-    backgroundColor: colors.inputBackground,
-    borderRadius: 14,
-    paddingHorizontal: 16,
-    paddingVertical: 12,
-    fontSize: 14,
-    color: colors.text,
-    minHeight: 60,
-    textAlignVertical: 'top' as const,
     marginBottom: 20,
   },
   generateButton: {
@@ -508,6 +703,44 @@ const createStyles = (colors: ThemeColors) => StyleSheet.create({
     backgroundColor: colors.accent + '15',
     borderWidth: 1,
     borderColor: colors.accent + '30',
+  },
+  modalChip: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+    paddingHorizontal: 14,
+    paddingVertical: 12,
+    backgroundColor: colors.inputBackground,
+    borderRadius: 14,
+    borderWidth: 1.5,
+    borderColor: colors.borderLight,
+  },
+  modalChipText: {
+    fontSize: 14,
+    fontWeight: '500' as const,
+    color: colors.textSecondary,
+    flex: 1,
+  },
+  modalTextInput: {
+    backgroundColor: colors.inputBackground,
+    borderRadius: 14,
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    fontSize: 14,
+    color: colors.text,
+    minHeight: 56,
+    textAlignVertical: 'top' as const,
+    borderWidth: 1,
+    borderColor: colors.borderLight,
+  },
+  modalGenerateButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 10,
+    backgroundColor: colors.accent,
+    paddingVertical: 16,
+    borderRadius: 14,
   },
 });
 
@@ -574,18 +807,32 @@ const staticStyles = StyleSheet.create({
   tripSelectorPlaceholder: {
     fontSize: 15,
   },
-  interestsGrid: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: 8,
-    marginBottom: 20,
-  },
   generateButtonDisabled: {
     opacity: 0.4,
   },
   generateButtonText: {
     fontSize: 16,
     fontWeight: '600' as const,
+  },
+  selectedInterestsPreview: {
+    marginBottom: 20,
+  },
+  previewChipsRow: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 6,
+  },
+  previewChip: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 5,
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    borderRadius: 10,
+  },
+  previewChipText: {
+    fontSize: 12,
+    fontWeight: '500' as const,
   },
   chatSection: {
     marginTop: 8,
@@ -728,5 +975,116 @@ const staticStyles = StyleSheet.create({
   tripPickerCloseText: {
     fontSize: 15,
     fontWeight: '500' as const,
+  },
+  modalRoot: {
+    flex: 1,
+    justifyContent: 'flex-end',
+  },
+  modalOverlay: {
+    ...StyleSheet.absoluteFillObject,
+  },
+  modalSheet: {
+    borderTopLeftRadius: 28,
+    borderTopRightRadius: 28,
+    maxHeight: '85%',
+    overflow: 'hidden',
+  },
+  modalHandle: {
+    alignItems: 'center',
+    paddingTop: 10,
+    paddingBottom: 4,
+  },
+  modalHandleBar: {
+    width: 40,
+    height: 4,
+    borderRadius: 2,
+  },
+  modalHeader: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    paddingHorizontal: 24,
+    paddingTop: 12,
+    paddingBottom: 16,
+    gap: 12,
+  },
+  modalTitle: {
+    fontSize: 22,
+    fontWeight: '700' as const,
+    letterSpacing: -0.3,
+  },
+  modalSubtitle: {
+    fontSize: 14,
+    marginTop: 4,
+    lineHeight: 18,
+  },
+  modalCloseButton: {
+    width: 34,
+    height: 34,
+    borderRadius: 17,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  modalBody: {
+    flexGrow: 0,
+    flexShrink: 1,
+  },
+  modalBodyContent: {
+    paddingHorizontal: 24,
+    paddingBottom: 8,
+  },
+  chipsGrid: {
+    gap: 8,
+  },
+  chipIconWrap: {
+    width: 32,
+    height: 32,
+    borderRadius: 10,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  chipCheck: {
+    width: 18,
+    height: 18,
+    borderRadius: 9,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  customInputSection: {
+    marginTop: 20,
+  },
+  customInputLabel: {
+    fontSize: 13,
+    fontWeight: '600' as const,
+    textTransform: 'uppercase' as const,
+    letterSpacing: 0.5,
+    marginBottom: 10,
+  },
+  hintRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    paddingHorizontal: 14,
+    paddingVertical: 10,
+    borderRadius: 12,
+    marginTop: 16,
+  },
+  hintText: {
+    fontSize: 13,
+    fontWeight: '500' as const,
+  },
+  modalFooter: {
+    paddingHorizontal: 24,
+    paddingTop: 16,
+    paddingBottom: Platform.OS === 'ios' ? 34 : 24,
+    borderTopWidth: 1,
+    gap: 8,
+  },
+  modalGenerateText: {
+    fontSize: 16,
+    fontWeight: '600' as const,
+  },
+  selectedCount: {
+    fontSize: 13,
+    textAlign: 'center',
   },
 });
