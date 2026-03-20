@@ -11,16 +11,20 @@ import { useThemeColors } from '@/hooks/useThemeColors';
 import { openComingSoon } from '@/utils/comingSoon';
 import { destinations, getDestinationWithDefaults, DiscoverDestination } from '@/mocks/destinations';
 import { ThemeColors } from '@/constants/themes';
+import { useSearchedDestinations } from '@/store/useSearchedDestinations';
 
 export default function DestinationOverviewScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const router = useRouter();
   const colors = useThemeColors();
 
+  const searchedDest = useSearchedDestinations((s) => s.destinations[id ?? '']);
+
   const rawDestination: DiscoverDestination | undefined =
     destinations.find(d => d.id === id) ??
     destinations.find(d => d.city.toLowerCase() === (id ?? '').toLowerCase()) ??
-    destinations.find(d => d.city.toLowerCase().replace(/\s+/g, '-') === (id ?? '').toLowerCase());
+    destinations.find(d => d.city.toLowerCase().replace(/\s+/g, '-') === (id ?? '').toLowerCase()) ??
+    searchedDest;
 
   const suggestedDestinations = destinations.slice(0, 3);
 

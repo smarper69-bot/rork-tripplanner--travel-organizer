@@ -1,5 +1,5 @@
-import React, { useState, useMemo, useRef, useCallback } from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, TextInput, Image, Animated, Pressable, Modal, Platform } from 'react-native';
+import React, { useState, useMemo, useRef, useCallback, useEffect } from 'react';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, TextInput, Image, Animated, Pressable, Modal, Platform, ActivityIndicator } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
@@ -7,7 +7,7 @@ import {
   Search, SlidersHorizontal, TrendingUp, MapPin, Sun,
   Compass, ChevronRight, DollarSign, Calendar, Heart, Plane, Star,
   X, TreePalm, Building2, Trees, Landmark, Backpack, Wallet,
-  Snowflake, Flower2, Leaf,
+  Snowflake, Flower2, Leaf, Navigation,
 } from 'lucide-react-native';
 import { useThemeColors } from '@/hooks/useThemeColors';
 import { hapticLight, hapticMedium } from '@/utils/haptics';
@@ -15,6 +15,9 @@ import { destinations, DiscoverDestination, TripType } from '@/mocks/destination
 import { mockTrips } from '@/mocks/trips';
 import { ThemeColors } from '@/constants/themes';
 import { DEFAULT_FALLBACK_IMAGE } from '@/utils/destinationImages';
+import { searchPlaces, MapboxPlace } from '@/utils/mapboxSearch';
+import { generateDestinationInfo } from '@/utils/destinationGenerator';
+import { useSearchedDestinations } from '@/store/useSearchedDestinations';
 
 const categories = [
   { id: 'all', label: 'All', icon: Compass },
@@ -425,6 +428,77 @@ export default function DiscoverScreen() {
   const [filterStyles, setFilterStyles] = useState<TripType[]>([]);
   const [filterSeason, setFilterSeason] = useState<string | null>(null);
 
+  const [mapboxResults, setMapboxResults] = useState<MapboxPlace[]>([]);
+  const [isSearching, setIsSearching] = useState(false);
+  const [showSearchResults, setShowSearchResults] = useState(false);
+  const [loadingPlaceId, setLoadingPlaceId] = useState<string | null>(null);
+  const searchTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const addDestination = useSearchedDestinations((s) => s.addDestination);
+
+  const handleSearchChange = useCallback((text: string) => {
+    setSearchQuery(text);
+    if (searchTimeoutRef.current) {
+      clearTimeout(searchTimeoutRef.current);
+    }
+    if (text.trim().length < 2) {
+      setMapboxResults([]);
+      setShowSearchResults(false);
+      setIsSearching(false);
+      return;
+    }
+    setIsSearching(true);
+    setShowSearchResults(true);
+    searchTimeoutRef.current = setTimeout(async () => {
+      try {
+        const results = await searchPlaces(text);
+        setMapboxResults(results);
+      } catch (e) {
+        console.log('[Discover] Search error:', e);
+        setMapboxResults([]);
+      } finally {
+        setIsSearching(false);
+      }
+    }, 350);
+  }, []);
+
+  const handleMapboxResultPress = useCallback(async (place: MapboxPlace) => {
+    console.log('[Discover] Selected place:', place.name, place.country);
+    hapticLight();
+    setLoadingPlaceId(place.id);
+
+    const existingMock = destinations.find(
+      (d) => d.city.toLowerCase() === place.name.toLowerCase()
+    );
+    if (existingMock) {
+      console.log('[Discover] Found in mock data, navigating directly');
+      setLoadingPlaceId(null);
+      setShowSearchResults(false);
+      setSearchQuery('');
+      setMapboxResults([]);
+      router.push({ pathname: '/destination/[id]' as any, params: { id: existingMock.id } });
+      return;
+    }
+
+    try {
+      const generated = await generateDestinationInfo(place);
+      addDestination(generated);
+      setLoadingPlaceId(null);
+      setShowSearchResults(false);
+      setSearchQuery('');
+      setMapboxResults([]);
+      router.push({ pathname: '/destination/[id]' as any, params: { id: generated.id } });
+    } catch (e) {
+      console.log('[Discover] Generation failed:', e);
+      setLoadingPlaceId(null);
+    }
+  }, [router, addDestination]);
+
+  useEffect(() => {
+    return () => {
+      if (searchTimeoutRef.current) clearTimeout(searchTimeoutRef.current);
+    };
+  }, []);
+
   const currentMonth = getCurrentMonth();
   const userTripTypes = getUserTripTypes();
 
@@ -562,11 +636,26 @@ export default function DiscoverScreen() {
             <Search size={18} color={colors.textMuted} />
             <TextInput
               style={[staticStyles.searchInput, { color: colors.text }]}
-              placeholder="Search destinations, styles..."
+              placeholder="Search any city or destination..."
               placeholderTextColor={colors.textMuted}
               value={searchQuery}
-              onChangeText={setSearchQuery}
+              onChangeText={handleSearchChange}
+              onFocus={() => {
+                if (searchQuery.trim().length >= 2) setShowSearchResults(true);
+              }}
             />
+            {searchQuery.length > 0 && (
+              <TouchableOpacity
+                style={staticStyles.clearSearchBtn}
+                onPress={() => {
+                  setSearchQuery('');
+                  setMapboxResults([]);
+                  setShowSearchResults(false);
+                }}
+              >
+                <X size={16} color={colors.textMuted} />
+              </TouchableOpacity>
+            )}
             <TouchableOpacity
               style={[s.filterIcon, activeFilterCount > 0 && { backgroundColor: colors.accent + '20', borderWidth: 1, borderColor: colors.accent }]}
               onPress={() => { hapticLight(); setFilterVisible(true); }}
@@ -579,6 +668,65 @@ export default function DiscoverScreen() {
               )}
             </TouchableOpacity>
           </View>
+
+          {showSearchResults && searchQuery.trim().length >= 2 && (
+            <View style={[staticStyles.searchResultsDropdown, { backgroundColor: colors.surface, borderColor: colors.border }]}>
+              {isSearching && mapboxResults.length === 0 && (
+                <View style={staticStyles.searchLoadingRow}>
+                  <ActivityIndicator size="small" color={colors.accent} />
+                  <Text style={[staticStyles.searchLoadingText, { color: colors.textSecondary }]}>Searching worldwide...</Text>
+                </View>
+              )}
+              {!isSearching && mapboxResults.length === 0 && (
+                <View style={staticStyles.searchLoadingRow}>
+                  <Compass size={18} color={colors.textMuted} />
+                  <Text style={[staticStyles.searchLoadingText, { color: colors.textSecondary }]}>No places found</Text>
+                </View>
+              )}
+              {mapboxResults.map((place) => {
+                const isLoading = loadingPlaceId === place.id;
+                const localMatch = destinations.find(
+                  (d) => d.city.toLowerCase() === place.name.toLowerCase()
+                );
+                return (
+                  <TouchableOpacity
+                    key={place.id}
+                    style={[staticStyles.searchResultItem, { borderBottomColor: colors.borderLight }]}
+                    onPress={() => handleMapboxResultPress(place)}
+                    disabled={isLoading}
+                    activeOpacity={0.6}
+                  >
+                    <View style={[staticStyles.searchResultIcon, { backgroundColor: colors.accent + '15' }]}>
+                      {isLoading ? (
+                        <ActivityIndicator size="small" color={colors.accent} />
+                      ) : (
+                        <Navigation size={16} color={colors.accent} />
+                      )}
+                    </View>
+                    <View style={staticStyles.searchResultInfo}>
+                      <Text style={[staticStyles.searchResultName, { color: colors.text }]} numberOfLines={1}>
+                        {place.name}
+                      </Text>
+                      <Text style={[staticStyles.searchResultCountry, { color: colors.textSecondary }]} numberOfLines={1}>
+                        {[place.region, place.country].filter(Boolean).join(', ')}
+                      </Text>
+                    </View>
+                    {localMatch && (
+                      <View style={[staticStyles.searchResultBadge, { backgroundColor: colors.accent + '18' }]}>
+                        <Text style={[staticStyles.searchResultBadgeText, { color: colors.accent }]}>Featured</Text>
+                      </View>
+                    )}
+                  </TouchableOpacity>
+                );
+              })}
+              {isSearching && mapboxResults.length > 0 && (
+                <View style={staticStyles.searchLoadingRow}>
+                  <ActivityIndicator size="small" color={colors.accent} />
+                  <Text style={[staticStyles.searchLoadingText, { color: colors.textSecondary }]}>Updating results...</Text>
+                </View>
+              )}
+            </View>
+          )}
         </View>
 
         <View style={staticStyles.categoriesSection}>
@@ -1388,6 +1536,67 @@ const staticStyles = StyleSheet.create({
   },
   applyButtonText: {
     fontSize: 16,
+    fontWeight: '700' as const,
+  },
+  clearSearchBtn: {
+    width: 28,
+    height: 28,
+    borderRadius: 14,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: 4,
+  },
+  searchResultsDropdown: {
+    marginTop: 8,
+    borderRadius: 14,
+    borderWidth: 1,
+    overflow: 'hidden',
+    maxHeight: 340,
+  },
+  searchLoadingRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+    paddingHorizontal: 16,
+    paddingVertical: 14,
+  },
+  searchLoadingText: {
+    fontSize: 14,
+  },
+  searchResultItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 14,
+    paddingVertical: 12,
+    borderBottomWidth: StyleSheet.hairlineWidth,
+  },
+  searchResultIcon: {
+    width: 36,
+    height: 36,
+    borderRadius: 10,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: 12,
+  },
+  searchResultInfo: {
+    flex: 1,
+  },
+  searchResultName: {
+    fontSize: 15,
+    fontWeight: '600' as const,
+    marginBottom: 2,
+  },
+  searchResultCountry: {
+    fontSize: 13,
+  },
+  searchResultBadge: {
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    borderRadius: 8,
+    marginLeft: 8,
+  },
+  searchResultBadgeText: {
+    fontSize: 10,
     fontWeight: '700' as const,
   },
 });
