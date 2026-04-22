@@ -1,0 +1,13 @@
+# Serve the invite page for any /join/{code} path so the invite code stays
+# in the URL and JavaScript can extract it from window.location.pathname.
+/join/*     /join/index.html    200
+
+# Shared-trip preview (add public/shared/index.html when ready)
+/shared/*   /join/index.html    200
+
+# Legacy invite redirect — same page handles both formats
+/invite/*   /join/index.html    200
+
+# Serve the .well-known files with the correct content type
+/.well-known/apple-app-site-association     /.well-known/apple-app-site-association    200! Content-Type=application/json
+/.well-known/assetlinks.json               /.well-known/assetlinks.json               200!

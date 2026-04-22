@@ -1,0 +1,566 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <meta name="format-detection" content="telephone=no, address=no, email=no" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <!--
+    iOS Smart App Banner.
+    Replace APP_STORE_ID with the numeric App Store ID once listed.
+    The app-argument passes the deep-link URL so tapping "Open" lands on
+    the correct join screen inside the app.
+  -->
+  <meta name="apple-itunes-app" content="app-id=APP_STORE_ID, app-argument=rork-app://join/INVITE_CODE" />
+
+  <!-- Open Graph -->
+  <meta property="og:type"        content="website" />
+  <meta property="og:site_name"   content="TripNest" />
+  <meta id="og-title"       property="og:title"       content="You're invited to a trip" />
+  <meta id="og-description" property="og:description" content="Open TripNest to view the itinerary and plan together." />
+
+  <title id="page-title">TripNest – Trip Invite</title>
+
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      color-scheme: light dark;
+      --accent:      #0891B2;
+      --accent-d:    #0e7490;
+      --bg:          #f1f5f9;
+      --surface:     #ffffff;
+      --surface-2:   #f8fafc;
+      --text:        #0f172a;
+      --text-2:      #475569;
+      --text-3:      #94a3b8;
+      --border:      rgba(0,0,0,0.08);
+      --shadow:      0 4px 32px rgba(0,0,0,0.10);
+      --r:           20px;
+      --r-sm:        12px;
+    }
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --bg:        #0f172a;
+        --surface:   #1e293b;
+        --surface-2: #263348;
+        --text:      #f1f5f9;
+        --text-2:    #94a3b8;
+        --text-3:    #64748b;
+        --border:    rgba(255,255,255,0.07);
+        --shadow:    0 4px 32px rgba(0,0,0,0.5);
+      }
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "Segoe UI", system-ui, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100svh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 0 16px 48px;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    /* ── Card ──────────────────────────────────────────────────────── */
+    .card {
+      width: 100%;
+      max-width: 440px;
+      background: var(--surface);
+      border-radius: var(--r);
+      overflow: hidden;
+      box-shadow: var(--shadow);
+      margin-top: 28px;
+    }
+
+    /* ── Hero ──────────────────────────────────────────────────────── */
+    .hero {
+      position: relative;
+      min-height: 230px;
+      padding: 56px 22px 28px;
+      display: flex;
+      flex-direction: column;
+      justify-content: flex-end;
+      background: linear-gradient(135deg, #0891B2, #06b6d4); /* overridden by JS */
+    }
+    .hero::after {
+      content: "";
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(180deg, rgba(0,0,0,0.06) 0%, rgba(0,0,0,0.58) 100%);
+    }
+    .hero > * { position: relative; z-index: 1; }
+
+    .brand {
+      position: absolute;
+      top: 14px;
+      left: 50%;
+      transform: translateX(-50%);
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      background: rgba(255,255,255,0.16);
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
+      border: 1px solid rgba(255,255,255,0.22);
+      padding: 5px 13px;
+      border-radius: 20px;
+      white-space: nowrap;
+    }
+    .brand-dot {
+      width: 22px; height: 22px;
+      background: rgba(255,255,255,0.22);
+      border-radius: 7px;
+      display: flex; align-items: center; justify-content: center;
+    }
+    .brand span { color: #fff; font-size: 13px; font-weight: 700; letter-spacing: -0.2px; }
+
+    .chip {
+      display: inline-flex; align-items: center; gap: 5px;
+      background: rgba(255,255,255,0.16);
+      border: 1px solid rgba(255,255,255,0.28);
+      color: #fff;
+      font-size: 10px; font-weight: 700;
+      letter-spacing: 0.9px; text-transform: uppercase;
+      padding: 4px 10px; border-radius: 20px;
+      margin-bottom: 10px; width: fit-content;
+    }
+
+    .hero-title {
+      color: #fff;
+      font-size: 29px; font-weight: 800;
+      letter-spacing: -0.5px; line-height: 1.18;
+      margin-bottom: 9px;
+    }
+
+    .meta-row {
+      display: none; align-items: center; gap: 6px;
+      color: rgba(255,255,255,0.82);
+      font-size: 13px; font-weight: 500;
+      margin-top: 3px;
+    }
+    .meta-row.dim { color: rgba(255,255,255,0.62); font-size: 12px; }
+
+    /* ── Body ──────────────────────────────────────────────────────── */
+    .body { padding: 18px 18px 22px; }
+
+    /* ── Stats ─────────────────────────────────────────────────────── */
+    .stats { display: flex; gap: 10px; margin-bottom: 14px; }
+    .stat {
+      flex: 1; text-align: center;
+      background: var(--surface-2);
+      border: 1px solid var(--border);
+      border-radius: var(--r-sm); padding: 12px 8px;
+    }
+    .stat-icon {
+      width: 32px; height: 32px; border-radius: 9px;
+      background: rgba(8,145,178,0.10);
+      display: flex; align-items: center; justify-content: center;
+      margin: 0 auto 6px;
+    }
+    .stat-val { font-size: 15px; font-weight: 700; color: var(--text); }
+    .stat-lbl { font-size: 10px; font-weight: 500; color: var(--text-3); text-transform: uppercase; letter-spacing: 0.3px; margin-top: 2px; }
+
+    /* ── Organizer ─────────────────────────────────────────────────── */
+    .organizer {
+      display: none; align-items: center; gap: 12px;
+      background: var(--surface-2); border: 1px solid var(--border);
+      border-radius: var(--r-sm); padding: 12px 14px;
+      margin-bottom: 14px;
+    }
+    .org-av {
+      width: 40px; height: 40px; border-radius: 20px;
+      background: linear-gradient(135deg, #0891B2, #06b6d4);
+      display: flex; align-items: center; justify-content: center;
+      color: #fff; font-size: 16px; font-weight: 700; flex-shrink: 0;
+    }
+    .org-lbl { font-size: 11px; color: var(--text-3); font-weight: 500; }
+    .org-name { font-size: 14px; color: var(--text); font-weight: 600; margin-top: 1px; }
+
+    /* ── Join Box ──────────────────────────────────────────────────── */
+    .join-box {
+      background: var(--surface-2); border: 1px solid var(--border);
+      border-radius: var(--r); padding: 20px; text-align: center;
+    }
+    .join-title { font-size: 17px; font-weight: 700; color: var(--text); margin-bottom: 5px; }
+    .join-sub { font-size: 13px; color: var(--text-2); line-height: 1.55; margin-bottom: 18px; }
+
+    .btn {
+      display: flex; align-items: center; justify-content: center; gap: 8px;
+      width: 100%; padding: 15px 20px; border-radius: 14px; border: none;
+      font-size: 15px; font-weight: 700; cursor: pointer;
+      text-decoration: none; transition: opacity 0.14s ease;
+      -webkit-tap-highlight-color: transparent;
+    }
+    .btn + .btn { margin-top: 10px; }
+    .btn:active { opacity: 0.75; }
+    .btn-primary { background: var(--accent); color: #fff; }
+    .btn-primary:disabled { opacity: 0.45; cursor: default; }
+    .btn-outline {
+      background: transparent; color: var(--text-2);
+      border: 1.5px solid var(--border);
+    }
+
+    .trust {
+      display: flex; align-items: center; justify-content: center;
+      gap: 5px; font-size: 11px; color: var(--text-3); margin-top: 14px;
+    }
+
+    /* ── Error State ───────────────────────────────────────────────── */
+    .error-card {
+      display: none;
+      text-align: center; padding: 48px 28px;
+    }
+    .error-icon {
+      width: 64px; height: 64px; border-radius: 32px;
+      background: rgba(239,68,68,0.10);
+      display: flex; align-items: center; justify-content: center;
+      margin: 0 auto 18px;
+    }
+    .error-title { font-size: 19px; font-weight: 700; color: var(--text); margin-bottom: 8px; }
+    .error-sub { font-size: 14px; color: var(--text-2); line-height: 1.55; }
+
+    /* ── Install Sheet ─────────────────────────────────────────────── */
+    .overlay {
+      display: none; position: fixed; inset: 0;
+      background: rgba(0,0,0,0.46); z-index: 200;
+      align-items: flex-end; justify-content: center;
+    }
+    .overlay.open { display: flex; }
+    .sheet {
+      background: var(--surface);
+      border-radius: 22px 22px 0 0;
+      padding: 10px 20px 44px;
+      width: 100%; max-width: 440px;
+    }
+    .sheet-handle {
+      width: 36px; height: 4px; border-radius: 2px;
+      background: var(--border); margin: 0 auto 20px;
+    }
+    .sheet-title { font-size: 18px; font-weight: 700; color: var(--text); margin-bottom: 6px; }
+    .sheet-sub { font-size: 14px; color: var(--text-2); line-height: 1.5; margin-bottom: 20px; }
+    .store-row { display: flex; gap: 10px; }
+    .store-btn {
+      flex: 1; display: flex; align-items: center; justify-content: center; gap: 8px;
+      padding: 14px; background: var(--text); color: var(--surface);
+      border-radius: 12px; font-size: 13px; font-weight: 600;
+      text-decoration: none; transition: opacity 0.14s;
+    }
+    .store-btn:active { opacity: 0.75; }
+    .sheet-close {
+      display: block; width: 100%; padding: 14px; text-align: center;
+      font-size: 14px; color: var(--text-2); background: none; border: none;
+      cursor: pointer; margin-top: 8px;
+    }
+
+    /* ── Footer ────────────────────────────────────────────────────── */
+    footer {
+      text-align: center; padding: 24px 0;
+      font-size: 12px; color: var(--text-3);
+    }
+  </style>
+</head>
+<body>
+
+<!-- ─── Invite card ──────────────────────────────────────────────── -->
+<div class="card" id="card">
+
+  <div class="hero" id="hero">
+    <div class="brand">
+      <div class="brand-dot">
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M17.8 19.2L16 11l3.5-3.5C21 6 21 4 19 4c-2 0-1.5 1.5-3.5 2.5L3 8l8 2.2 1.7 1.7"/>
+        </svg>
+      </div>
+      <span>TripNest</span>
+    </div>
+
+    <div class="chip">
+      <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/>
+        <circle cx="9" cy="7" r="4"/>
+        <line x1="19" y1="8" x2="19" y2="14"/><line x1="22" y1="11" x2="16" y2="11"/>
+      </svg>
+      Trip Invitation
+    </div>
+
+    <h1 class="hero-title" id="trip-name">—</h1>
+
+    <div id="loc-row" class="meta-row">
+      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M21 10c0 7-9 13-9 13S3 17 3 10a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/>
+      </svg>
+      <span id="loc-text"></span>
+    </div>
+    <div id="date-row" class="meta-row dim">
+      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/>
+        <line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/>
+      </svg>
+      <span id="date-text"></span>
+    </div>
+  </div><!-- /hero -->
+
+  <div class="body">
+    <div class="stats" id="stats"></div>
+
+    <div class="organizer" id="org-row">
+      <div class="org-av" id="org-av"></div>
+      <div>
+        <div class="org-lbl">Organized by</div>
+        <div class="org-name" id="org-name"></div>
+      </div>
+    </div>
+
+    <div class="join-box">
+      <div class="join-title">You're invited!</div>
+      <div class="join-sub">Open TripNest to join this trip, view the full itinerary, and plan together with your group.</div>
+
+      <button class="btn btn-primary" id="open-btn" onclick="tryOpenApp()">
+        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M17.8 19.2L16 11l3.5-3.5C21 6 21 4 19 4c-2 0-1.5 1.5-3.5 2.5L3 8l8 2.2 1.7 1.7"/>
+        </svg>
+        Open in TripNest
+      </button>
+
+      <button class="btn btn-outline" onclick="showInstall()">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+          <polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/>
+        </svg>
+        Download TripNest
+      </button>
+
+      <div class="trust">
+        <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+        </svg>
+        Free to join · No account required to preview
+      </div>
+    </div><!-- /join-box -->
+
+    <!-- Error state (hidden by default; shown via JS) -->
+    <div class="error-card" id="error-state">
+      <div class="error-icon">
+        <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#ef4444" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="12" cy="12" r="10"/>
+          <line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/>
+        </svg>
+      </div>
+      <div class="error-title">Invite link not found</div>
+      <div class="error-sub">This link may have expired or the trip no longer exists. Ask the organiser to send a fresh invite.</div>
+    </div>
+  </div><!-- /body -->
+</div><!-- /card -->
+
+
+<!-- ─── Install bottom sheet ─────────────────────────────────────── -->
+<div class="overlay" id="install-overlay" onclick="closeInstall(event)">
+  <div class="sheet" onclick="event.stopPropagation()">
+    <div class="sheet-handle"></div>
+    <div class="sheet-title">Get TripNest</div>
+    <div class="sheet-sub">Download the free TripNest app to join this trip and start planning together.</div>
+    <div class="store-row">
+      <!--
+        Replace href values with real App Store / Play Store links once listed.
+        iOS App Store URL format: https://apps.apple.com/app/id{APP_ID}
+        Android: https://play.google.com/store/apps/details?id={PACKAGE}
+      -->
+      <a href="https://apps.apple.com/app/id0000000000" class="store-btn" id="ios-link">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+          <path d="M18.71 19.5c-.83 1.24-1.71 2.45-3.05 2.47-1.34.03-1.77-.79-3.29-.79-1.53 0-2 .77-3.27.82-1.31.05-2.3-1.32-3.14-2.53C4.25 17 2.94 12.45 4.7 9.39c.87-1.52 2.43-2.48 4.12-2.51 1.28-.02 2.5.87 3.29.87.78 0 2.26-1.07 3.8-.91.65.03 2.47.26 3.64 1.98-.09.06-2.17 1.28-2.15 3.81.03 3.02 2.65 4.03 2.68 4.04-.03.07-.42 1.44-1.38 2.83M13 3.5c.73-.83 1.94-1.46 2.94-1.5.13 1.17-.34 2.35-1.04 3.19-.69.85-1.83 1.51-2.95 1.42-.15-1.15.41-2.35 1.05-3.11z"/>
+        </svg>
+        App Store
+      </a>
+      <a href="https://play.google.com/store/apps/details?id=app.rork.tripplanner_travel_organizer_66zlm3j" class="store-btn">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+          <path d="M3 20.5v-17c0-.83.94-1.3 1.6-.8l14 8.5c.6.36.6 1.24 0 1.6l-14 8.5c-.66.5-1.6.03-1.6-.8z"/>
+        </svg>
+        Play Store
+      </a>
+    </div>
+    <button class="sheet-close" onclick="closeInstall()">Close</button>
+  </div>
+</div>
+
+
+<footer>
+  <strong>TripNest</strong> &nbsp;·&nbsp; Plan trips together
+</footer>
+
+
+<script>
+// ─── Helpers ──────────────────────────────────────────────────────────────────
+
+function qs(id) { return document.getElementById(id); }
+
+/** Extract the invite code from /join/{code} */
+function inviteCode() {
+  var parts = window.location.pathname.replace(/\/$/, '').split('/');
+  var i = parts.lastIndexOf('join');
+  if (i !== -1 && parts[i + 1]) return decodeURIComponent(parts[i + 1]);
+  return new URLSearchParams(window.location.search).get('id') || '';
+}
+
+/** All URL query params as an object */
+function parseParams() {
+  var p = new URLSearchParams(window.location.search);
+  return {
+    name:      p.get('name')     || '',
+    dest:      p.get('dest')     || '',
+    country:   p.get('country')  || '',
+    start:     p.get('start')    || '',
+    end:       p.get('end')      || '',
+    budget:    Number(p.get('budget'))    || 0,
+    travelers: Number(p.get('travelers'))|| 0,
+    owner:     p.get('owner')    || '',
+  };
+}
+
+function fmt(dateStr) {
+  if (!dateStr) return '';
+  try { return new Date(dateStr + 'T00:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric' }); }
+  catch (e) { return dateStr; }
+}
+
+function days(s, e) {
+  if (!s || !e) return 0;
+  try { return Math.max(Math.ceil((new Date(e) - new Date(s)) / 86400000), 1); }
+  catch (e) { return 0; }
+}
+
+/** Deterministic hero gradient from destination / trip name */
+var GRADIENTS = [
+  ['#0891B2','#06b6d4'], ['#7c3aed','#8b5cf6'], ['#059669','#10b981'],
+  ['#d97706','#f59e0b'], ['#dc2626','#ef4444'], ['#db2777','#ec4899'],
+  ['#2563eb','#3b82f6'], ['#0f766e','#14b8a6'], ['#9333ea','#a855f7'],
+];
+function gradient(name) {
+  var i = (name && name.charCodeAt(0) || 65) % GRADIENTS.length;
+  return 'linear-gradient(135deg, ' + GRADIENTS[i][0] + ' 0%, ' + GRADIENTS[i][1] + ' 100%)';
+}
+
+function statCard(svgStr, val, lbl) {
+  return '<div class="stat">' +
+    '<div class="stat-icon">' + svgStr + '</div>' +
+    '<div class="stat-val">' + val + '</div>' +
+    '<div class="stat-lbl">' + lbl + '</div>' +
+    '</div>';
+}
+
+var CLOCK = '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#0891B2" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>';
+var USERS = '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#0891B2" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>';
+
+// ─── App deep link ─────────────────────────────────────────────────────────────
+
+var CODE   = inviteCode();
+var PARAMS = parseParams();
+
+/** Build the custom-scheme URL that opens the native app */
+function appUrl() {
+  var qs = new URLSearchParams(window.location.search).toString();
+  return 'rork-app://join/' + encodeURIComponent(CODE) + (qs ? '?' + qs : '');
+}
+
+function tryOpenApp() {
+  if (!CODE) { showInstall(); return; }
+
+  var btn = qs('open-btn');
+  btn.disabled = true;
+  btn.innerHTML =
+    '<svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">' +
+    '<path d="M17.8 19.2L16 11l3.5-3.5C21 6 21 4 19 4c-2 0-1.5 1.5-3.5 2.5L3 8l8 2.2 1.7 1.7"/></svg>' +
+    ' Opening TripNest\u2026';
+
+  // Attempt to hand off to the native app via custom URI scheme.
+  // If the app is installed (production / EAS build), it opens immediately.
+  // If not installed, the browser either shows a "can't open" dialog (iOS)
+  // or silently does nothing (Android). Either way, after ~2.5 s we're
+  // still on this page so we show the install sheet.
+  window.location.href = appUrl();
+
+  setTimeout(function () {
+    btn.disabled = false;
+    btn.innerHTML =
+      '<svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">' +
+      '<path d="M17.8 19.2L16 11l3.5-3.5C21 6 21 4 19 4c-2 0-1.5 1.5-3.5 2.5L3 8l8 2.2 1.7 1.7"/></svg>' +
+      ' Open in TripNest';
+    showInstall();
+  }, 2500);
+}
+
+function showInstall()  { qs('install-overlay').classList.add('open'); }
+function closeInstall(e) {
+  if (!e || e.target === qs('install-overlay')) {
+    qs('install-overlay').classList.remove('open');
+  }
+}
+
+// ─── Render ────────────────────────────────────────────────────────────────────
+
+(function render() {
+  var p = PARAMS;
+
+  // No invite code AND no name param → invalid link
+  if (!CODE && !p.name) {
+    qs('hero').style.display       = 'none';
+    qs('stats').parentElement.style.display = 'none';
+    qs('error-state').style.display = 'block';
+    return;
+  }
+
+  // Hero gradient + title
+  var heroName = p.dest || p.name || CODE;
+  qs('hero').style.background = gradient(heroName);
+
+  var name = p.name || 'Shared Trip';
+  qs('trip-name').textContent = name;
+  document.title = 'Join \u201c' + name + '\u201d on TripNest';
+  qs('og-title').setAttribute('content', 'Join \u201c' + name + '\u201d on TripNest');
+  if (p.dest || p.country) {
+    qs('og-description').setAttribute('content', [p.dest, p.country].filter(Boolean).join(', '));
+  }
+
+  // Location
+  var loc = [p.dest, p.country].filter(Boolean).join(', ');
+  if (loc) {
+    qs('loc-text').textContent = loc;
+    qs('loc-row').style.display = 'flex';
+  }
+
+  // Dates
+  var d = days(p.start, p.end);
+  var dateStr = p.start && p.end
+    ? fmt(p.start) + ' \u2013 ' + fmt(p.end)
+    : p.start ? 'From ' + fmt(p.start) : '';
+  if (dateStr) {
+    qs('date-text').textContent = dateStr;
+    qs('date-row').style.display = 'flex';
+  }
+
+  // Stats
+  var statsHtml = '';
+  if (d > 0)         statsHtml += statCard(CLOCK, d,            d === 1 ? 'day' : 'days');
+  if (p.travelers>0) statsHtml += statCard(USERS, p.travelers,  p.travelers === 1 ? 'traveler' : 'travelers');
+  if (statsHtml) qs('stats').innerHTML = statsHtml;
+  else           qs('stats').style.display = 'none';
+
+  // Organiser
+  if (p.owner) {
+    qs('org-av').textContent   = p.owner.charAt(0).toUpperCase();
+    qs('org-name').textContent = p.owner;
+    qs('org-row').style.display = 'flex';
+  }
+
+  // Patch the Smart App Banner app-argument with the real invite code
+  var banner = document.querySelector('meta[name="apple-itunes-app"]');
+  if (banner && CODE) {
+    banner.setAttribute('content',
+      'app-id=APP_STORE_ID, app-argument=' + appUrl());
+  }
+})();
+</script>
+</body>
+</html>

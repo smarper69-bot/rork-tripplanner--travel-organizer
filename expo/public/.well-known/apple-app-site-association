@@ -1,0 +1,16 @@
+{
+  "applinks": {
+    "apps": [],
+    "details": [
+      {
+        "appID": "REPLACE_WITH_APPLE_TEAM_ID.app.rork.tripplanner-travel-organizer-66zlm3j",
+        "paths": [
+          "/join/*",
+          "/shared/*",
+          "/invite/*",
+          "/trip/*"
+        ]
+      }
+    ]
+  }
+}

@@ -1,0 +1,8 @@
+{
+  "outputDirectory": "public",
+  "rewrites": [
+    { "source": "/join/:code*",   "destination": "/join/index.html" },
+    { "source": "/shared/:id*",   "destination": "/join/index.html" },
+    { "source": "/invite/:id*",   "destination": "/join/index.html" }
+  ]
+}
